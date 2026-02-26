@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lernzeitplaner POC</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="container header">
+    <div>
+      <h1>Lernzeitplaner</h1>
+      <p class="subtitle">Planung, Tracking und Zielerreichung für berufsbegleitendes Studium</p>
+    </div>
+    <div class="header-actions">
+      <button id="load-demo" class="secondary">Demo-Daten laden</button>
+      <button id="reset-data" class="danger">Alles löschen</button>
+    </div>
+  </header>
+
+  <main class="container grid">
+    <section class="card">
+      <h2>Übersicht</h2>
+      <div class="stats" id="stats"></div>
+      <div class="progress-group">
+        <label>Geplante vs. getrackte Lernzeit (6 Monate)</label>
+        <div class="progress"><div id="time-progress"></div></div>
+      </div>
+      <div class="progress-group">
+        <label>Zielerreichung (abgeschlossene Ziele)</label>
+        <div class="progress"><div id="goal-progress"></div></div>
+      </div>
+      <p class="hint" id="reminder-hint">Erinnerungen aktiv nur bei geöffneter Seite.</p>
+    </section>
+
+    <section class="card">
+      <h2>1) Lernziele (6 Monate)</h2>
+      <form id="goal-form" class="inline-form">
+        <input type="text" id="goal-title" placeholder="z. B. Modul SE abschließen" required />
+        <input type="date" id="goal-date" required />
+        <button>Hinzufügen</button>
+      </form>
+      <ul id="goal-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>2) Grobplanung Lernzeit (6 Monate)</h2>
+      <form id="rough-form" class="inline-form">
+        <input type="date" id="rough-date" required />
+        <input type="number" id="rough-hours" min="0.5" step="0.5" placeholder="Stunden" required />
+        <input type="text" id="rough-note" placeholder="Thema (optional)" />
+        <button>Planen</button>
+      </form>
+      <ul id="rough-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>3) Detailplanung + Zwischenziele (1 Monat)</h2>
+      <div class="month-filter">
+        <label for="month-select">Monat:</label>
+        <input type="month" id="month-select" />
+      </div>
+      <form id="detail-form" class="inline-form">
+        <input type="date" id="detail-date" required />
+        <input type="number" id="detail-minutes" min="15" step="15" placeholder="Minuten" required />
+        <input type="text" id="detail-topic" placeholder="Lerninhalt" required />
+        <input type="text" id="detail-milestone" placeholder="Zwischenziel" />
+        <button>Eintragen</button>
+      </form>
+      <ul id="detail-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>4) Lernzeit-Tracking (Stoppuhr)</h2>
+      <div class="timer-box">
+        <p id="timer-display">00:00:00</p>
+        <div class="timer-actions">
+          <button id="timer-start">Start</button>
+          <button id="timer-stop" class="secondary">Stopp & Speichern</button>
+        </div>
+      </div>
+      <form id="track-note-form" class="inline-form">
+        <input type="text" id="track-note" placeholder="Notiz (optional)" />
+      </form>
+      <ul id="track-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>5) Erreichte Ziele</h2>
+      <p class="hint">Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht abgegeben etc.).</p>
+      <ul id="achieved-list" class="list"></ul>
+    </section>
+
+    <section class="card">
+      <h2>6) Erinnerung & Inaktivität</h2>
+      <form id="settings-form" class="inline-form">
+        <input type="number" id="inactivity-days" min="1" max="30" placeholder="Inaktivität in Tagen" />
+        <button>Einstellung speichern</button>
+      </form>
+      <button id="enable-notifications" class="secondary">Browser-Benachrichtigungen aktivieren</button>
+      <ul id="reminder-list" class="list"></ul>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
