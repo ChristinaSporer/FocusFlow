@@ -1,6 +1,7 @@
 name: Create Milestones
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - 'copilot/add-four-milestones'
