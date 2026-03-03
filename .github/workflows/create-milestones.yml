@@ -12,34 +12,30 @@ jobs:
     permissions:
       issues: write
     steps:
-      - name: Create MS 3
+      - name: Create Milestones
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh milestone create "MS 3 - Konfiguration der Softwareentwicklung und Qualitätsplanung der Liefergegenstände bereitgestellt" \
-            --due 2026-03-27 \
-            -R ${{ github.repository }} || echo "MS 3 may already exist"
+          gh api /repos/${{ github.repository }}/milestones \
+            --method POST \
+            -f title="MS 3 - Konfiguration der Softwareentwicklung und Qualitätsplanung der Liefergegenstände bereitgestellt" \
+            -f due_on="2026-03-27T00:00:00Z" \
+            --jq '.number' || echo "MS 3 may already exist"
 
-      - name: Create MS 4
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh milestone create "MS 4 - Softwaresystem und Dokumentation bereitgestellt" \
-            --due 2026-04-27 \
-            -R ${{ github.repository }} || echo "MS 4 may already exist"
+          gh api /repos/${{ github.repository }}/milestones \
+            --method POST \
+            -f title="MS 4 - Softwaresystem und Dokumentation bereitgestellt" \
+            -f due_on="2026-04-27T00:00:00Z" \
+            --jq '.number' || echo "MS 4 may already exist"
 
-      - name: Create MS 5
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh milestone create "MS 5 - Ergebnispräsentation als Video bereitgestellt" \
-            --due 2026-05-11 \
-            -R ${{ github.repository }} || echo "MS 5 may already exist"
+          gh api /repos/${{ github.repository }}/milestones \
+            --method POST \
+            -f title="MS 5 - Ergebnispräsentation als Video bereitgestellt" \
+            -f due_on="2026-05-11T00:00:00Z" \
+            --jq '.number' || echo "MS 5 may already exist"
 
-      - name: Create MS 6
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh milestone create "MS 6 - Projektbericht bereitgestellt" \
-            --due 2026-06-01 \
-            -R ${{ github.repository }} || echo "MS 6 may already exist"
+          gh api /repos/${{ github.repository }}/milestones \
+            --method POST \
+            -f title="MS 6 - Projektbericht bereitgestellt" \
+            -f due_on="2026-06-01T00:00:00Z" \
+            --jq '.number' || echo "MS 6 may already exist"
