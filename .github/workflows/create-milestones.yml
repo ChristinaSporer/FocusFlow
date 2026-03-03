@@ -1,0 +1,44 @@
+name: Create Milestones
+
+on:
+  push:
+    branches:
+      - 'copilot/add-four-milestones'
+
+jobs:
+  create-milestones:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Create MS 3
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh milestone create "MS 3 - Konfiguration der Softwareentwicklung und Qualitätsplanung der Liefergegenstände bereitgestellt" \
+            --due 2026-03-27 \
+            -R ${{ github.repository }} || echo "MS 3 may already exist"
+
+      - name: Create MS 4
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh milestone create "MS 4 - Softwaresystem und Dokumentation bereitgestellt" \
+            --due 2026-04-27 \
+            -R ${{ github.repository }} || echo "MS 4 may already exist"
+
+      - name: Create MS 5
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh milestone create "MS 5 - Ergebnispräsentation als Video bereitgestellt" \
+            --due 2026-05-11 \
+            -R ${{ github.repository }} || echo "MS 5 may already exist"
+
+      - name: Create MS 6
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh milestone create "MS 6 - Projektbericht bereitgestellt" \
+            --due 2026-06-01 \
+            -R ${{ github.repository }} || echo "MS 6 may already exist"
