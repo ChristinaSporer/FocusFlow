@@ -17,6 +17,17 @@ Alle Daten werden im Browser über `localStorage` gespeichert.
 
 Da es statisches HTML/CSS/JS ist, einfach `index.html` im Browser öffnen.
 
+## Code-Qualität (Lint/Format)
+
+1. Abhängigkeiten installieren:
+   - `npm install`
+2. Linting ausführen:
+   - `npm run lint`
+   - `npm run lint:fix` (mit Auto-Fixes)
+3. Formatting prüfen/anwenden:
+   - `npm run format`
+   - `npm run format:write`
+
 ## GitHub Pages Deployment
 
 1. Repository auf GitHub erstellen und Dateien pushen.

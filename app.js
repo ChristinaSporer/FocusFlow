@@ -132,19 +132,15 @@ function renderGoals() {
       renderAll();
     });
 
-    const goalRow = buildRow(
-      goal.title,
-      `Bis ${formatDate(goal.targetDate)}`,
-      {
-        done: goal.completed,
-        onDelete: () => {
-          state.goals = state.goals.filter((item) => item.id !== goal.id);
-          saveState();
-          renderAll();
-        },
-        actions: [checkbox],
-      }
-    );
+    const goalRow = buildRow(goal.title, `Bis ${formatDate(goal.targetDate)}`, {
+      done: goal.completed,
+      onDelete: () => {
+        state.goals = state.goals.filter((item) => item.id !== goal.id);
+        saveState();
+        renderAll();
+      },
+      actions: [checkbox],
+    });
 
     list.appendChild(goalRow);
 
@@ -160,7 +156,8 @@ function renderGoals() {
     list.innerHTML = "<li><div class='item-main'><span>Keine Ziele vorhanden</span></div></li>";
   }
   if (!achieved.children.length) {
-    achieved.innerHTML = "<li><div class='item-main'><span>Noch keine erreichten Ziele</span></div></li>";
+    achieved.innerHTML =
+      "<li><div class='item-main'><span>Noch keine erreichten Ziele</span></div></li>";
   }
 }
 
@@ -188,7 +185,8 @@ function renderRoughPlans() {
   });
 
   if (!data.length) {
-    list.innerHTML = "<li><div class='item-main'><span>Keine Grobplanung in den nächsten 6 Monaten</span></div></li>";
+    list.innerHTML =
+      "<li><div class='item-main'><span>Keine Grobplanung in den nächsten 6 Monaten</span></div></li>";
   }
 }
 
@@ -229,7 +227,8 @@ function renderDetailPlans() {
   });
 
   if (!data.length) {
-    list.innerHTML = "<li><div class='item-main'><span>Keine Detailplanung für diesen Monat</span></div></li>";
+    list.innerHTML =
+      "<li><div class='item-main'><span>Keine Detailplanung für diesen Monat</span></div></li>";
   }
 }
 
@@ -255,20 +254,23 @@ function renderTrackedSessions() {
   });
 
   if (!data.length) {
-    list.innerHTML = "<li><div class='item-main'><span>Noch keine getrackte Lernzeit</span></div></li>";
+    list.innerHTML =
+      "<li><div class='item-main'><span>Noch keine getrackte Lernzeit</span></div></li>";
   }
 }
 
 function renderStats() {
-  const plannedSixMonthsMin = sum(
-    state.roughPlans
-      .filter((item) => isWithinNextSixMonths(item.date))
-      .map((item) => toMinutes(item.hours))
-  ) + sum(
-    state.detailPlans
-      .filter((item) => isWithinNextSixMonths(item.date))
-      .map((item) => Number(item.minutes))
-  );
+  const plannedSixMonthsMin =
+    sum(
+      state.roughPlans
+        .filter((item) => isWithinNextSixMonths(item.date))
+        .map((item) => toMinutes(item.hours))
+    ) +
+    sum(
+      state.detailPlans
+        .filter((item) => isWithinNextSixMonths(item.date))
+        .map((item) => Number(item.minutes))
+    );
 
   const trackedMin = sum(state.trackedSessions.map((item) => Number(item.minutes)));
 
@@ -294,12 +296,11 @@ function renderStats() {
     <div class="stat"><small>Aktueller Monat getrackt</small><b>${monthlyTracked} Min</b></div>
   `;
 
-  const timePercent = plannedSixMonthsMin === 0
-    ? 0
-    : Math.min(100, Math.round((trackedMin / plannedSixMonthsMin) * 100));
-  const goalPercent = totalGoals === 0
-    ? 0
-    : Math.round((completedGoals / totalGoals) * 100);
+  const timePercent =
+    plannedSixMonthsMin === 0
+      ? 0
+      : Math.min(100, Math.round((trackedMin / plannedSixMonthsMin) * 100));
+  const goalPercent = totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
 
   byId("time-progress").style.width = `${timePercent}%`;
   byId("goal-progress").style.width = `${goalPercent}%`;
@@ -364,22 +365,29 @@ function upcomingItems() {
   const now = new Date();
   const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-  const upcomingRough = state.roughPlans.filter((item) => {
-    const d = dateOnly(item.date);
-    return d >= now && d <= next24h;
-  }).map((item) => `Geplante Lernzeit in den nächsten 24h: ${item.hours}h am ${formatDate(item.date)}`);
+  const upcomingRough = state.roughPlans
+    .filter((item) => {
+      const d = dateOnly(item.date);
+      return d >= now && d <= next24h;
+    })
+    .map(
+      (item) => `Geplante Lernzeit in den nächsten 24h: ${item.hours}h am ${formatDate(item.date)}`
+    );
 
-  const upcomingGoals = state.goals.filter((goal) => {
-    const d = dateOnly(goal.targetDate);
-    return !goal.completed && d >= now && d <= next24h;
-  }).map((goal) => `Ziel bald fällig: ${goal.title} (${formatDate(goal.targetDate)})`);
+  const upcomingGoals = state.goals
+    .filter((goal) => {
+      const d = dateOnly(goal.targetDate);
+      return !goal.completed && d >= now && d <= next24h;
+    })
+    .map((goal) => `Ziel bald fällig: ${goal.title} (${formatDate(goal.targetDate)})`);
 
   return [...upcomingRough, ...upcomingGoals];
 }
 
 function inactivityMessage() {
   const days = Number(state.settings.inactivityDays) || 3;
-  if (!state.trackedSessions.length) return `Noch keine Lernzeit erfasst. Starte deine erste Session.`;
+  if (!state.trackedSessions.length)
+    return `Noch keine Lernzeit erfasst. Starte deine erste Session.`;
 
   const last = state.trackedSessions.reduce((acc, item) => {
     const t = new Date(item.end).getTime();
@@ -410,7 +418,8 @@ function runReminders() {
   if (inactivity) reminders.push(inactivity);
 
   if (!reminders.length) {
-    list.innerHTML = "<li><div class='item-main'><span>Keine aktuellen Erinnerungen</span></div></li>";
+    list.innerHTML =
+      "<li><div class='item-main'><span>Keine aktuellen Erinnerungen</span></div></li>";
     byId("reminder-hint").textContent = "Erinnerungen geprüft: aktuell nichts offen.";
     return;
   }
@@ -537,20 +546,58 @@ function loadDemoData() {
   state = {
     ...defaultData(),
     goals: [
-      { id: uid(), title: "Modul Software Engineering abschließen", targetDate: in20.toISOString().slice(0, 10), completed: false, completedAt: null },
-      { id: uid(), title: "Klausurvorbereitung Mathematik", targetDate: in10.toISOString().slice(0, 10), completed: true, completedAt: nowIso() },
+      {
+        id: uid(),
+        title: "Modul Software Engineering abschließen",
+        targetDate: in20.toISOString().slice(0, 10),
+        completed: false,
+        completedAt: null,
+      },
+      {
+        id: uid(),
+        title: "Klausurvorbereitung Mathematik",
+        targetDate: in10.toISOString().slice(0, 10),
+        completed: true,
+        completedAt: nowIso(),
+      },
     ],
     roughPlans: [
       { id: uid(), date: in5.toISOString().slice(0, 10), hours: 3, note: "Wiederholung UML" },
       { id: uid(), date: in10.toISOString().slice(0, 10), hours: 4, note: "Altklausuren" },
     ],
     detailPlans: [
-      { id: uid(), date: in5.toISOString().slice(0, 10), minutes: 90, topic: "User Stories", milestone: "Kapitel 4 durcharbeiten", done: false },
-      { id: uid(), date: in10.toISOString().slice(0, 10), minutes: 120, topic: "Testmethoden", milestone: "10 Übungsaufgaben", done: true },
+      {
+        id: uid(),
+        date: in5.toISOString().slice(0, 10),
+        minutes: 90,
+        topic: "User Stories",
+        milestone: "Kapitel 4 durcharbeiten",
+        done: false,
+      },
+      {
+        id: uid(),
+        date: in10.toISOString().slice(0, 10),
+        minutes: 120,
+        topic: "Testmethoden",
+        milestone: "10 Übungsaufgaben",
+        done: true,
+      },
     ],
     trackedSessions: [
-      { id: uid(), start: new Date().toISOString(), end: new Date(Date.now() + 45 * 60000).toISOString(), minutes: 45, note: "Fokusblock am Morgen" },
-      { id: uid(), start: new Date().toISOString(), end: new Date(Date.now() + 60 * 60000).toISOString(), minutes: 60, note: "Abend-Review" },
+      {
+        id: uid(),
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 45 * 60000).toISOString(),
+        minutes: 45,
+        note: "Fokusblock am Morgen",
+      },
+      {
+        id: uid(),
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 60 * 60000).toISOString(),
+        minutes: 60,
+        note: "Abend-Review",
+      },
     ],
     settings: {
       inactivityDays: 3,
