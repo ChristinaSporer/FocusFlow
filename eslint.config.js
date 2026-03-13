@@ -3,7 +3,13 @@ const eslintConfigPrettier = require("eslint-config-prettier");
 
 module.exports = [
   {
-    ignores: ["node_modules/**", "eslint.config.js"],
+    ignores: [
+      "node_modules/**",
+      "eslint.config.js",
+      "vitest.config.js",
+      "playwright.config.js",
+      "tests/**",
+    ],
   },
   js.configs.recommended,
   {
@@ -21,6 +27,8 @@ module.exports = [
         setInterval: "readonly",
         clearInterval: "readonly",
         Notification: "readonly",
+        Blob: "readonly",
+        URL: "readonly",
       },
     },
     rules: {

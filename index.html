@@ -12,13 +12,30 @@
         <h1>Lernzeitplaner</h1>
         <p class="subtitle">Planung, Tracking und Zielerreichung für berufsbegleitendes Studium</p>
       </div>
-      <div class="header-actions">
-        <button id="load-demo" class="secondary">Demo-Daten laden</button>
-        <button id="reset-data" class="danger">Alles löschen</button>
+      <div class="header-controls">
+        <div class="view-tabs" role="tablist" aria-label="Ansicht">
+          <button id="tab-list" class="secondary" data-view="list" role="tab" aria-selected="true">
+            Listenansicht
+          </button>
+          <button
+            id="tab-calendar"
+            class="secondary"
+            data-view="calendar"
+            role="tab"
+            aria-selected="false"
+          >
+            Kalender
+          </button>
+        </div>
+        <div class="header-actions">
+          <button id="load-demo" class="secondary">Demo-Daten laden</button>
+          <button id="reset-data" class="danger">Alles löschen</button>
+        </div>
       </div>
     </header>
 
-    <main class="container grid">
+    <main class="container">
+      <div id="list-view" class="grid view-panel">
       <section class="card">
         <h2>Übersicht</h2>
         <div class="stats" id="stats"></div>
@@ -124,6 +141,31 @@
           Browser-Benachrichtigungen aktivieren
         </button>
         <ul id="reminder-list" class="list"></ul>
+      </section>
+      </div>
+
+      <section id="calendar-view" class="view-panel hidden">
+        <div class="card">
+          <h2>Kalenderansicht</h2>
+          <p class="hint">Termine aus Detailplanung, Grobplanung, Tracking und ICS-Import.</p>
+
+          <div class="calendar-toolbar">
+            <button id="calendar-prev" class="secondary" type="button">Monat zurück</button>
+            <strong id="calendar-month-label">-</strong>
+            <button id="calendar-next" class="secondary" type="button">Monat vor</button>
+          </div>
+
+          <div id="calendar-legend" class="calendar-legend"></div>
+
+          <div class="calendar-import-export">
+            <input id="ics-file" type="file" accept=".ics,text/calendar" />
+            <button id="ics-import" type="button">ICS importieren</button>
+            <button id="ics-export" type="button" class="secondary">App-Termine als ICS exportieren</button>
+          </div>
+          <p id="ics-status" class="hint">Noch kein Import durchgeführt.</p>
+
+          <div id="calendar-grid" class="calendar-grid"></div>
+        </div>
       </section>
     </main>
 
