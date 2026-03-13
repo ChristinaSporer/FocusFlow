@@ -7,7 +7,11 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --check",
-    "format:write": "prettier . --write"
+    "format:write": "prettier . --write",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "test:all": "npm run test && npm run test:e2e"
   },
   "repository": {
     "type": "git",
@@ -22,8 +26,12 @@
   "homepage": "https://github.com/ChristinaSporer/POC_Lernzeitmanager#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.58.2",
     "eslint": "^10.0.2",
     "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.8.1"
+    "http-server": "^14.1.1",
+    "jsdom": "^28.1.0",
+    "prettier": "^3.8.1",
+    "vitest": "^4.0.18"
   }
 }

@@ -28,6 +28,18 @@ Da es statisches HTML/CSS/JS ist, einfach `index.html` im Browser öffnen.
    - `npm run format`
    - `npm run format:write`
 
+## Automatische Tests
+
+1. Test-Dependencies installieren:
+   - `npm install`
+2. Unit-/DOM-Tests (Vitest):
+   - `npm run test`
+   - `npm run test:watch`
+3. End-to-End-Test (Playwright):
+   - `npm run test:e2e`
+4. Alles zusammen:
+   - `npm run test:all`
+
 ## GitHub Pages Deployment
 
 1. Repository auf GitHub erstellen und Dateien pushen.
