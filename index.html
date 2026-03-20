@@ -4,167 +4,337 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Lernzeitplaner POC</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <header class="container header">
-      <div>
-        <h1>Lernzeitplaner</h1>
-        <p class="subtitle">Planung, Tracking und Zielerreichung für berufsbegleitendes Studium</p>
-      </div>
-      <div class="header-controls">
-        <div class="view-tabs" role="tablist" aria-label="Ansicht">
-          <button id="tab-list" class="secondary" data-view="list" role="tab" aria-selected="true">
-            Listenansicht
-          </button>
-          <button
-            id="tab-calendar"
-            class="secondary"
-            data-view="calendar"
-            role="tab"
-            aria-selected="false"
-          >
-            Kalender
-          </button>
+    <header class="container py-4">
+      <div class="row gy-3 justify-content-between align-items-lg-center">
+        <div class="col-12 col-lg-auto">
+          <h1 class="mb-0">Lernzeitplaner</h1>
+          <p class="mb-0 mt-2 text-body-secondary">
+            Planung, Tracking und Zielerreichung f&uuml;r berufsbegleitendes Studium
+          </p>
         </div>
-        <div class="header-actions">
-          <button id="load-demo" class="secondary">Demo-Daten laden</button>
-          <button id="reset-data" class="danger">Alles löschen</button>
+        <div class="col-12 col-lg-auto">
+          <div class="d-flex flex-column align-items-stretch align-items-lg-end gap-2">
+            <div class="btn-group" role="tablist" aria-label="Ansicht">
+              <button
+                id="tab-list"
+                class="btn btn-outline-primary active"
+                type="button"
+                data-view="list"
+                role="tab"
+                aria-selected="true"
+              >
+                Listenansicht
+              </button>
+              <button
+                id="tab-calendar"
+                class="btn btn-outline-primary"
+                type="button"
+                data-view="calendar"
+                role="tab"
+                aria-selected="false"
+              >
+                Kalender
+              </button>
+            </div>
+            <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
+              <label for="theme-mode" class="form-label mb-0 small text-body-secondary"
+                >Darstellung</label
+              >
+              <select id="theme-mode" class="form-select form-select-sm w-auto" aria-label="Theme">
+                <option value="auto">Auto (System)</option>
+                <option value="light">Hell</option>
+                <option value="dark">Dunkel</option>
+              </select>
+            </div>
+            <div class="d-flex flex-wrap justify-content-lg-end gap-2">
+              <button id="load-demo" class="btn btn-secondary" type="button">Demo-Daten laden</button>
+              <button id="reset-data" class="btn btn-danger" type="button">Alles l&ouml;schen</button>
+            </div>
+          </div>
         </div>
       </div>
     </header>
 
-    <main class="container">
-      <div id="list-view" class="grid view-panel">
-      <section class="card">
-        <h2>Übersicht</h2>
-        <div class="stats" id="stats"></div>
-        <div class="progress-group">
-          <label>Geplante vs. getrackte Lernzeit (6 Monate)</label>
-          <div class="progress"><div id="time-progress"></div></div>
+    <main class="container pb-4">
+      <div id="list-view" class="row row-cols-1 row-cols-xl-2 g-4 mb-4">
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">&Uuml;bersicht</h2>
+              <div class="row row-cols-1 row-cols-sm-2 g-3 mt-1" id="stats"></div>
+              <div class="mt-3">
+                <label class="form-label text-body-secondary small mb-1"
+                  >Geplante vs. getrackte Lernzeit (6 Monate)</label
+                >
+                <div class="progress">
+                  <div
+                    id="time-progress"
+                    class="progress-bar"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <div class="mt-3">
+                <label class="form-label text-body-secondary small mb-1"
+                  >Zielerreichung (abgeschlossene Ziele)</label
+                >
+                <div class="progress">
+                  <div
+                    id="goal-progress"
+                    class="progress-bar bg-success"
+                    role="progressbar"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                    style="width: 0%"
+                  ></div>
+                </div>
+              </div>
+              <p class="text-body-secondary small mt-3 mb-0" id="reminder-hint">
+                Erinnerungen aktiv nur bei ge&ouml;ffneter Seite.
+              </p>
+            </div>
+          </section>
         </div>
-        <div class="progress-group">
-          <label>Zielerreichung (abgeschlossene Ziele)</label>
-          <div class="progress"><div id="goal-progress"></div></div>
+
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">1) Lernziele (6 Monate)</h2>
+              <form id="goal-form" class="row g-2 mt-1">
+                <div class="col-12 col-md">
+                  <input
+                    type="text"
+                    id="goal-title"
+                    class="form-control"
+                    placeholder="z. B. Modul SE abschlie&szlig;en"
+                    required
+                  />
+                </div>
+                <div class="col-12 col-md-4">
+                  <input type="date" id="goal-date" class="form-control" required />
+                </div>
+                <div class="col-12 col-md-auto d-grid">
+                  <button class="btn btn-primary" type="submit">Hinzuf&uuml;gen</button>
+                </div>
+              </form>
+              <ul id="goal-list" class="list-group list-panel"></ul>
+            </div>
+          </section>
         </div>
-        <p class="hint" id="reminder-hint">Erinnerungen aktiv nur bei geöffneter Seite.</p>
-      </section>
 
-      <section class="card">
-        <h2>1) Lernziele (6 Monate)</h2>
-        <form id="goal-form" class="inline-form">
-          <input type="text" id="goal-title" placeholder="z. B. Modul SE abschließen" required />
-          <input type="date" id="goal-date" required />
-          <button>Hinzufügen</button>
-        </form>
-        <ul id="goal-list" class="list"></ul>
-      </section>
-
-      <section class="card">
-        <h2>2) Grobplanung Lernzeit (6 Monate)</h2>
-        <form id="rough-form" class="inline-form">
-          <input type="date" id="rough-date" required />
-          <input
-            type="number"
-            id="rough-hours"
-            min="0.5"
-            step="0.5"
-            placeholder="Stunden"
-            required
-          />
-          <input type="text" id="rough-note" placeholder="Thema (optional)" />
-          <button>Planen</button>
-        </form>
-        <ul id="rough-list" class="list"></ul>
-      </section>
-
-      <section class="card">
-        <h2>3) Detailplanung + Zwischenziele (1 Monat)</h2>
-        <div class="month-filter">
-          <label for="month-select">Monat:</label>
-          <input type="month" id="month-select" />
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">2) Grobplanung Lernzeit (6 Monate)</h2>
+              <form id="rough-form" class="row g-2 mt-1">
+                <div class="col-12 col-md-4">
+                  <input type="date" id="rough-date" class="form-control" required />
+                </div>
+                <div class="col-12 col-md-3">
+                  <input
+                    type="number"
+                    id="rough-hours"
+                    class="form-control"
+                    min="0.5"
+                    step="0.5"
+                    placeholder="Stunden"
+                    required
+                  />
+                </div>
+                <div class="col-12 col-md">
+                  <input
+                    type="text"
+                    id="rough-note"
+                    class="form-control"
+                    placeholder="Thema (optional)"
+                  />
+                </div>
+                <div class="col-12 col-md-auto d-grid">
+                  <button class="btn btn-primary" type="submit">Planen</button>
+                </div>
+              </form>
+              <ul id="rough-list" class="list-group list-panel"></ul>
+            </div>
+          </section>
         </div>
-        <form id="detail-form" class="inline-form">
-          <input type="date" id="detail-date" required />
-          <input
-            type="number"
-            id="detail-minutes"
-            min="15"
-            step="15"
-            placeholder="Minuten"
-            required
-          />
-          <input type="text" id="detail-topic" placeholder="Lerninhalt" required />
-          <input type="text" id="detail-milestone" placeholder="Zwischenziel" />
-          <button>Eintragen</button>
-        </form>
-        <ul id="detail-list" class="list"></ul>
-      </section>
 
-      <section class="card">
-        <h2>4) Lernzeit-Tracking (Stoppuhr)</h2>
-        <div class="timer-box">
-          <p id="timer-display">00:00:00</p>
-          <div class="timer-actions">
-            <button id="timer-start">Start</button>
-            <button id="timer-stop" class="secondary">Stopp & Speichern</button>
-          </div>
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">3) Detailplanung + Zwischenziele (1 Monat)</h2>
+              <div class="row g-2 align-items-center mb-3 mt-1">
+                <div class="col-auto">
+                  <label class="form-label mb-0" for="month-select">Monat:</label>
+                </div>
+                <div class="col-12 col-sm-auto">
+                  <input type="month" id="month-select" class="form-control" />
+                </div>
+              </div>
+              <form id="detail-form" class="row g-2">
+                <div class="col-12 col-md-4">
+                  <input type="date" id="detail-date" class="form-control" required />
+                </div>
+                <div class="col-12 col-md-3">
+                  <input
+                    type="number"
+                    id="detail-minutes"
+                    class="form-control"
+                    min="15"
+                    step="15"
+                    placeholder="Minuten"
+                    required
+                  />
+                </div>
+                <div class="col-12 col-md">
+                  <input
+                    type="text"
+                    id="detail-topic"
+                    class="form-control"
+                    placeholder="Lerninhalt"
+                    required
+                  />
+                </div>
+                <div class="col-12 col-md">
+                  <input
+                    type="text"
+                    id="detail-milestone"
+                    class="form-control"
+                    placeholder="Zwischenziel"
+                  />
+                </div>
+                <div class="col-12 col-md-auto d-grid">
+                  <button class="btn btn-primary" type="submit">Eintragen</button>
+                </div>
+              </form>
+              <ul id="detail-list" class="list-group list-panel mt-3"></ul>
+            </div>
+          </section>
         </div>
-        <form id="track-note-form" class="inline-form">
-          <input type="text" id="track-note" placeholder="Notiz (optional)" />
-        </form>
-        <ul id="track-list" class="list"></ul>
-      </section>
 
-      <section class="card">
-        <h2>5) Erreichte Ziele</h2>
-        <p class="hint">
-          Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht abgegeben
-          etc.).
-        </p>
-        <ul id="achieved-list" class="list"></ul>
-      </section>
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">4) Lernzeit-Tracking (Stoppuhr)</h2>
+              <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1">
+                <p id="timer-display" class="mb-0">00:00:00</p>
+                <div class="d-flex flex-wrap gap-2">
+                  <button id="timer-start" class="btn btn-primary" type="button">Start</button>
+                  <button id="timer-stop" class="btn btn-secondary" type="button">
+                    Stopp &amp; Speichern
+                  </button>
+                </div>
+              </div>
+              <form id="track-note-form" class="row g-2 mt-3">
+                <div class="col-12">
+                  <input
+                    type="text"
+                    id="track-note"
+                    class="form-control"
+                    placeholder="Notiz (optional)"
+                  />
+                </div>
+              </form>
+              <ul id="track-list" class="list-group list-panel"></ul>
+            </div>
+          </section>
+        </div>
 
-      <section class="card">
-        <h2>6) Erinnerung & Inaktivität</h2>
-        <form id="settings-form" class="inline-form">
-          <input
-            type="number"
-            id="inactivity-days"
-            min="1"
-            max="30"
-            placeholder="Inaktivität in Tagen"
-          />
-          <button>Einstellung speichern</button>
-        </form>
-        <button id="enable-notifications" class="secondary">
-          Browser-Benachrichtigungen aktivieren
-        </button>
-        <ul id="reminder-list" class="list"></ul>
-      </section>
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">5) Erreichte Ziele</h2>
+              <p class="text-body-secondary small mt-1">
+                Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht
+                abgegeben etc.).
+              </p>
+              <ul id="achieved-list" class="list-group list-panel"></ul>
+            </div>
+          </section>
+        </div>
+
+        <div class="col">
+          <section class="card shadow-sm h-100">
+            <div class="card-body">
+              <h2 class="h4">6) Erinnerung &amp; Inaktivit&auml;t</h2>
+              <form id="settings-form" class="row g-2 mt-1">
+                <div class="col-12 col-md">
+                  <input
+                    type="number"
+                    id="inactivity-days"
+                    class="form-control"
+                    min="1"
+                    max="30"
+                    placeholder="Inaktivit&auml;t in Tagen"
+                  />
+                </div>
+                <div class="col-12 col-md-auto d-grid">
+                  <button class="btn btn-primary" type="submit">Einstellung speichern</button>
+                </div>
+              </form>
+              <button id="enable-notifications" class="btn btn-secondary mt-2" type="button">
+                Browser-Benachrichtigungen aktivieren
+              </button>
+              <ul id="reminder-list" class="list-group list-panel mt-3"></ul>
+            </div>
+          </section>
+        </div>
       </div>
 
-      <section id="calendar-view" class="view-panel hidden">
-        <div class="card">
-          <h2>Kalenderansicht</h2>
-          <p class="hint">Termine aus Detailplanung, Grobplanung, Tracking und ICS-Import.</p>
+      <section id="calendar-view" class="mb-4 d-none">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h2 class="h4">Kalenderansicht</h2>
+            <p class="text-body-secondary small mt-1">
+              Termine aus Detailplanung, Grobplanung, Tracking und ICS-Import.
+            </p>
 
-          <div class="calendar-toolbar">
-            <button id="calendar-prev" class="secondary" type="button">Monat zurück</button>
-            <strong id="calendar-month-label">-</strong>
-            <button id="calendar-next" class="secondary" type="button">Monat vor</button>
+            <div
+              class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 my-3"
+            >
+              <button id="calendar-prev" class="btn btn-secondary" type="button">
+                Monat zur&uuml;ck
+              </button>
+              <strong id="calendar-month-label">-</strong>
+              <button id="calendar-next" class="btn btn-secondary" type="button">
+                Monat vor
+              </button>
+            </div>
+
+            <div id="calendar-legend" class="d-flex flex-wrap gap-3 mb-3"></div>
+
+            <div class="row g-2 align-items-center mb-2">
+              <div class="col-12 col-lg-5">
+                <input id="ics-file" class="form-control" type="file" accept=".ics,text/calendar" />
+              </div>
+              <div class="col-12 col-sm-auto d-grid">
+                <button id="ics-import" type="button" class="btn btn-primary">
+                  ICS importieren
+                </button>
+              </div>
+              <div class="col-12 col-sm-auto d-grid">
+                <button id="ics-export" type="button" class="btn btn-secondary">
+                  App-Termine als ICS exportieren
+                </button>
+              </div>
+            </div>
+            <p id="ics-status" class="text-body-secondary small mb-3">
+              Noch kein Import durchgef&uuml;hrt.
+            </p>
+
+            <div id="calendar-grid" class="calendar-grid"></div>
           </div>
-
-          <div id="calendar-legend" class="calendar-legend"></div>
-
-          <div class="calendar-import-export">
-            <input id="ics-file" type="file" accept=".ics,text/calendar" />
-            <button id="ics-import" type="button">ICS importieren</button>
-            <button id="ics-export" type="button" class="secondary">App-Termine als ICS exportieren</button>
-          </div>
-          <p id="ics-status" class="hint">Noch kein Import durchgeführt.</p>
-
-          <div id="calendar-grid" class="calendar-grid"></div>
         </div>
       </section>
     </main>

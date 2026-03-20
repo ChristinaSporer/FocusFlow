@@ -68,8 +68,8 @@ describe("App UI integration (jsdom)", () => {
 
     document.getElementById("tab-calendar").click();
 
-    expect(document.getElementById("calendar-view").classList.contains("hidden")).toBe(false);
-    expect(document.getElementById("list-view").classList.contains("hidden")).toBe(true);
+    expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(false);
+    expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
     expect(document.querySelector(".calendar-event.source-detail")?.textContent).toContain("Architektur");
   });
 });

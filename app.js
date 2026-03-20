@@ -21,6 +21,7 @@ const defaultData = () => ({
     notificationEnabled: false,
     activeView: "list",
     calendarMonth: null,
+    themeMode: "auto",
   },
   timer: {
     start: null,
@@ -29,6 +30,7 @@ const defaultData = () => ({
 
 let state = loadState();
 let timerInterval = null;
+let systemThemeMediaQuery = null;
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -114,29 +116,50 @@ function isWithinNextSixMonths(dateLike) {
 
 function buildRow(main, sub, { done = false, onDelete, actions = [] } = {}) {
   const li = document.createElement("li");
-  if (done) li.classList.add("done");
+  li.className = [
+    "list-group-item",
+    "d-flex",
+    "justify-content-between",
+    "align-items-start",
+    "gap-3",
+    "flex-wrap",
+    done ? "list-group-item-success" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   const info = document.createElement("div");
-  info.className = "item-main";
+  info.className = "d-flex flex-column gap-1 flex-grow-1";
   const title = document.createElement("span");
   title.textContent = main;
   const small = document.createElement("small");
+  small.className = "text-body-secondary";
   small.textContent = sub;
   info.append(title, small);
 
   const rowActions = document.createElement("div");
-  rowActions.className = "row-actions";
+  rowActions.className = "d-flex align-items-center gap-2 ms-auto";
 
-  actions.forEach((action) => rowActions.appendChild(action));
+  actions.forEach((action) => {
+    if (action.tagName === "INPUT" && action.type === "checkbox") {
+      action.classList.add("form-check-input", "mt-1", "flex-shrink-0");
+    }
+    rowActions.appendChild(action);
+  });
 
   const del = document.createElement("button");
-  del.className = "icon-btn";
+  del.className = "btn btn-outline-danger btn-sm";
+  del.type = "button";
   del.textContent = "Löschen";
   del.addEventListener("click", onDelete);
   rowActions.appendChild(del);
 
   li.append(info, rowActions);
   return li;
+}
+
+function renderEmptyList(list, message) {
+  list.innerHTML = `<li class="list-group-item text-body-secondary">${message}</li>`;
 }
 
 function renderGoals() {
@@ -174,18 +197,17 @@ function renderGoals() {
 
     if (goal.completed) {
       const doneRow = document.createElement("li");
-      doneRow.classList.add("done");
-      doneRow.innerHTML = `<div class="item-main"><span>${goal.title}</span><small>Erreicht am ${formatDate(goal.completedAt)}</small></div>`;
+      doneRow.className = "list-group-item list-group-item-success";
+      doneRow.innerHTML = `<div class="d-flex flex-column gap-1"><span>${goal.title}</span><small class="text-body-secondary">Erreicht am ${formatDate(goal.completedAt)}</small></div>`;
       achieved.appendChild(doneRow);
     }
   });
 
   if (!sorted.length) {
-    list.innerHTML = "<li><div class='item-main'><span>Keine Ziele vorhanden</span></div></li>";
+    renderEmptyList(list, "Keine Ziele vorhanden");
   }
   if (!achieved.children.length) {
-    achieved.innerHTML =
-      "<li><div class='item-main'><span>Noch keine erreichten Ziele</span></div></li>";
+    renderEmptyList(achieved, "Noch keine erreichten Ziele");
   }
 }
 
@@ -213,8 +235,7 @@ function renderRoughPlans() {
   });
 
   if (!data.length) {
-    list.innerHTML =
-      "<li><div class='item-main'><span>Keine Grobplanung in den nächsten 6 Monaten</span></div></li>";
+    renderEmptyList(list, "Keine Grobplanung in den nächsten 6 Monaten");
   }
 }
 
@@ -255,8 +276,7 @@ function renderDetailPlans() {
   });
 
   if (!data.length) {
-    list.innerHTML =
-      "<li><div class='item-main'><span>Keine Detailplanung für diesen Monat</span></div></li>";
+    renderEmptyList(list, "Keine Detailplanung für diesen Monat");
   }
 }
 
@@ -282,8 +302,7 @@ function renderTrackedSessions() {
   });
 
   if (!data.length) {
-    list.innerHTML =
-      "<li><div class='item-main'><span>Noch keine getrackte Lernzeit</span></div></li>";
+    renderEmptyList(list, "Noch keine getrackte Lernzeit");
   }
 }
 
@@ -318,10 +337,38 @@ function renderStats() {
   );
 
   byId("stats").innerHTML = `
-    <div class="stat"><small>Geplant (6M)</small><b>${plannedSixMonthsMin} Min</b></div>
-    <div class="stat"><small>Getrackt gesamt</small><b>${trackedMin} Min</b></div>
-    <div class="stat"><small>Aktueller Monat geplant</small><b>${monthlyPlanned} Min</b></div>
-    <div class="stat"><small>Aktueller Monat getrackt</small><b>${monthlyTracked} Min</b></div>
+    <div class="col">
+      <div class="card border-0 bg-body-tertiary h-100">
+        <div class="card-body py-3">
+          <small class="d-block text-body-secondary">Geplant (6M)</small>
+          <b class="fs-5">${plannedSixMonthsMin} Min</b>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 bg-body-tertiary h-100">
+        <div class="card-body py-3">
+          <small class="d-block text-body-secondary">Getrackt gesamt</small>
+          <b class="fs-5">${trackedMin} Min</b>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 bg-body-tertiary h-100">
+        <div class="card-body py-3">
+          <small class="d-block text-body-secondary">Aktueller Monat geplant</small>
+          <b class="fs-5">${monthlyPlanned} Min</b>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="card border-0 bg-body-tertiary h-100">
+        <div class="card-body py-3">
+          <small class="d-block text-body-secondary">Aktueller Monat getrackt</small>
+          <b class="fs-5">${monthlyTracked} Min</b>
+        </div>
+      </div>
+    </div>
   `;
 
   const timePercent =
@@ -330,8 +377,16 @@ function renderStats() {
       : Math.min(100, Math.round((trackedMin / plannedSixMonthsMin) * 100));
   const goalPercent = totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
 
-  byId("time-progress").style.width = `${timePercent}%`;
-  byId("goal-progress").style.width = `${goalPercent}%`;
+  const timeProgress = byId("time-progress");
+  const goalProgress = byId("goal-progress");
+
+  timeProgress.style.width = `${timePercent}%`;
+  timeProgress.setAttribute("aria-valuenow", String(timePercent));
+  timeProgress.textContent = `${timePercent}%`;
+
+  goalProgress.style.width = `${goalPercent}%`;
+  goalProgress.setAttribute("aria-valuenow", String(goalPercent));
+  goalProgress.textContent = `${goalPercent}%`;
 }
 
 function toClock(ms) {
@@ -517,8 +572,8 @@ function renderViewState() {
   const calendarTab = byId("tab-calendar");
 
   const active = state.settings.activeView === "calendar" ? "calendar" : "list";
-  listView.classList.toggle("hidden", active !== "list");
-  calendarView.classList.toggle("hidden", active !== "calendar");
+  listView.classList.toggle("d-none", active !== "list");
+  calendarView.classList.toggle("d-none", active !== "calendar");
 
   listTab.classList.toggle("active", active === "list");
   calendarTab.classList.toggle("active", active === "calendar");
@@ -532,7 +587,7 @@ function renderCalendarLegend() {
 
   Object.values(SOURCE_META).forEach((meta) => {
     const item = document.createElement("div");
-    item.className = "legend-item";
+    item.className = "d-inline-flex align-items-center gap-2 small text-body-secondary";
 
     const dot = document.createElement("span");
     dot.className = `legend-dot ${meta.className}`;
@@ -888,6 +943,12 @@ function initForms() {
     renderAll();
   });
 
+  byId("theme-mode").addEventListener("change", (event) => {
+    state.settings.themeMode = normalizeThemeMode(event.target.value);
+    saveState();
+    applyTheme(state.settings.themeMode);
+  });
+
   byId("ics-import").addEventListener("click", async () => {
     const input = byId("ics-file");
     const file = input.files && input.files[0];
@@ -949,6 +1010,7 @@ function loadDemoData() {
   const y = today.getFullYear();
   const m = `${today.getMonth() + 1}`.padStart(2, "0");
   const month = `${y}-${m}`;
+  const themeMode = normalizeThemeMode(state.settings.themeMode);
 
   const in5 = new Date(today);
   in5.setDate(today.getDate() + 5);
@@ -1019,6 +1081,7 @@ function loadDemoData() {
       notificationEnabled: false,
       activeView: "list",
       calendarMonth: month,
+      themeMode,
     },
     importedEvents: [],
     timer: {
@@ -1027,6 +1090,8 @@ function loadDemoData() {
   };
 
   byId("month-select").value = month;
+  byId("theme-mode").value = themeMode;
+  applyTheme(themeMode);
 }
 
 function setInitialValues() {
@@ -1038,6 +1103,9 @@ function setInitialValues() {
     state.settings.calendarMonth = month;
   }
   byId("inactivity-days").value = state.settings.inactivityDays;
+  state.settings.themeMode = normalizeThemeMode(state.settings.themeMode);
+  byId("theme-mode").value = state.settings.themeMode;
+  applyTheme(state.settings.themeMode);
 
   if (state.timer.start) {
     clearInterval(timerInterval);
@@ -1045,7 +1113,43 @@ function setInitialValues() {
   }
 }
 
+function normalizeThemeMode(mode) {
+  return ["auto", "light", "dark"].includes(mode) ? mode : "auto";
+}
+
+function applyTheme(mode = state.settings.themeMode) {
+  const normalizedMode = normalizeThemeMode(mode);
+  let resolvedTheme = normalizedMode;
+
+  if (normalizedMode === "auto") {
+    const prefersDark = Boolean(systemThemeMediaQuery && systemThemeMediaQuery.matches);
+    resolvedTheme = prefersDark ? "dark" : "light";
+  }
+
+  document.documentElement.setAttribute("data-bs-theme", resolvedTheme);
+}
+
+function initSystemTheme() {
+  if (typeof window.matchMedia !== "function") return;
+
+  systemThemeMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+  applyTheme("auto");
+
+  const onChange = () => {
+    if (normalizeThemeMode(state.settings.themeMode) === "auto") {
+      applyTheme("auto");
+    }
+  };
+
+  if (typeof systemThemeMediaQuery.addEventListener === "function") {
+    systemThemeMediaQuery.addEventListener("change", onChange);
+  } else if (typeof systemThemeMediaQuery.addListener === "function") {
+    systemThemeMediaQuery.addListener(onChange);
+  }
+}
+
 function init() {
+  initSystemTheme();
   setInitialValues();
   initForms();
   renderAll();

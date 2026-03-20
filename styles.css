@@ -1,270 +1,45 @@
 :root {
+  color-scheme: light dark;
   --bg: #f3f6fb;
-  --card: #ffffff;
   --text: #1f2937;
-  --muted: #6b7280;
-  --primary: #2563eb;
-  --primary-soft: #dbeafe;
-  --danger: #dc2626;
   --border: #e5e7eb;
+  --calendar-grid-bg: #ffffff;
+  --calendar-weekday-bg: #e2e8f0;
+  --calendar-weekday-text: #334155;
+  --calendar-weekday-border: #cbd5e1;
+  --calendar-day-outside-bg: #f8fafc;
+  --calendar-day-outside-text: #94a3b8;
   --source-detail: #1d4ed8;
   --source-rough: #0f766e;
   --source-tracked: #854d0e;
   --source-import: #7c2d12;
 }
 
-* {
-  box-sizing: border-box;
+html[data-bs-theme="dark"] {
+  --bg: #0f172a;
+  --text: #e2e8f0;
+  --border: #334155;
+  --calendar-grid-bg: #0b1220;
+  --calendar-weekday-bg: #1f2937;
+  --calendar-weekday-text: #cbd5e1;
+  --calendar-weekday-border: #334155;
+  --calendar-day-outside-bg: #111827;
+  --calendar-day-outside-text: #64748b;
 }
 
 body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-.container {
-  width: min(1200px, 94%);
-  margin: 0 auto;
-}
-
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.2rem 0;
-}
-
-h1,
-h2 {
-  margin: 0;
-}
-
-.subtitle {
-  margin: 0.3rem 0 0;
-  color: var(--muted);
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  gap: 1rem;
-  padding-bottom: 2rem;
-}
-
-.hidden {
-  display: none;
-}
-
-.view-panel {
-  margin-bottom: 1rem;
-}
-
-.card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 1rem;
-}
-
-.inline-form {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  margin: 0.8rem 0;
-}
-
-input,
-button {
-  padding: 0.6rem 0.7rem;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 0.95rem;
-}
-
-button {
-  border: none;
-  cursor: pointer;
-  background: var(--primary);
-  color: white;
-}
-
-button.secondary {
-  background: #334155;
-}
-
-button.danger {
-  background: var(--danger);
-}
-
-.header-actions {
-  display: flex;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-
-.header-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  align-items: flex-end;
-}
-
-.view-tabs {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.view-tabs button {
-  background: #cbd5e1;
-  color: #0f172a;
-}
-
-.view-tabs button.active {
-  background: var(--primary);
-  color: #fff;
-}
-
-.list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
+.list-panel {
   max-height: 280px;
   overflow: auto;
 }
 
-.list li {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.6rem;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  background: #fff;
-}
-
-.list li.done {
-  background: #ecfdf5;
-  border-color: #a7f3d0;
-}
-
-.item-main {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.item-main small {
-  color: var(--muted);
-}
-
-.row-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.icon-btn {
-  background: transparent;
-  color: var(--danger);
-  border: 1px solid #fecaca;
-  padding: 0.35rem 0.55rem;
-}
-
-.timer-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
 #timer-display {
   font-size: 2rem;
-  margin: 0;
   font-weight: bold;
-}
-
-.timer-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.stats {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.6rem;
-  margin: 0.8rem 0;
-}
-
-.stat {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 0.6rem;
-  background: #fff;
-}
-
-.stat b {
-  display: block;
-  font-size: 1.1rem;
-}
-
-.progress-group {
-  margin-bottom: 0.8rem;
-}
-
-.progress {
-  margin-top: 0.3rem;
-  height: 14px;
-  border-radius: 999px;
-  background: #e5e7eb;
-  overflow: hidden;
-}
-
-.progress > div {
-  height: 100%;
-  width: 0;
-  background: var(--primary);
-}
-
-.hint {
-  color: var(--muted);
-  font-size: 0.9rem;
-}
-
-.month-filter {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-
-.calendar-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.6rem;
-  margin: 0.8rem 0;
-}
-
-.calendar-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.6rem;
-  margin-bottom: 0.8rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  font-size: 0.88rem;
-  color: var(--muted);
 }
 
 .legend-dot {
@@ -274,18 +49,11 @@ button.danger {
   display: inline-block;
 }
 
-.calendar-import-export {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-  margin-bottom: 0.6rem;
-}
-
 .calendar-grid {
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
-  background: #fff;
+  background: var(--calendar-grid-bg);
 }
 
 .calendar-weekdays,
@@ -295,13 +63,13 @@ button.danger {
 }
 
 .calendar-weekday {
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--calendar-weekday-bg);
+  color: var(--calendar-weekday-text);
   text-align: center;
   font-size: 0.82rem;
   font-weight: 600;
   padding: 0.45rem 0.2rem;
-  border-right: 1px solid #cbd5e1;
+  border-right: 1px solid var(--calendar-weekday-border);
 }
 
 .calendar-weekday:last-child {
@@ -323,8 +91,8 @@ button.danger {
 }
 
 .calendar-day.outside {
-  background: #f8fafc;
-  color: #94a3b8;
+  background: var(--calendar-day-outside-bg);
+  color: var(--calendar-day-outside-text);
 }
 
 .calendar-day-number {
@@ -358,28 +126,6 @@ button.danger {
 }
 
 @media (max-width: 600px) {
-  .header {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .header-controls {
-    width: 100%;
-    align-items: flex-start;
-  }
-
-  .view-tabs {
-    width: 100%;
-  }
-
-  .view-tabs button {
-    flex: 1;
-  }
-
-  .stats {
-    grid-template-columns: 1fr;
-  }
-
   .calendar-day {
     min-height: 112px;
   }
