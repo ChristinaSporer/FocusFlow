@@ -1,0 +1,120 @@
+import { byId } from "./dom.js";
+import { formatYmd, monthOf, nowIso } from "./date-utils.js";
+import { uid } from "./app-utils.js";
+import { hashText, parseIcsEvents, serializeEventsToIcs } from "./ics-utils.js";
+
+function downloadFile(name, content, type) {
+  const blob = new Blob([content], { type });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = name;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
+}
+
+export function createIcsManager({ getState, dispatch }) {
+  function setStatus(message) {
+    byId("ics-status").textContent = message;
+  }
+
+  function replaceImportedEvents(sourceKey, sourceName, sourceHash, events) {
+    const mapped = events.map((event) => ({
+      id: uid(),
+      sourceKey,
+      sourceName,
+      sourceHash,
+      externalUid: event.externalUid,
+      date: event.date,
+      summary: event.summary,
+      createdAt: nowIso(),
+    }));
+
+    dispatch({ type: "REPLACE_IMPORTED_EVENTS", payload: { sourceKey, events: mapped } });
+    return mapped;
+  }
+
+  async function importFromFile(file) {
+    if (!file) {
+      return { ok: false, status: "Bitte zuerst eine .ics-Datei auswählen." };
+    }
+
+    try {
+      const text = await file.text();
+      const events = parseIcsEvents(text);
+      if (!events.length) {
+        return { ok: false, status: "Keine importierbaren Termine in der Datei gefunden." };
+      }
+
+      const mapped = replaceImportedEvents(
+        `file:${file.name.toLowerCase()}`,
+        file.name,
+        hashText(text),
+        events
+      );
+
+      const firstDate = events[0]?.date || null;
+      const status = `${mapped.length} Termin(e) aus ${file.name} importiert.`;
+      setStatus(status);
+
+      return {
+        ok: true,
+        status,
+        calendarMonth: firstDate ? monthOf(firstDate) : null,
+      };
+    } catch {
+      const status = "Import fehlgeschlagen. Bitte gültige .ics-Datei prüfen.";
+      setStatus(status);
+      return { ok: false, status };
+    }
+  }
+
+  function buildExportEvents() {
+    const state = getState();
+
+    const detail = state.detailPlans.map((item) => ({
+      uid: item.id || uid(),
+      date: item.date,
+      summary: `Detailplanung: ${item.topic}`,
+      description: `${item.minutes} Minuten${item.milestone ? `; Zwischenziel: ${item.milestone}` : ""}`,
+    }));
+
+    const rough = state.roughPlans.map((item) => ({
+      uid: item.id || uid(),
+      date: item.date,
+      summary: `Grobplanung: ${item.hours} h`,
+      description: item.note || "",
+    }));
+
+    return [...detail, ...rough].sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  function exportToFile() {
+    const events = buildExportEvents();
+    if (!events.length) {
+      const status = "Keine App-Termine für den Export vorhanden.";
+      setStatus(status);
+      return { ok: false, status };
+    }
+
+    const fileName = `lernzeitplaner-export-${formatYmd(new Date())}.ics`;
+    const ics = serializeEventsToIcs(events);
+    downloadFile(fileName, ics, "text/calendar;charset=utf-8");
+
+    const status = `${events.length} App-Termin(e) als ${fileName} exportiert.`;
+    setStatus(status);
+
+    return {
+      ok: true,
+      status,
+    };
+  }
+
+  return {
+    importFromFile,
+    exportToFile,
+    setStatus,
+  };
+}
