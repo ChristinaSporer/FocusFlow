@@ -144,6 +144,46 @@ function maybeNotify(message) {
   }
 }
 
+async function activateNotifications() {
+  const hint = byId("reminder-hint");
+
+  if (!window.isSecureContext) {
+    hint.textContent =
+      "Benachrichtigungen benötigen eine sichere Umgebung (https oder localhost).";
+    alert("Benachrichtigungen funktionieren nur über https oder localhost.");
+    return;
+  }
+
+  if (!("Notification" in window)) {
+    hint.textContent = "Browser unterstützt keine Benachrichtigungen.";
+    alert("Browser unterstützt keine Notifications.");
+    return;
+  }
+
+  try {
+    const permission = await Notification.requestPermission();
+    const enabled = permission === "granted";
+    dispatch({ type: "SET_NOTIFICATION_ENABLED", payload: { enabled } });
+
+    if (enabled) {
+      hint.textContent = "Benachrichtigungen wurden aktiviert.";
+      try {
+        new Notification("Lernzeitplaner", {
+          body: "Benachrichtigungen sind jetzt aktiv.",
+        });
+      } catch {
+        // Some browsers can still reject immediate notifications despite granted permission.
+      }
+    } else {
+      hint.textContent = "Benachrichtigungen wurden nicht erlaubt.";
+    }
+
+    renderAll();
+  } catch {
+    hint.textContent = "Benachrichtigungserlaubnis konnte nicht angefragt werden.";
+  }
+}
+
 function runReminders() {
   const list = byId("reminder-list");
   list.innerHTML = "";
@@ -581,16 +621,7 @@ function initForms() {
     }
   });
 
-  byId("enable-notifications").addEventListener("click", async () => {
-    if (!("Notification" in window)) {
-      alert("Browser unterstützt keine Notifications.");
-      return;
-    }
-
-    const permission = await Notification.requestPermission();
-    dispatch({ type: "SET_NOTIFICATION_ENABLED", payload: { enabled: permission === "granted" } });
-    renderAll();
-  });
+  byId("enable-notifications").addEventListener("click", activateNotifications);
 
   byId("load-demo").addEventListener("click", () => {
     loadDemoData();

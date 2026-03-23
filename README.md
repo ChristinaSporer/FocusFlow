@@ -16,6 +16,7 @@ Alle Daten werden im Browser über `localStorage` gespeichert.
 ## Lokaler Start
 
 Da es statisches HTML/CSS/JS ist, einfach `index.html` im Browser öffnen.
+Für Browser-Benachrichtigungen bitte über `localhost` starten (z. B. `npx http-server .`).
 
 ## Code-Qualität (Lint/Format)
 
