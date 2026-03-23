@@ -8,6 +8,8 @@ import {
   monthOf,
   nowIso,
 } from "./modules/date-utils.js";
+import { appReducer } from "./modules/app-reducer.js";
+import { buildRow, renderEmptyList } from "./modules/list-render-utils.js";
 import { createStore, defaultData, loadState } from "./modules/state-store.js";
 
 const SOURCE_META = {
@@ -18,134 +20,6 @@ const SOURCE_META = {
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
-
-function appReducer(currentState, action) {
-  switch (action?.type) {
-    case "TOUCH_ACTIVITY":
-      return {
-        ...currentState,
-        settings: {
-          ...currentState.settings,
-          lastReminderRun: action.payload.timestamp,
-        },
-      };
-    case "GOAL_ADD":
-      return { ...currentState, goals: [...currentState.goals, action.payload.goal] };
-    case "GOAL_DELETE":
-      return {
-        ...currentState,
-        goals: currentState.goals.filter((item) => item.id !== action.payload.id),
-      };
-    case "GOAL_SET_COMPLETED":
-      return {
-        ...currentState,
-        goals: currentState.goals.map((item) =>
-          item.id === action.payload.id
-            ? {
-                ...item,
-                completed: action.payload.completed,
-                completedAt: action.payload.completedAt,
-              }
-            : item
-        ),
-      };
-    case "ROUGH_ADD":
-      return { ...currentState, roughPlans: [...currentState.roughPlans, action.payload.plan] };
-    case "ROUGH_DELETE":
-      return {
-        ...currentState,
-        roughPlans: currentState.roughPlans.filter((item) => item.id !== action.payload.id),
-      };
-    case "DETAIL_ADD":
-      return { ...currentState, detailPlans: [...currentState.detailPlans, action.payload.plan] };
-    case "DETAIL_DELETE":
-      return {
-        ...currentState,
-        detailPlans: currentState.detailPlans.filter((item) => item.id !== action.payload.id),
-      };
-    case "DETAIL_SET_DONE":
-      return {
-        ...currentState,
-        detailPlans: currentState.detailPlans.map((item) =>
-          item.id === action.payload.id ? { ...item, done: action.payload.done } : item
-        ),
-      };
-    case "TRACKED_DELETE":
-      return {
-        ...currentState,
-        trackedSessions: currentState.trackedSessions.filter((item) => item.id !== action.payload.id),
-      };
-    case "TIMER_START":
-      return {
-        ...currentState,
-        timer: {
-          ...currentState.timer,
-          start: action.payload.start,
-        },
-      };
-    case "TIMER_STOP_AND_STORE_SESSION":
-      return {
-        ...currentState,
-        trackedSessions: [...currentState.trackedSessions, action.payload.session],
-        timer: {
-          ...currentState.timer,
-          start: null,
-        },
-      };
-    case "SET_CALENDAR_MONTH":
-      return {
-        ...currentState,
-        settings: {
-          ...currentState.settings,
-          calendarMonth: action.payload.month,
-        },
-      };
-    case "SET_ACTIVE_VIEW":
-      return {
-        ...currentState,
-        settings: {
-          ...currentState.settings,
-          activeView: action.payload.view,
-        },
-      };
-    case "SET_INACTIVITY_DAYS":
-      return {
-        ...currentState,
-        settings: {
-          ...currentState.settings,
-          inactivityDays: action.payload.days,
-        },
-      };
-    case "SET_NOTIFICATION_ENABLED":
-      return {
-        ...currentState,
-        settings: {
-          ...currentState.settings,
-          notificationEnabled: action.payload.enabled,
-        },
-      };
-    case "SET_THEME_MODE":
-      return {
-        ...currentState,
-        settings: {
-          ...currentState.settings,
-          themeMode: action.payload.themeMode,
-        },
-      };
-    case "REPLACE_IMPORTED_EVENTS":
-      return {
-        ...currentState,
-        importedEvents: [
-          ...currentState.importedEvents.filter((item) => item.sourceKey !== action.payload.sourceKey),
-          ...action.payload.events,
-        ],
-      };
-    case "REPLACE_STATE":
-      return action.payload.state;
-    default:
-      return currentState;
-  }
-}
 
 const store = createStore(loadState(), appReducer);
 let state = store.getState();
@@ -170,54 +44,6 @@ function toMinutes(hours) {
 
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
-}
-
-function buildRow(main, sub, { done = false, onDelete, actions = [] } = {}) {
-  const li = document.createElement("li");
-  li.className = [
-    "list-group-item",
-    "d-flex",
-    "justify-content-between",
-    "align-items-start",
-    "gap-3",
-    "flex-wrap",
-    done ? "list-group-item-success" : "",
-  ]
-    .filter(Boolean)
-    .join(" ");
-
-  const info = document.createElement("div");
-  info.className = "d-flex flex-column gap-1 flex-grow-1";
-  const title = document.createElement("span");
-  title.textContent = main;
-  const small = document.createElement("small");
-  small.className = "text-body-secondary";
-  small.textContent = sub;
-  info.append(title, small);
-
-  const rowActions = document.createElement("div");
-  rowActions.className = "d-flex align-items-center gap-2 ms-auto";
-
-  actions.forEach((action) => {
-    if (action.tagName === "INPUT" && action.type === "checkbox") {
-      action.classList.add("form-check-input", "mt-1", "flex-shrink-0");
-    }
-    rowActions.appendChild(action);
-  });
-
-  const del = document.createElement("button");
-  del.className = "btn btn-outline-danger btn-sm";
-  del.type = "button";
-  del.textContent = "Löschen";
-  del.addEventListener("click", onDelete);
-  rowActions.appendChild(del);
-
-  li.append(info, rowActions);
-  return li;
-}
-
-function renderEmptyList(list, message) {
-  list.innerHTML = `<li class="list-group-item text-body-secondary">${message}</li>`;
 }
 
 function renderGoals() {
