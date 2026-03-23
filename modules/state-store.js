@@ -1,5 +1,4 @@
 export const STORAGE_KEY = "focusflow-v1";
-const LEGACY_STORAGE_KEYS = ["lernzeitplaner-poc-v1"];
 
 export const defaultData = () => ({
   goals: [],
@@ -21,39 +20,20 @@ export const defaultData = () => ({
 });
 
 export function loadState() {
-  let raw = localStorage.getItem(STORAGE_KEY);
-  let loadedFromLegacyKey = false;
-
-  if (!raw) {
-    for (const legacyKey of LEGACY_STORAGE_KEYS) {
-      const legacyRaw = localStorage.getItem(legacyKey);
-      if (legacyRaw) {
-        raw = legacyRaw;
-        loadedFromLegacyKey = true;
-        break;
-      }
-    }
-  }
-
+  const raw = localStorage.getItem(STORAGE_KEY);
   if (!raw) return defaultData();
 
   try {
     const parsed = JSON.parse(raw);
     const defaults = defaultData();
 
-    const hydratedState = {
+    return {
       ...defaults,
       ...parsed,
       importedEvents: Array.isArray(parsed.importedEvents) ? parsed.importedEvents : [],
       settings: { ...defaults.settings, ...(parsed.settings || {}) },
       timer: { ...defaults.timer, ...(parsed.timer || {}) },
     };
-
-    if (loadedFromLegacyKey) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(hydratedState));
-    }
-
-    return hydratedState;
   } catch {
     return defaultData();
   }

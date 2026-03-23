@@ -97,7 +97,7 @@ export function serializeEventsToIcs(events) {
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Lernzeitplaner POC//DE",
+    "PRODID:-//FocusFlow//DE",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
   ];

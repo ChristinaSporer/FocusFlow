@@ -1,0 +1,9 @@
+{
+  "recommendations": [
+    "ms-vscode.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ms-playwright.playwright",
+    "vitest.explorer",
+    "github.copilot-chat"
+  ]
+}
