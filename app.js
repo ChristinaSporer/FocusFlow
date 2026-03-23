@@ -83,6 +83,20 @@ function setInitialValues() {
   byId("theme-mode").value = getState().settings.themeMode;
   themeManager.applyTheme();
   timerManager.syncFromState();
+
+  const hasNotificationApi = "Notification" in window;
+  const isEnabled = getState().settings.notificationEnabled;
+  if (!hasNotificationApi) {
+    reminderManager.setNotificationStatus("Dieser Browser unterstützt keine Benachrichtigungen.");
+  } else if (Notification.permission === "granted" && isEnabled) {
+    reminderManager.setNotificationStatus("Benachrichtigungen sind aktiv.");
+  } else if (Notification.permission === "denied") {
+    reminderManager.setNotificationStatus(
+      "Benachrichtigungen sind blockiert. Bitte in den Browser-Seiteneinstellungen erlauben."
+    );
+  } else {
+    reminderManager.setNotificationStatus("Benachrichtigungen sind derzeit nicht aktiviert.");
+  }
 }
 
 function initHandlers() {

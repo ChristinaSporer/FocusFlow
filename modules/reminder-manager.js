@@ -4,6 +4,13 @@ import { dateOnly, formatDate } from "./date-utils.js";
 export function createReminderManager({ getState, dispatch, onRenderAll }) {
   let reminderInterval = null;
 
+  function setNotificationStatus(message) {
+    const statusEl = byId("notification-status");
+    if (statusEl) {
+      statusEl.textContent = message;
+    }
+  }
+
   function upcomingItems() {
     const state = getState();
     const now = new Date();
@@ -61,23 +68,33 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
 
     if (!window.isSecureContext) {
       hint.textContent = "Benachrichtigungen benötigen eine sichere Umgebung (https oder localhost).";
+      setNotificationStatus("Aktivierung fehlgeschlagen: nur über https oder localhost möglich.");
       alert("Benachrichtigungen funktionieren nur über https oder localhost.");
       return;
     }
 
     if (!("Notification" in window)) {
       hint.textContent = "Browser unterstützt keine Benachrichtigungen.";
+      setNotificationStatus("Dieser Browser unterstützt keine Benachrichtigungen.");
       alert("Browser unterstützt keine Notifications.");
       return;
     }
 
     try {
+      if (Notification.permission === "denied") {
+        dispatch({ type: "SET_NOTIFICATION_ENABLED", payload: { enabled: false } });
+        setNotificationStatus(
+          "Benachrichtigungen sind im Browser blockiert. Bitte in den Seiteneinstellungen erlauben."
+        );
+        return;
+      }
+
       const permission = await Notification.requestPermission();
       const enabled = permission === "granted";
       dispatch({ type: "SET_NOTIFICATION_ENABLED", payload: { enabled } });
 
       if (enabled) {
-        hint.textContent = "Benachrichtigungen wurden aktiviert.";
+        setNotificationStatus("Benachrichtigungen wurden aktiviert.");
         try {
           new Notification("Lernzeitplaner", {
             body: "Benachrichtigungen sind jetzt aktiv.",
@@ -86,12 +103,12 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
           // Some browsers can still reject immediate notifications despite granted permission.
         }
       } else {
-        hint.textContent = "Benachrichtigungen wurden nicht erlaubt.";
+        setNotificationStatus("Benachrichtigungen wurden nicht erlaubt.");
       }
 
       onRenderAll();
     } catch {
-      hint.textContent = "Benachrichtigungserlaubnis konnte nicht angefragt werden.";
+      setNotificationStatus("Benachrichtigungserlaubnis konnte nicht angefragt werden.");
     }
   }
 
@@ -134,5 +151,6 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
     runReminders,
     startLoop,
     stopLoop,
+    setNotificationStatus,
   };
 }
