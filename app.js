@@ -4,12 +4,17 @@ import {
   dateOnly,
   formatDate,
   formatYmd,
-  isWithinNextSixMonths,
   monthOf,
   nowIso,
 } from "./modules/date-utils.js";
 import { appReducer } from "./modules/app-reducer.js";
-import { buildRow, renderEmptyList } from "./modules/list-render-utils.js";
+import {
+  renderDetailPlans,
+  renderGoals,
+  renderRoughPlans,
+  renderStats,
+  renderTrackedSessions,
+} from "./modules/render-main-view.js";
 import { createStore, defaultData, loadState } from "./modules/state-store.js";
 
 const SOURCE_META = {
@@ -36,241 +41,6 @@ function uid() {
   return typeof crypto !== "undefined" && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
-}
-
-function toMinutes(hours) {
-  return Math.round(Number(hours) * 60);
-}
-
-function sum(array) {
-  return array.reduce((acc, value) => acc + value, 0);
-}
-
-function renderGoals() {
-  const list = byId("goal-list");
-  const achieved = byId("achieved-list");
-  list.innerHTML = "";
-  achieved.innerHTML = "";
-
-  const sorted = [...state.goals].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
-
-  sorted.forEach((goal) => {
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = goal.completed;
-    checkbox.title = "Als erreicht markieren";
-    checkbox.addEventListener("change", () => {
-      dispatch({
-        type: "GOAL_SET_COMPLETED",
-        payload: {
-          id: goal.id,
-          completed: checkbox.checked,
-          completedAt: checkbox.checked ? nowIso() : null,
-        },
-      });
-      touchActivity();
-      renderAll();
-    });
-
-    const goalRow = buildRow(goal.title, `Bis ${formatDate(goal.targetDate)}`, {
-      done: goal.completed,
-      onDelete: () => {
-        dispatch({ type: "GOAL_DELETE", payload: { id: goal.id } });
-        renderAll();
-      },
-      actions: [checkbox],
-    });
-
-    list.appendChild(goalRow);
-
-    if (goal.completed) {
-      const doneRow = document.createElement("li");
-      doneRow.className = "list-group-item list-group-item-success";
-      doneRow.innerHTML = `<div class="d-flex flex-column gap-1"><span>${goal.title}</span><small class="text-body-secondary">Erreicht am ${formatDate(goal.completedAt)}</small></div>`;
-      achieved.appendChild(doneRow);
-    }
-  });
-
-  if (!sorted.length) {
-    renderEmptyList(list, "Keine Ziele vorhanden");
-  }
-  if (!achieved.children.length) {
-    renderEmptyList(achieved, "Noch keine erreichten Ziele");
-  }
-}
-
-function renderRoughPlans() {
-  const list = byId("rough-list");
-  list.innerHTML = "";
-
-  const data = [...state.roughPlans]
-    .sort((a, b) => a.date.localeCompare(b.date))
-    .filter((plan) => isWithinNextSixMonths(plan.date));
-
-  data.forEach((plan) => {
-    const row = buildRow(
-      `${plan.hours} h geplant`,
-      `${formatDate(plan.date)}${plan.note ? ` · ${plan.note}` : ""}`,
-      {
-        onDelete: () => {
-          dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
-          renderAll();
-        },
-      }
-    );
-    list.appendChild(row);
-  });
-
-  if (!data.length) {
-    renderEmptyList(list, "Keine Grobplanung in den nächsten 6 Monaten");
-  }
-}
-
-function renderDetailPlans() {
-  const month = byId("month-select").value;
-  const list = byId("detail-list");
-  list.innerHTML = "";
-
-  const data = [...state.detailPlans]
-    .filter((item) => monthOf(item.date) === month)
-    .sort((a, b) => a.date.localeCompare(b.date));
-
-  data.forEach((item) => {
-    const flag = document.createElement("input");
-    flag.type = "checkbox";
-    flag.checked = item.done;
-    flag.title = "Zwischenziel erreicht";
-    flag.addEventListener("change", () => {
-      dispatch({ type: "DETAIL_SET_DONE", payload: { id: item.id, done: flag.checked } });
-      renderAll();
-    });
-
-    const row = buildRow(
-      `${item.minutes} Min · ${item.topic}`,
-      `${formatDate(item.date)}${item.milestone ? ` · Zwischenziel: ${item.milestone}` : ""}`,
-      {
-        done: item.done,
-        onDelete: () => {
-          dispatch({ type: "DETAIL_DELETE", payload: { id: item.id } });
-          renderAll();
-        },
-        actions: [flag],
-      }
-    );
-    list.appendChild(row);
-  });
-
-  if (!data.length) {
-    renderEmptyList(list, "Keine Detailplanung für diesen Monat");
-  }
-}
-
-function renderTrackedSessions() {
-  const list = byId("track-list");
-  list.innerHTML = "";
-
-  const data = [...state.trackedSessions].sort((a, b) => b.start.localeCompare(a.start));
-
-  data.forEach((session) => {
-    const row = buildRow(
-      `${session.minutes} Min fokussierte Lernzeit`,
-      `${formatDate(session.start)}${session.note ? ` · ${session.note}` : ""}`,
-      {
-        onDelete: () => {
-          dispatch({ type: "TRACKED_DELETE", payload: { id: session.id } });
-          renderAll();
-        },
-      }
-    );
-    list.appendChild(row);
-  });
-
-  if (!data.length) {
-    renderEmptyList(list, "Noch keine getrackte Lernzeit");
-  }
-}
-
-function renderStats() {
-  const plannedSixMonthsMin =
-    sum(
-      state.roughPlans
-        .filter((item) => isWithinNextSixMonths(item.date))
-        .map((item) => toMinutes(item.hours))
-    ) +
-    sum(
-      state.detailPlans
-        .filter((item) => isWithinNextSixMonths(item.date))
-        .map((item) => Number(item.minutes))
-    );
-
-  const trackedMin = sum(state.trackedSessions.map((item) => Number(item.minutes)));
-
-  const totalGoals = state.goals.length;
-  const completedGoals = state.goals.filter((g) => g.completed).length;
-
-  const currentMonth = byId("month-select").value;
-  const monthlyPlanned = sum(
-    state.detailPlans
-      .filter((item) => monthOf(item.date) === currentMonth)
-      .map((item) => Number(item.minutes))
-  );
-  const monthlyTracked = sum(
-    state.trackedSessions
-      .filter((item) => monthOf(item.start) === currentMonth)
-      .map((item) => Number(item.minutes))
-  );
-
-  byId("stats").innerHTML = `
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Geplant (6M)</small>
-          <b class="fs-5">${plannedSixMonthsMin} Min</b>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Getrackt gesamt</small>
-          <b class="fs-5">${trackedMin} Min</b>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Aktueller Monat geplant</small>
-          <b class="fs-5">${monthlyPlanned} Min</b>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Aktueller Monat getrackt</small>
-          <b class="fs-5">${monthlyTracked} Min</b>
-        </div>
-      </div>
-    </div>
-  `;
-
-  const timePercent =
-    plannedSixMonthsMin === 0
-      ? 0
-      : Math.min(100, Math.round((trackedMin / plannedSixMonthsMin) * 100));
-  const goalPercent = totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
-
-  const timeProgress = byId("time-progress");
-  const goalProgress = byId("goal-progress");
-
-  timeProgress.style.width = `${timePercent}%`;
-  timeProgress.setAttribute("aria-valuenow", String(timePercent));
-  timeProgress.textContent = `${timePercent}%`;
-
-  goalProgress.style.width = `${goalPercent}%`;
-  goalProgress.setAttribute("aria-valuenow", String(goalPercent));
-  goalProgress.textContent = `${goalPercent}%`;
 }
 
 function toClock(ms) {
@@ -712,11 +482,14 @@ function downloadFile(name, content, type) {
 }
 
 function renderAll() {
-  renderGoals();
-  renderRoughPlans();
-  renderDetailPlans();
-  renderTrackedSessions();
-  renderStats();
+  const selectedMonth = byId("month-select")?.value || monthOf(new Date());
+  const renderContext = { state, dispatch, onRenderAll: renderAll };
+
+  renderGoals({ ...renderContext, onActivity: touchActivity });
+  renderRoughPlans(renderContext);
+  renderDetailPlans({ ...renderContext, selectedMonth });
+  renderTrackedSessions(renderContext);
+  renderStats({ state, currentMonth: selectedMonth });
   renderTimer();
   runReminders();
   renderViewState();
