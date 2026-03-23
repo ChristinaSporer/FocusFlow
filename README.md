@@ -1,4 +1,4 @@
-# Lernzeitplaner (Proof of Concept)
+# FocusFlow
 
 Ein einfacher Frontend-Prototyp (ohne Backend) für Lernzeitplanung und Lernzeit-Tracking.
 Alle Daten werden im Browser über `localStorage` gespeichert.

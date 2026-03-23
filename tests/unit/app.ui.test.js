@@ -53,7 +53,7 @@ describe("App UI integration (jsdom)", () => {
 
     expect(document.getElementById("goal-list").textContent).toContain(title);
 
-    const raw = localStorage.getItem("lernzeitplaner-poc-v1");
+    const raw = localStorage.getItem("focusflow-v1");
     const parsed = JSON.parse(raw);
     expect(parsed.goals).toHaveLength(1);
     expect(parsed.goals[0].title).toBe(title);

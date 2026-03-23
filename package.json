@@ -1,5 +1,5 @@
 {
-  "name": "proofofconcept_a",
+  "name": "focusflow",
   "version": "1.0.0",
   "description": "Ein einfacher Frontend-Prototyp (ohne Backend) für Lernzeitplanung und Lernzeit-Tracking.\r Alle Daten werden im Browser über `localStorage` gespeichert.",
   "main": "app.js",
@@ -15,15 +15,15 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ChristinaSporer/POC_Lernzeitmanager.git"
+    "url": "git+https://github.com/ChristinaSporer/FocusFlow.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/ChristinaSporer/POC_Lernzeitmanager/issues"
+    "url": "https://github.com/ChristinaSporer/FocusFlow/issues"
   },
-  "homepage": "https://github.com/ChristinaSporer/POC_Lernzeitmanager#readme",
+  "homepage": "https://github.com/ChristinaSporer/FocusFlow#readme",
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.58.2",
