@@ -13,13 +13,15 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
 
   function upcomingItems() {
     const state = getState();
-    const now = new Date();
-    const next24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const dayStart = new Date();
+    dayStart.setHours(0, 0, 0, 0);
+    const nextDayStart = new Date(dayStart);
+    nextDayStart.setDate(nextDayStart.getDate() + 1);
 
     const upcomingRough = state.roughPlans
       .filter((item) => {
         const date = dateOnly(item.date);
-        return date >= now && date <= next24h;
+        return date >= dayStart && date <= nextDayStart;
       })
       .map(
         (item) => `Geplante Lernzeit in den nächsten 24h: ${item.hours}h am ${formatDate(item.date)}`
@@ -28,7 +30,7 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
     const upcomingGoals = state.goals
       .filter((goal) => {
         const date = dateOnly(goal.targetDate);
-        return !goal.completed && date >= now && date <= next24h;
+        return !goal.completed && date >= dayStart && date <= nextDayStart;
       })
       .map((goal) => `Ziel bald fällig: ${goal.title} (${formatDate(goal.targetDate)})`);
 
