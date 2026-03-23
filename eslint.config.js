@@ -15,7 +15,7 @@ module.exports = [
   {
     files: ["**/*.js"],
     languageOptions: {
-      sourceType: "script",
+      sourceType: "module",
       ecmaVersion: "latest",
       globals: {
         window: "readonly",

@@ -1,4 +1,14 @@
-const STORAGE_KEY = "lernzeitplaner-poc-v1";
+import { byId } from "./modules/dom.js";
+import {
+  addDays,
+  dateOnly,
+  formatDate,
+  formatYmd,
+  isWithinNextSixMonths,
+  monthOf,
+  nowIso,
+} from "./modules/date-utils.js";
+import { createStore, defaultData, loadState } from "./modules/state-store.js";
 
 const SOURCE_META = {
   detail: { label: "Detailplanung", className: "source-detail" },
@@ -9,49 +19,14 @@ const SOURCE_META = {
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
-const defaultData = () => ({
-  goals: [],
-  roughPlans: [],
-  detailPlans: [],
-  trackedSessions: [],
-  importedEvents: [],
-  settings: {
-    inactivityDays: 3,
-    lastReminderRun: null,
-    notificationEnabled: false,
-    activeView: "list",
-    calendarMonth: null,
-    themeMode: "auto",
-  },
-  timer: {
-    start: null,
-  },
-});
-
-let state = loadState();
+const store = createStore(loadState());
+let state = store.getState();
 let timerInterval = null;
+let reminderInterval = null;
 let systemThemeMediaQuery = null;
 
-function loadState() {
-  const raw = localStorage.getItem(STORAGE_KEY);
-  if (!raw) return defaultData();
-  try {
-    const parsed = JSON.parse(raw);
-    const defaults = defaultData();
-    return {
-      ...defaults,
-      ...parsed,
-      importedEvents: Array.isArray(parsed.importedEvents) ? parsed.importedEvents : [],
-      settings: { ...defaults.settings, ...(parsed.settings || {}) },
-      timer: { ...defaults.timer, ...(parsed.timer || {}) },
-    };
-  } catch {
-    return defaultData();
-  }
-}
-
 function saveState() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  store.persist();
 }
 
 function uid() {
@@ -60,58 +35,12 @@ function uid() {
     : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function byId(id) {
-  return document.getElementById(id);
-}
-
-function dateOnly(dateLike) {
-  return new Date(`${dateLike}T00:00:00`);
-}
-
-function formatDate(dateLike) {
-  const date = new Date(dateLike);
-  return date.toLocaleDateString("de-DE");
-}
-
 function toMinutes(hours) {
   return Math.round(Number(hours) * 60);
 }
 
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
-}
-
-function monthOf(dateLike) {
-  const d = new Date(dateLike);
-  const m = `${d.getMonth() + 1}`.padStart(2, "0");
-  return `${d.getFullYear()}-${m}`;
-}
-
-function nowIso() {
-  return new Date().toISOString();
-}
-
-function addDays(dateLike, days) {
-  const d = new Date(dateLike);
-  d.setDate(d.getDate() + days);
-  return d;
-}
-
-function formatYmd(dateLike) {
-  const d = new Date(dateLike);
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
-
-function isWithinNextSixMonths(dateLike) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const six = new Date(today);
-  six.setMonth(six.getMonth() + 6);
-  const value = dateOnly(dateLike);
-  return value >= today && value <= six;
 }
 
 function buildRow(main, sub, { done = false, onDelete, actions = [] } = {}) {
@@ -998,8 +927,7 @@ function initForms() {
   byId("reset-data").addEventListener("click", () => {
     const ok = confirm("Alle Daten wirklich löschen?");
     if (!ok) return;
-    state = defaultData();
-    saveState();
+    state = store.replace(defaultData());
     setInitialValues();
     renderAll();
   });
@@ -1019,7 +947,7 @@ function loadDemoData() {
   const in20 = new Date(today);
   in20.setDate(today.getDate() + 20);
 
-  state = {
+  state = store.replace({
     ...defaultData(),
     goals: [
       {
@@ -1087,7 +1015,7 @@ function loadDemoData() {
     timer: {
       start: null,
     },
-  };
+  });
 
   byId("month-select").value = month;
   byId("theme-mode").value = themeMode;
@@ -1148,12 +1076,18 @@ function initSystemTheme() {
   }
 }
 
-function init() {
+export function bootstrap() {
   initSystemTheme();
   setInitialValues();
   initForms();
   renderAll();
-  setInterval(runReminders, 60000);
+  clearInterval(reminderInterval);
+  reminderInterval = setInterval(runReminders, 60000);
 }
 
-init();
+export function shutdown() {
+  clearInterval(timerInterval);
+  clearInterval(reminderInterval);
+  timerInterval = null;
+  reminderInterval = null;
+}

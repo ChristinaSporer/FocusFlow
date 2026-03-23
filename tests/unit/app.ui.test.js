@@ -6,18 +6,13 @@ function loadDomWithoutScript() {
   const html = fs.readFileSync(htmlPath, "utf8");
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const bodyContent = bodyMatch ? bodyMatch[1] : "";
-  document.body.innerHTML = bodyContent.replace(/<script[^>]*src="app\.js"[^>]*><\/script>/i, "");
-}
-
-function bootAppScript() {
-  const scriptPath = path.resolve(__dirname, "../../app.js");
-  const script = fs.readFileSync(scriptPath, "utf8");
-  const execute = new Function(script);
-  execute();
+  document.body.innerHTML = bodyContent.replace(/<script[\s\S]*?<\/script>/gi, "");
 }
 
 describe("App UI integration (jsdom)", () => {
-  beforeEach(() => {
+  let appModule;
+
+  beforeEach(async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-03-03T10:00:00.000Z"));
 
@@ -31,12 +26,19 @@ describe("App UI integration (jsdom)", () => {
       requestPermission: vi.fn(async () => "denied"),
     };
 
-    bootAppScript();
+    vi.resetModules();
+    appModule = await import("../../app.js");
+    appModule.bootstrap();
   });
 
   afterEach(() => {
+    if (appModule?.shutdown) {
+      appModule.shutdown();
+    }
+
     vi.clearAllTimers();
     vi.useRealTimers();
+    document.body.innerHTML = "";
   });
 
   it("adds a goal and persists it in localStorage", () => {

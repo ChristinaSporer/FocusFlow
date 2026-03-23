@@ -53,3 +53,123 @@ Da es statisches HTML/CSS/JS ist, einfach `index.html` im Browser öffnen.
 - Browser-Benachrichtigungen müssen einmal erlaubt werden.
 - Erinnerungen laufen nur, solange die Seite geöffnet ist (kein Backend/kein Service Worker).
 - Für einen echten Produktivbetrieb wären Benutzerkonten, serverseitige Persistenz und Synchronisation sinnvoll.
+
+## Komponentendiagramm
+
+```mermaid
+flowchart LR
+  U[Nutzer]
+  UI[index.html + styles.css]
+  APP[app.js: Controller + Fachlogik]
+  ST[(In-Memory State)]
+  LS[(localStorage)]
+  NTF[Notification API]
+  ICS[ICS Import/Export]
+  FILE[File/Blob API]
+
+  U --> UI
+  UI --> APP
+  APP <--> ST
+  APP <--> LS
+  APP --> NTF
+  APP <--> ICS
+  APP --> FILE
+  ```
+
+  ## Sequenzdiagramm: Ziel anlegen
+
+```mermaid
+  sequenceDiagram
+  actor Nutzer
+  participant Form as goal-form
+  participant App as app.js Handler
+  participant State as state.goals
+  participant Store as localStorage
+  participant UI as renderAll()
+
+  Nutzer->>Form: Titel + Datum eingeben, Submit
+  Form->>App: submit event
+  App->>State: push(goal)
+  App->>Store: saveState()
+  App->>UI: renderAll()
+  UI-->>Nutzer: aktualisierte Ziel-Liste
+```
+
+  ## Klassendiagramm: Datenmodell
+
+```mermaid
+  classDiagram
+  class AppState {
+    +goals: Goal[]
+    +roughPlans: RoughPlan[]
+    +detailPlans: DetailPlan[]
+    +trackedSessions: TrackedSession[]
+    +importedEvents: ImportedEvent[]
+    +settings: Settings
+    +timer: TimerState
+  }
+
+  class Goal {
+    +id: string
+    +title: string
+    +targetDate: string
+    +completed: boolean
+    +completedAt: string|null
+  }
+
+  class RoughPlan {
+    +id: string
+    +date: string
+    +hours: number
+    +note: string
+  }
+
+  class DetailPlan {
+    +id: string
+    +date: string
+    +minutes: number
+    +topic: string
+    +milestone: string
+    +done: boolean
+  }
+
+  class TrackedSession {
+    +id: string
+    +start: string
+    +end: string
+    +minutes: number
+    +note: string
+  }
+
+  class ImportedEvent {
+    +id: string
+    +sourceKey: string
+    +sourceName: string
+    +sourceHash: string
+    +externalUid: string
+    +date: string
+    +summary: string
+    +createdAt: string
+  }
+
+  class Settings {
+    +inactivityDays: number
+    +lastReminderRun: string|null
+    +notificationEnabled: boolean
+    +activeView: string
+    +calendarMonth: string|null
+  }
+
+  class TimerState {
+    +start: string|null
+  }
+
+  AppState --> Goal
+  AppState --> RoughPlan
+  AppState --> DetailPlan
+  AppState --> TrackedSession
+  AppState --> ImportedEvent
+  AppState --> Settings
+  AppState --> TimerState
+  ```
+  
