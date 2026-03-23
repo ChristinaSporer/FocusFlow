@@ -43,17 +43,29 @@ export function persistState(state) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-export function createStore(initialState = loadState()) {
+function identityReducer(state) {
+  return state;
+}
+
+export function createStore(initialState = loadState(), reducer = identityReducer) {
   let state = initialState;
+
+  function applyState(nextState) {
+    state = nextState;
+    persistState(state);
+    return state;
+  }
 
   return {
     getState() {
       return state;
     },
     replace(nextState) {
-      state = nextState;
-      persistState(state);
-      return state;
+      return applyState(nextState);
+    },
+    dispatch(action) {
+      const nextState = reducer(state, action);
+      return applyState(nextState);
     },
     persist() {
       persistState(state);

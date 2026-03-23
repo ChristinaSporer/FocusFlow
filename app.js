@@ -19,14 +19,143 @@ const SOURCE_META = {
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
 
-const store = createStore(loadState());
+function appReducer(currentState, action) {
+  switch (action?.type) {
+    case "TOUCH_ACTIVITY":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          lastReminderRun: action.payload.timestamp,
+        },
+      };
+    case "GOAL_ADD":
+      return { ...currentState, goals: [...currentState.goals, action.payload.goal] };
+    case "GOAL_DELETE":
+      return {
+        ...currentState,
+        goals: currentState.goals.filter((item) => item.id !== action.payload.id),
+      };
+    case "GOAL_SET_COMPLETED":
+      return {
+        ...currentState,
+        goals: currentState.goals.map((item) =>
+          item.id === action.payload.id
+            ? {
+                ...item,
+                completed: action.payload.completed,
+                completedAt: action.payload.completedAt,
+              }
+            : item
+        ),
+      };
+    case "ROUGH_ADD":
+      return { ...currentState, roughPlans: [...currentState.roughPlans, action.payload.plan] };
+    case "ROUGH_DELETE":
+      return {
+        ...currentState,
+        roughPlans: currentState.roughPlans.filter((item) => item.id !== action.payload.id),
+      };
+    case "DETAIL_ADD":
+      return { ...currentState, detailPlans: [...currentState.detailPlans, action.payload.plan] };
+    case "DETAIL_DELETE":
+      return {
+        ...currentState,
+        detailPlans: currentState.detailPlans.filter((item) => item.id !== action.payload.id),
+      };
+    case "DETAIL_SET_DONE":
+      return {
+        ...currentState,
+        detailPlans: currentState.detailPlans.map((item) =>
+          item.id === action.payload.id ? { ...item, done: action.payload.done } : item
+        ),
+      };
+    case "TRACKED_DELETE":
+      return {
+        ...currentState,
+        trackedSessions: currentState.trackedSessions.filter((item) => item.id !== action.payload.id),
+      };
+    case "TIMER_START":
+      return {
+        ...currentState,
+        timer: {
+          ...currentState.timer,
+          start: action.payload.start,
+        },
+      };
+    case "TIMER_STOP_AND_STORE_SESSION":
+      return {
+        ...currentState,
+        trackedSessions: [...currentState.trackedSessions, action.payload.session],
+        timer: {
+          ...currentState.timer,
+          start: null,
+        },
+      };
+    case "SET_CALENDAR_MONTH":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          calendarMonth: action.payload.month,
+        },
+      };
+    case "SET_ACTIVE_VIEW":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          activeView: action.payload.view,
+        },
+      };
+    case "SET_INACTIVITY_DAYS":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          inactivityDays: action.payload.days,
+        },
+      };
+    case "SET_NOTIFICATION_ENABLED":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          notificationEnabled: action.payload.enabled,
+        },
+      };
+    case "SET_THEME_MODE":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          themeMode: action.payload.themeMode,
+        },
+      };
+    case "REPLACE_IMPORTED_EVENTS":
+      return {
+        ...currentState,
+        importedEvents: [
+          ...currentState.importedEvents.filter((item) => item.sourceKey !== action.payload.sourceKey),
+          ...action.payload.events,
+        ],
+      };
+    case "REPLACE_STATE":
+      return action.payload.state;
+    default:
+      return currentState;
+  }
+}
+
+const store = createStore(loadState(), appReducer);
 let state = store.getState();
 let timerInterval = null;
 let reminderInterval = null;
 let systemThemeMediaQuery = null;
 
-function saveState() {
-  store.persist();
+function dispatch(action) {
+  state = store.dispatch(action);
+  return state;
 }
 
 function uid() {
@@ -105,18 +234,22 @@ function renderGoals() {
     checkbox.checked = goal.completed;
     checkbox.title = "Als erreicht markieren";
     checkbox.addEventListener("change", () => {
-      goal.completed = checkbox.checked;
-      goal.completedAt = checkbox.checked ? nowIso() : null;
+      dispatch({
+        type: "GOAL_SET_COMPLETED",
+        payload: {
+          id: goal.id,
+          completed: checkbox.checked,
+          completedAt: checkbox.checked ? nowIso() : null,
+        },
+      });
       touchActivity();
-      saveState();
       renderAll();
     });
 
     const goalRow = buildRow(goal.title, `Bis ${formatDate(goal.targetDate)}`, {
       done: goal.completed,
       onDelete: () => {
-        state.goals = state.goals.filter((item) => item.id !== goal.id);
-        saveState();
+        dispatch({ type: "GOAL_DELETE", payload: { id: goal.id } });
         renderAll();
       },
       actions: [checkbox],
@@ -154,8 +287,7 @@ function renderRoughPlans() {
       `${formatDate(plan.date)}${plan.note ? ` · ${plan.note}` : ""}`,
       {
         onDelete: () => {
-          state.roughPlans = state.roughPlans.filter((item) => item.id !== plan.id);
-          saveState();
+          dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
           renderAll();
         },
       }
@@ -183,8 +315,7 @@ function renderDetailPlans() {
     flag.checked = item.done;
     flag.title = "Zwischenziel erreicht";
     flag.addEventListener("change", () => {
-      item.done = flag.checked;
-      saveState();
+      dispatch({ type: "DETAIL_SET_DONE", payload: { id: item.id, done: flag.checked } });
       renderAll();
     });
 
@@ -194,8 +325,7 @@ function renderDetailPlans() {
       {
         done: item.done,
         onDelete: () => {
-          state.detailPlans = state.detailPlans.filter((p) => p.id !== item.id);
-          saveState();
+          dispatch({ type: "DETAIL_DELETE", payload: { id: item.id } });
           renderAll();
         },
         actions: [flag],
@@ -221,8 +351,7 @@ function renderTrackedSessions() {
       `${formatDate(session.start)}${session.note ? ` · ${session.note}` : ""}`,
       {
         onDelete: () => {
-          state.trackedSessions = state.trackedSessions.filter((s) => s.id !== session.id);
-          saveState();
+          dispatch({ type: "TRACKED_DELETE", payload: { id: session.id } });
           renderAll();
         },
       }
@@ -338,9 +467,8 @@ function renderTimer() {
 
 function startTimer() {
   if (state.timer.start) return;
-  state.timer.start = nowIso();
+  dispatch({ type: "TIMER_START", payload: { start: nowIso() } });
   touchActivity();
-  saveState();
   renderTimer();
   timerInterval = setInterval(renderTimer, 1000);
 }
@@ -352,25 +480,24 @@ function stopTimer() {
   const start = new Date(state.timer.start);
   const minutes = Math.max(1, Math.round((end - start) / 60000));
 
-  state.trackedSessions.push({
+  const session = {
     id: uid(),
     start: start.toISOString(),
     end: end.toISOString(),
     minutes,
     note,
-  });
+  };
 
-  state.timer.start = null;
+  dispatch({ type: "TIMER_STOP_AND_STORE_SESSION", payload: { session } });
   byId("track-note").value = "";
   touchActivity();
-  saveState();
   clearInterval(timerInterval);
   timerInterval = null;
   renderAll();
 }
 
 function touchActivity() {
-  state.settings.lastReminderRun = nowIso();
+  dispatch({ type: "TOUCH_ACTIVITY", payload: { timestamp: nowIso() } });
 }
 
 function upcomingItems() {
@@ -451,8 +578,7 @@ function getCalendarMonth() {
 }
 
 function setCalendarMonth(month) {
-  state.settings.calendarMonth = month;
-  saveState();
+  dispatch({ type: "SET_CALENDAR_MONTH", payload: { month } });
 }
 
 function getCalendarEvents() {
@@ -659,8 +785,6 @@ function parseIcsEvents(icsText) {
 }
 
 function replaceImportedEvents(sourceKey, sourceName, sourceHash, events) {
-  state.importedEvents = state.importedEvents.filter((item) => item.sourceKey !== sourceKey);
-
   const mapped = events.map((event) => ({
     id: uid(),
     sourceKey,
@@ -672,8 +796,7 @@ function replaceImportedEvents(sourceKey, sourceName, sourceHash, events) {
     createdAt: nowIso(),
   }));
 
-  state.importedEvents.push(...mapped);
-  saveState();
+  dispatch({ type: "REPLACE_IMPORTED_EVENTS", payload: { sourceKey, events: mapped } });
   renderAll();
   byId("ics-status").textContent = `${mapped.length} Termin(e) aus ${sourceName} importiert.`;
 }
@@ -781,10 +904,14 @@ function initForms() {
     const targetDate = byId("goal-date").value;
     if (!title || !targetDate) return;
 
-    state.goals.push({ id: uid(), title, targetDate, completed: false, completedAt: null });
+    dispatch({
+      type: "GOAL_ADD",
+      payload: {
+        goal: { id: uid(), title, targetDate, completed: false, completedAt: null },
+      },
+    });
     event.target.reset();
     touchActivity();
-    saveState();
     renderAll();
   });
 
@@ -795,10 +922,9 @@ function initForms() {
     const note = byId("rough-note").value.trim();
     if (!date || !hours) return;
 
-    state.roughPlans.push({ id: uid(), date, hours, note });
+    dispatch({ type: "ROUGH_ADD", payload: { plan: { id: uid(), date, hours, note } } });
     event.target.reset();
     touchActivity();
-    saveState();
     renderAll();
   });
 
@@ -810,10 +936,14 @@ function initForms() {
     const milestone = byId("detail-milestone").value.trim();
     if (!date || !minutes || !topic) return;
 
-    state.detailPlans.push({ id: uid(), date, minutes, topic, milestone, done: false });
+    dispatch({
+      type: "DETAIL_ADD",
+      payload: {
+        plan: { id: uid(), date, minutes, topic, milestone, done: false },
+      },
+    });
     event.target.reset();
     touchActivity();
-    saveState();
     renderAll();
   });
 
@@ -821,8 +951,7 @@ function initForms() {
 
   [byId("tab-list"), byId("tab-calendar")].forEach((btn) => {
     btn.addEventListener("click", () => {
-      state.settings.activeView = btn.dataset.view;
-      saveState();
+      dispatch({ type: "SET_ACTIVE_VIEW", payload: { view: btn.dataset.view } });
       renderAll();
     });
   });
@@ -848,8 +977,7 @@ function initForms() {
     event.preventDefault();
     const days = Number(byId("inactivity-days").value);
     if (days > 0) {
-      state.settings.inactivityDays = days;
-      saveState();
+      dispatch({ type: "SET_INACTIVITY_DAYS", payload: { days } });
       renderAll();
     }
   });
@@ -861,20 +989,20 @@ function initForms() {
     }
 
     const permission = await Notification.requestPermission();
-    state.settings.notificationEnabled = permission === "granted";
-    saveState();
+    dispatch({ type: "SET_NOTIFICATION_ENABLED", payload: { enabled: permission === "granted" } });
     renderAll();
   });
 
   byId("load-demo").addEventListener("click", () => {
     loadDemoData();
-    saveState();
     renderAll();
   });
 
   byId("theme-mode").addEventListener("change", (event) => {
-    state.settings.themeMode = normalizeThemeMode(event.target.value);
-    saveState();
+    dispatch({
+      type: "SET_THEME_MODE",
+      payload: { themeMode: normalizeThemeMode(event.target.value) },
+    });
     applyTheme(state.settings.themeMode);
   });
 
@@ -927,7 +1055,7 @@ function initForms() {
   byId("reset-data").addEventListener("click", () => {
     const ok = confirm("Alle Daten wirklich löschen?");
     if (!ok) return;
-    state = store.replace(defaultData());
+    dispatch({ type: "REPLACE_STATE", payload: { state: defaultData() } });
     setInitialValues();
     renderAll();
   });
@@ -947,7 +1075,10 @@ function loadDemoData() {
   const in20 = new Date(today);
   in20.setDate(today.getDate() + 20);
 
-  state = store.replace({
+  dispatch({
+    type: "REPLACE_STATE",
+    payload: {
+      state: {
     ...defaultData(),
     goals: [
       {
@@ -1015,6 +1146,8 @@ function loadDemoData() {
     timer: {
       start: null,
     },
+      },
+    },
   });
 
   byId("month-select").value = month;
@@ -1027,11 +1160,12 @@ function setInitialValues() {
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
   byId("month-select").value = month;
-  if (!state.settings.calendarMonth) {
-    state.settings.calendarMonth = month;
-  }
+  if (!state.settings.calendarMonth) dispatch({ type: "SET_CALENDAR_MONTH", payload: { month } });
   byId("inactivity-days").value = state.settings.inactivityDays;
-  state.settings.themeMode = normalizeThemeMode(state.settings.themeMode);
+  const normalizedThemeMode = normalizeThemeMode(state.settings.themeMode);
+  if (normalizedThemeMode !== state.settings.themeMode) {
+    dispatch({ type: "SET_THEME_MODE", payload: { themeMode: normalizedThemeMode } });
+  }
   byId("theme-mode").value = state.settings.themeMode;
   applyTheme(state.settings.themeMode);
 
