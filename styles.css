@@ -32,7 +32,7 @@ body {
   color: var(--text);
 }
 
-.list-panel {
+.lz-list-panel {
   max-height: 280px;
   overflow: auto;
 }
@@ -42,27 +42,27 @@ body {
   font-weight: bold;
 }
 
-.legend-dot {
+.lz-legend-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
   display: inline-block;
 }
 
-.calendar-grid {
+.lz-calendar-grid {
   border: 1px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
   background: var(--calendar-grid-bg);
 }
 
-.calendar-weekdays,
-.calendar-days {
+.lz-calendar-weekdays,
+.lz-calendar-days {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
 }
 
-.calendar-weekday {
+.lz-calendar-weekday {
   background: var(--calendar-weekday-bg);
   color: var(--calendar-weekday-text);
   text-align: center;
@@ -72,11 +72,11 @@ body {
   border-right: 1px solid var(--calendar-weekday-border);
 }
 
-.calendar-weekday:last-child {
+.lz-calendar-weekday:last-child {
   border-right: none;
 }
 
-.calendar-day {
+.lz-calendar-day {
   min-height: 128px;
   border-top: 1px solid var(--border);
   border-right: 1px solid var(--border);
@@ -86,21 +86,21 @@ body {
   gap: 0.25rem;
 }
 
-.calendar-day:nth-child(7n) {
+.lz-calendar-day:nth-child(7n) {
   border-right: none;
 }
 
-.calendar-day.outside {
+.lz-calendar-day.outside {
   background: var(--calendar-day-outside-bg);
   color: var(--calendar-day-outside-text);
 }
 
-.calendar-day-number {
+.lz-calendar-day-number {
   font-size: 0.82rem;
   font-weight: 600;
 }
 
-.calendar-event {
+.lz-calendar-event {
   font-size: 0.75rem;
   border-radius: 6px;
   padding: 0.2rem 0.35rem;
@@ -109,24 +109,24 @@ body {
   word-break: break-word;
 }
 
-.source-detail {
+.lz-source-detail {
   background: var(--source-detail);
 }
 
-.source-rough {
+.lz-source-rough {
   background: var(--source-rough);
 }
 
-.source-tracked {
+.lz-source-tracked {
   background: var(--source-tracked);
 }
 
-.source-import {
+.lz-source-import {
   background: var(--source-import);
 }
 
 @media (max-width: 600px) {
-  .calendar-day {
+  .lz-calendar-day {
     min-height: 112px;
   }
 }

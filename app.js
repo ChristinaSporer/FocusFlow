@@ -20,6 +20,10 @@ import { createIcsManager } from "./modules/ics-manager.js";
 const store = createStore(loadState(), appReducer);
 let state = store.getState();
 let handlersInitialized = false;
+let goalFormController = {
+  resetGoalForm() {},
+  startGoalEdit() {},
+};
 
 function getState() {
   return state;
@@ -38,7 +42,7 @@ function renderAll() {
   const selectedMonth = byId("month-select")?.value || monthOf(new Date());
   const renderContext = { state: getState(), dispatch, onRenderAll: renderAll };
 
-  renderGoals({ ...renderContext, onActivity: touchActivity });
+  renderGoals({ ...renderContext, onActivity: touchActivity, onEditGoal: goalFormController.startGoalEdit });
   renderRoughPlans(renderContext);
   renderDetailPlans({ ...renderContext, selectedMonth });
   renderTrackedSessions(renderContext);
@@ -60,6 +64,7 @@ function loadDemoData() {
       },
     },
   });
+  goalFormController.resetGoalForm();
   setInitialValues();
 }
 
@@ -102,7 +107,7 @@ function setInitialValues() {
 function initHandlers() {
   if (handlersInitialized) return;
 
-  initFormHandlers({
+  goalFormController = initFormHandlers({
     dispatch,
     renderAll,
     touchActivity,

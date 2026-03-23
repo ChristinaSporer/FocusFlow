@@ -2,6 +2,7 @@
   "recommendations": [
     "ms-vscode.vscode-eslint",
     "esbenp.prettier-vscode",
+    "stylelint.vscode-stylelint",
     "ms-playwright.playwright",
     "vitest.explorer",
     "github.copilot-chat"

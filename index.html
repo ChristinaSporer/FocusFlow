@@ -8,6 +8,10 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.7/dist/css/bootstrap.min.css"
       rel="stylesheet"
     />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -113,6 +117,7 @@
             <div class="card-body">
               <h2 class="h4">1) Lernziele (6 Monate)</h2>
               <form id="goal-form" class="row g-2 mt-1">
+                <input type="hidden" id="goal-edit-id" />
                 <div class="col-12 col-md">
                   <input
                     type="text"
@@ -125,11 +130,30 @@
                 <div class="col-12 col-md-4">
                   <input type="date" id="goal-date" class="form-control" required />
                 </div>
+                <div class="col-12">
+                  <textarea
+                    id="goal-description"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Beschreibung oder naeherer Kontext (optional)"
+                  ></textarea>
+                </div>
                 <div class="col-12 col-md-auto d-grid">
-                  <button class="btn btn-primary" type="submit">Hinzuf&uuml;gen</button>
+                  <button id="goal-submit" class="btn btn-primary" type="submit">
+                    Hinzuf&uuml;gen
+                  </button>
+                </div>
+                <div class="col-12 col-md-auto d-grid">
+                  <button
+                    id="goal-cancel-edit"
+                    class="btn btn-outline-secondary d-none"
+                    type="button"
+                  >
+                    Bearbeitung abbrechen
+                  </button>
                 </div>
               </form>
-              <ul id="goal-list" class="list-group list-panel"></ul>
+              <ul id="goal-list" class="list-group lz-list-panel"></ul>
             </div>
           </section>
         </div>
@@ -165,7 +189,7 @@
                   <button class="btn btn-primary" type="submit">Planen</button>
                 </div>
               </form>
-              <ul id="rough-list" class="list-group list-panel"></ul>
+              <ul id="rough-list" class="list-group lz-list-panel"></ul>
             </div>
           </section>
         </div>
@@ -218,7 +242,7 @@
                   <button class="btn btn-primary" type="submit">Eintragen</button>
                 </div>
               </form>
-              <ul id="detail-list" class="list-group list-panel mt-3"></ul>
+              <ul id="detail-list" class="list-group lz-list-panel mt-3"></ul>
             </div>
           </section>
         </div>
@@ -246,7 +270,7 @@
                   />
                 </div>
               </form>
-              <ul id="track-list" class="list-group list-panel"></ul>
+              <ul id="track-list" class="list-group lz-list-panel"></ul>
             </div>
           </section>
         </div>
@@ -259,7 +283,7 @@
                 Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht
                 abgegeben etc.).
               </p>
-              <ul id="achieved-list" class="list-group list-panel"></ul>
+              <ul id="achieved-list" class="list-group lz-list-panel"></ul>
             </div>
           </section>
         </div>
@@ -289,7 +313,7 @@
               <p id="notification-status" class="text-body-secondary small mt-2 mb-0">
                 Benachrichtigungen sind derzeit nicht aktiviert.
               </p>
-              <ul id="reminder-list" class="list-group list-panel mt-3"></ul>
+              <ul id="reminder-list" class="list-group lz-list-panel mt-3"></ul>
             </div>
           </section>
         </div>
@@ -336,7 +360,7 @@
               Noch kein Import durchgef&uuml;hrt.
             </p>
 
-            <div id="calendar-grid" class="calendar-grid"></div>
+            <div id="calendar-grid" class="lz-calendar-grid"></div>
           </div>
         </div>
       </section>

@@ -2,10 +2,10 @@ import { byId } from "./dom.js";
 import { addDays, formatYmd, monthOf } from "./date-utils.js";
 
 const SOURCE_META = {
-  detail: { label: "Detailplanung", className: "source-detail" },
-  rough: { label: "Grobplanung", className: "source-rough" },
-  tracked: { label: "Tracking", className: "source-tracked" },
-  import: { label: "ICS-Import", className: "source-import" },
+  detail: { label: "Detailplanung", className: "lz-source-detail" },
+  rough: { label: "Grobplanung", className: "lz-source-rough" },
+  tracked: { label: "Tracking", className: "lz-source-tracked" },
+  import: { label: "ICS-Import", className: "lz-source-import" },
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -87,7 +87,7 @@ export function createCalendarManager({ getState, dispatch }) {
       item.className = "d-inline-flex align-items-center gap-2 small text-body-secondary";
 
       const dot = document.createElement("span");
-      dot.className = `legend-dot ${meta.className}`;
+      dot.className = `lz-legend-dot ${meta.className}`;
 
       const label = document.createElement("span");
       label.textContent = meta.label;
@@ -119,26 +119,26 @@ export function createCalendarManager({ getState, dispatch }) {
     });
 
     const weekdays = document.createElement("div");
-    weekdays.className = "calendar-weekdays";
+    weekdays.className = "lz-calendar-weekdays";
     WEEKDAYS.forEach((day) => {
       const cell = document.createElement("div");
-      cell.className = "calendar-weekday";
+      cell.className = "lz-calendar-weekday";
       cell.textContent = day;
       weekdays.appendChild(cell);
     });
 
     const days = document.createElement("div");
-    days.className = "calendar-days";
+    days.className = "lz-calendar-days";
     for (let index = 0; index < 42; index += 1) {
       const current = addDays(firstCellDate, index);
       const currentYmd = formatYmd(current);
       const inActiveMonth = current >= monthStart && current <= monthEnd;
 
       const cell = document.createElement("div");
-      cell.className = `calendar-day${inActiveMonth ? "" : " outside"}`;
+      cell.className = `lz-calendar-day${inActiveMonth ? "" : " outside"}`;
 
       const dayNo = document.createElement("div");
-      dayNo.className = "calendar-day-number";
+      dayNo.className = "lz-calendar-day-number";
       dayNo.textContent = String(current.getDate());
       cell.appendChild(dayNo);
 
@@ -146,7 +146,7 @@ export function createCalendarManager({ getState, dispatch }) {
       events.forEach((event) => {
         const entry = document.createElement("div");
         const source = SOURCE_META[event.source] || SOURCE_META.detail;
-        entry.className = `calendar-event ${source.className}`;
+        entry.className = `lz-calendar-event ${source.className}`;
         entry.title = event.hint || source.label;
         entry.textContent = event.title;
         cell.appendChild(entry);

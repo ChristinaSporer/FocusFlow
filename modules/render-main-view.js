@@ -1,6 +1,7 @@
 import { byId } from "./dom.js";
 import { formatDate, isWithinNextSixMonths, monthOf, nowIso } from "./date-utils.js";
 import { buildRow, renderEmptyList } from "./list-render-utils.js";
+import { uid } from "./app-utils.js";
 
 function toMinutes(hours) {
   return Math.round(Number(hours) * 60);
@@ -10,7 +11,7 @@ function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
 }
 
-export function renderGoals({ state, dispatch, onActivity, onRenderAll }) {
+export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGoal }) {
   const list = byId("goal-list");
   const achieved = byId("achieved-list");
   list.innerHTML = "";
@@ -19,6 +20,9 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll }) {
   const sorted = [...state.goals].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
 
   sorted.forEach((goal) => {
+    const milestones = Array.isArray(goal.milestones) ? goal.milestones : [];
+    const completedMilestones = milestones.filter((milestone) => milestone.done).length;
+
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = goal.completed;
@@ -36,21 +40,231 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll }) {
       onRenderAll();
     });
 
-    const goalRow = buildRow(goal.title, `Bis ${formatDate(goal.targetDate)}`, {
+    const editButton = document.createElement("button");
+    editButton.className = "btn btn-outline-secondary btn-sm";
+    editButton.type = "button";
+    editButton.setAttribute("aria-label", "Bearbeiten");
+    editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+    editButton.addEventListener("click", () => {
+      onEditGoal?.(goal);
+    });
+
+    const goalDetails = [`Bis ${formatDate(goal.targetDate)}`];
+    if (goal.description) {
+      goalDetails.push(goal.description);
+    }
+    if (milestones.length) {
+      goalDetails.push(`Zwischenziele: ${completedMilestones}/${milestones.length} erledigt`);
+    }
+
+    const goalRow = buildRow(goal.title, goalDetails.join(" · "), {
       done: goal.completed,
       onDelete: () => {
         dispatch({ type: "GOAL_DELETE", payload: { id: goal.id } });
         onRenderAll();
       },
-      actions: [checkbox],
+      actions: [editButton],
     });
+
+    const info = goalRow.querySelector(".flex-grow-1");
+    const titleElement = info.querySelector("span");
+
+    const goalTitleRow = document.createElement("label");
+    goalTitleRow.className = "form-check d-flex align-items-start gap-2 mb-0";
+
+    checkbox.classList.add("form-check-input", "mt-1");
+    checkbox.setAttribute("data-goal-toggle", goal.id);
+
+    const goalTitleText = document.createElement("span");
+    goalTitleText.textContent = goal.title;
+    if (goal.completed) {
+      goalTitleText.classList.add("text-decoration-line-through", "text-body-secondary");
+    }
+
+    goalTitleRow.append(checkbox, goalTitleText);
+    titleElement.replaceWith(goalTitleRow);
+
+    const milestoneSection = document.createElement("div");
+    milestoneSection.className = "mt-2";
+
+    const milestoneHeading = document.createElement("small");
+    milestoneHeading.className = "text-body-secondary d-block mb-1";
+    milestoneHeading.textContent = "Zwischenziele";
+    milestoneSection.appendChild(milestoneHeading);
+
+    if (milestones.length) {
+      const milestoneList = document.createElement("div");
+      milestoneList.className = "d-flex flex-column gap-1";
+
+      milestones.forEach((milestone) => {
+        const milestoneRow = document.createElement("div");
+        milestoneRow.className = "d-flex align-items-start gap-2 flex-wrap";
+
+        const label = document.createElement("label");
+        label.className = "form-check d-flex align-items-start gap-2 mb-0 flex-grow-1";
+
+        const milestoneCheckbox = document.createElement("input");
+        milestoneCheckbox.type = "checkbox";
+        milestoneCheckbox.className = "form-check-input mt-1";
+        milestoneCheckbox.setAttribute("data-goal-milestone-toggle", milestone.id);
+        milestoneCheckbox.checked = Boolean(milestone.done);
+        milestoneCheckbox.addEventListener("change", () => {
+          dispatch({
+            type: "GOAL_TOGGLE_MILESTONE",
+            payload: {
+              goalId: goal.id,
+              milestoneId: milestone.id,
+              done: milestoneCheckbox.checked,
+            },
+          });
+          onActivity();
+          onRenderAll();
+        });
+
+        const milestoneText = document.createElement("span");
+        milestoneText.textContent = milestone.title;
+        milestoneText.setAttribute("data-goal-milestone-title", milestone.id);
+        if (milestone.done) {
+          milestoneText.classList.add("text-decoration-line-through", "text-body-secondary");
+        }
+
+        label.append(milestoneCheckbox, milestoneText);
+
+        const editMilestoneButton = document.createElement("button");
+        editMilestoneButton.type = "button";
+        editMilestoneButton.className = "btn btn-outline-secondary btn-sm";
+        editMilestoneButton.setAttribute("aria-label", "Bearbeiten");
+        editMilestoneButton.innerHTML = '<i class="bi bi-pencil"></i>';
+        editMilestoneButton.setAttribute("data-goal-milestone-edit", milestone.id);
+        editMilestoneButton.addEventListener("click", () => {
+          label.classList.add("d-none");
+          editMilestoneButton.classList.add("d-none");
+          deleteMilestoneButton.classList.add("d-none");
+          inlineEditForm.classList.remove("d-none");
+          inlineEditInput.focus();
+          inlineEditInput.select();
+        });
+
+        const deleteMilestoneButton = document.createElement("button");
+        deleteMilestoneButton.type = "button";
+        deleteMilestoneButton.className = "btn btn-outline-danger btn-sm";
+        deleteMilestoneButton.setAttribute("aria-label", "Löschen");
+        deleteMilestoneButton.innerHTML = '<i class="bi bi-trash"></i>';
+        deleteMilestoneButton.setAttribute("data-goal-milestone-delete", milestone.id);
+        deleteMilestoneButton.addEventListener("click", () => {
+          const ok = confirm("Zwischenziel wirklich löschen?");
+          if (!ok) return;
+
+          dispatch({
+            type: "GOAL_DELETE_MILESTONE",
+            payload: {
+              goalId: goal.id,
+              milestoneId: milestone.id,
+            },
+          });
+          onActivity();
+          onRenderAll();
+        });
+
+        const inlineEditForm = document.createElement("form");
+        inlineEditForm.className = "d-none d-flex flex-wrap gap-2 flex-grow-1 align-items-start";
+        inlineEditForm.setAttribute("data-goal-milestone-inline-edit", milestone.id);
+
+        const inlineEditInput = document.createElement("input");
+        inlineEditInput.type = "text";
+        inlineEditInput.className = "form-control form-control-sm";
+        inlineEditInput.value = milestone.title;
+        inlineEditInput.setAttribute("aria-label", `Zwischenziel bearbeiten: ${milestone.title}`);
+
+        const saveMilestoneButton = document.createElement("button");
+        saveMilestoneButton.type = "submit";
+        saveMilestoneButton.className = "btn btn-primary btn-sm";
+        saveMilestoneButton.textContent = "Speichern";
+
+        const cancelMilestoneButton = document.createElement("button");
+        cancelMilestoneButton.type = "button";
+        cancelMilestoneButton.className = "btn btn-outline-secondary btn-sm";
+        cancelMilestoneButton.textContent = "Abbrechen";
+        cancelMilestoneButton.addEventListener("click", () => {
+          inlineEditInput.value = milestone.title;
+          inlineEditForm.classList.add("d-none");
+          label.classList.remove("d-none");
+          editMilestoneButton.classList.remove("d-none");
+          deleteMilestoneButton.classList.remove("d-none");
+        });
+
+        inlineEditForm.addEventListener("submit", (event) => {
+          event.preventDefault();
+          const title = inlineEditInput.value.trim();
+          if (!title) return;
+
+          dispatch({
+            type: "GOAL_UPDATE_MILESTONE",
+            payload: {
+              goalId: goal.id,
+              milestoneId: milestone.id,
+              title,
+            },
+          });
+          onActivity();
+          onRenderAll();
+        });
+
+        inlineEditForm.append(inlineEditInput, saveMilestoneButton, cancelMilestoneButton);
+
+        milestoneRow.append(label, inlineEditForm, editMilestoneButton, deleteMilestoneButton);
+        milestoneList.appendChild(milestoneRow);
+      });
+
+      milestoneSection.appendChild(milestoneList);
+    } else {
+      const emptyMilestones = document.createElement("small");
+      emptyMilestones.className = "text-body-secondary";
+      emptyMilestones.textContent = "Noch keine Zwischenziele";
+      milestoneSection.appendChild(emptyMilestones);
+    }
+
+    const addMilestoneForm = document.createElement("form");
+    addMilestoneForm.className = "d-flex flex-wrap gap-2 mt-2";
+
+    const addMilestoneInput = document.createElement("input");
+    addMilestoneInput.type = "text";
+    addMilestoneInput.className = "form-control form-control-sm";
+    addMilestoneInput.placeholder = "Zwischenziel hinzufügen";
+    addMilestoneInput.setAttribute("aria-label", `Zwischenziel für ${goal.title}`);
+
+    const addMilestoneButton = document.createElement("button");
+    addMilestoneButton.type = "submit";
+    addMilestoneButton.className = "btn btn-outline-primary btn-sm";
+    addMilestoneButton.textContent = "Hinzufügen";
+
+    addMilestoneForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const title = addMilestoneInput.value.trim();
+      if (!title) return;
+
+      dispatch({
+        type: "GOAL_ADD_MILESTONE",
+        payload: {
+          goalId: goal.id,
+          milestone: { id: uid(), title, done: false },
+        },
+      });
+      addMilestoneInput.value = "";
+      onActivity();
+      onRenderAll();
+    });
+
+    addMilestoneForm.append(addMilestoneInput, addMilestoneButton);
+    milestoneSection.appendChild(addMilestoneForm);
+    info.appendChild(milestoneSection);
 
     list.appendChild(goalRow);
 
     if (goal.completed) {
       const doneRow = document.createElement("li");
       doneRow.className = "list-group-item list-group-item-success";
-      doneRow.innerHTML = `<div class="d-flex flex-column gap-1"><span>${goal.title}</span><small class="text-body-secondary">Erreicht am ${formatDate(goal.completedAt)}</small></div>`;
+      doneRow.innerHTML = `<div class="d-flex flex-column gap-1"><span>${goal.title}</span>${goal.description ? `<small class="text-body-secondary">${goal.description}</small>` : ""}${milestones.length ? `<small class="text-body-secondary">Zwischenziele erledigt: ${completedMilestones}/${milestones.length}</small>` : ""}<small class="text-body-secondary">Erreicht am ${formatDate(goal.completedAt)}</small></div>`;
       achieved.appendChild(doneRow);
     }
   });

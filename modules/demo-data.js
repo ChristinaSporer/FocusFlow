@@ -19,6 +19,11 @@ export function buildDemoState({ themeMode }) {
         id: uid(),
         title: "Modul Software Engineering abschließen",
         targetDate: in20.toISOString().slice(0, 10),
+        description: "Abgabe, Abschlusspräsentation und Nachbereitung erledigen.",
+        milestones: [
+          { id: uid(), title: "Kapitel 6 wiederholen", done: true },
+          { id: uid(), title: "Präsentation fertigstellen", done: false },
+        ],
         completed: false,
         completedAt: null,
       },
@@ -26,6 +31,11 @@ export function buildDemoState({ themeMode }) {
         id: uid(),
         title: "Klausurvorbereitung Mathematik",
         targetDate: in10.toISOString().slice(0, 10),
+        description: "Altklausuren durcharbeiten und Formelsammlung wiederholen.",
+        milestones: [
+          { id: uid(), title: "Altklausur 1 rechnen", done: true },
+          { id: uid(), title: "Formelblatt zusammenfassen", done: true },
+        ],
         completed: true,
         completedAt: nowIso(),
       },

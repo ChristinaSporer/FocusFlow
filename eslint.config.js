@@ -33,6 +33,17 @@ module.exports = [
     },
     rules: {
       "no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      camelcase: ["error", { properties: "never", ignoreDestructuring: true }],
+      "id-match": [
+        "error",
+        "^([a-z][a-zA-Z0-9]*|[A-Z][a-zA-Z0-9]*|[A-Z][A-Z0-9]*(?:_[A-Z0-9]+)*)$",
+        {
+          onlyDeclarations: true,
+          properties: false,
+          ignoreDestructuring: true,
+        },
+      ],
+      "new-cap": ["error", { newIsCap: true, capIsNew: false }],
     },
   },
   eslintConfigPrettier,

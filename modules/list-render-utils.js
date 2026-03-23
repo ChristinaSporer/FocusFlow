@@ -34,7 +34,8 @@ export function buildRow(main, sub, { done = false, onDelete, actions = [] } = {
   const del = document.createElement("button");
   del.className = "btn btn-outline-danger btn-sm";
   del.type = "button";
-  del.textContent = "Löschen";
+  del.setAttribute("aria-label", "Löschen");
+  del.innerHTML = '<i class="bi bi-trash"></i>';
   del.addEventListener("click", onDelete);
   rowActions.appendChild(del);
 

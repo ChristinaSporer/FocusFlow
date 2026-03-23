@@ -10,6 +10,71 @@ export function appReducer(currentState, action) {
       };
     case "GOAL_ADD":
       return { ...currentState, goals: [...currentState.goals, action.payload.goal] };
+    case "GOAL_UPDATE":
+      return {
+        ...currentState,
+        goals: currentState.goals.map((item) =>
+          item.id === action.payload.goal.id ? { ...item, ...action.payload.goal } : item
+        ),
+      };
+    case "GOAL_ADD_MILESTONE":
+      return {
+        ...currentState,
+        goals: currentState.goals.map((item) =>
+          item.id === action.payload.goalId
+            ? {
+                ...item,
+                milestones: [...(item.milestones || []), action.payload.milestone],
+              }
+            : item
+        ),
+      };
+    case "GOAL_TOGGLE_MILESTONE":
+      return {
+        ...currentState,
+        goals: currentState.goals.map((item) =>
+          item.id === action.payload.goalId
+            ? {
+                ...item,
+                milestones: (item.milestones || []).map((milestone) =>
+                  milestone.id === action.payload.milestoneId
+                    ? { ...milestone, done: action.payload.done }
+                    : milestone
+                ),
+              }
+            : item
+        ),
+      };
+    case "GOAL_UPDATE_MILESTONE":
+      return {
+        ...currentState,
+        goals: currentState.goals.map((item) =>
+          item.id === action.payload.goalId
+            ? {
+                ...item,
+                milestones: (item.milestones || []).map((milestone) =>
+                  milestone.id === action.payload.milestoneId
+                    ? { ...milestone, title: action.payload.title }
+                    : milestone
+                ),
+              }
+            : item
+        ),
+      };
+    case "GOAL_DELETE_MILESTONE":
+      return {
+        ...currentState,
+        goals: currentState.goals.map((item) =>
+          item.id === action.payload.goalId
+            ? {
+                ...item,
+                milestones: (item.milestones || []).filter(
+                  (milestone) => milestone.id !== action.payload.milestoneId
+                ),
+              }
+            : item
+        ),
+      };
     case "GOAL_DELETE":
       return {
         ...currentState,

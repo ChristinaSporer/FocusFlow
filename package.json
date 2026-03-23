@@ -4,8 +4,10 @@
   "description": "Ein einfacher Frontend-Prototyp (ohne Backend) für Lernzeitplanung und Lernzeit-Tracking.\r Alle Daten werden im Browser über `localStorage` gespeichert.",
   "main": "app.js",
   "scripts": {
-    "lint": "eslint .",
-    "lint:fix": "eslint . --fix",
+    "lint": "npm run lint:js && npm run lint:css",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint \"**/*.css\"",
+    "lint:fix": "npm run lint:js -- --fix && npm run lint:css -- --fix",
     "format": "prettier . --check",
     "format:write": "prettier . --write",
     "test": "vitest run",
@@ -32,6 +34,8 @@
     "http-server": "^14.1.1",
     "jsdom": "^28.1.0",
     "prettier": "^3.8.1",
+    "stylelint": "^16.25.0",
+    "stylelint-config-standard": "^39.0.1",
     "vitest": "^4.0.18"
   }
 }

@@ -44,9 +44,11 @@ describe("App UI integration (jsdom)", () => {
   it("adds a goal and persists it in localStorage", () => {
     const title = "SE Lernziel";
     const date = "2026-03-15";
+    const description = "Architektur, Tests und Review abschließen";
 
     document.getElementById("goal-title").value = title;
     document.getElementById("goal-date").value = date;
+    document.getElementById("goal-description").value = description;
 
     const form = document.getElementById("goal-form");
     form.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
@@ -58,6 +60,96 @@ describe("App UI integration (jsdom)", () => {
     expect(parsed.goals).toHaveLength(1);
     expect(parsed.goals[0].title).toBe(title);
     expect(parsed.goals[0].targetDate).toBe(date);
+    expect(parsed.goals[0].description).toBe(description);
+    expect(document.getElementById("goal-list").textContent).toContain(description);
+    expect(document.querySelector("#goal-list [data-goal-toggle]")).not.toBeNull();
+  });
+
+  it("edits an existing goal including title, date, and description", () => {
+    document.getElementById("goal-title").value = "Altes Ziel";
+    document.getElementById("goal-date").value = "2026-03-15";
+    document.getElementById("goal-description").value = "Erste Version";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.querySelector("#goal-list .btn-outline-secondary")?.click();
+
+    expect(document.getElementById("goal-title").value).toBe("Altes Ziel");
+    expect(document.getElementById("goal-submit").textContent).toContain("speichern");
+
+    document.getElementById("goal-title").value = "Aktualisiertes Ziel";
+    document.getElementById("goal-date").value = "2026-03-20";
+    document.getElementById("goal-description").value = "Überarbeitete Beschreibung";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const raw = localStorage.getItem("focusflow-v1");
+    const parsed = JSON.parse(raw);
+    expect(parsed.goals).toHaveLength(1);
+    expect(parsed.goals[0].title).toBe("Aktualisiertes Ziel");
+    expect(parsed.goals[0].targetDate).toBe("2026-03-20");
+    expect(parsed.goals[0].description).toBe("Überarbeitete Beschreibung");
+    expect(document.getElementById("goal-list").textContent).toContain("Überarbeitete Beschreibung");
+    expect(document.getElementById("goal-edit-id").value).toBe("");
+  });
+
+  it("adds and completes milestones for a goal", () => {
+    document.getElementById("goal-title").value = "Ziel mit Zwischenzielen";
+    document.getElementById("goal-date").value = "2026-03-22";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Erstes Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    expect(document.getElementById("goal-list").textContent).toContain("Erstes Zwischenziel");
+
+    const milestoneCheckbox = document.querySelector("#goal-list [data-goal-milestone-toggle]");
+    milestoneCheckbox.checked = true;
+    milestoneCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
+
+    const raw = localStorage.getItem("focusflow-v1");
+    const parsed = JSON.parse(raw);
+    expect(parsed.goals[0].milestones).toHaveLength(1);
+    expect(parsed.goals[0].milestones[0].title).toBe("Erstes Zwischenziel");
+    expect(parsed.goals[0].milestones[0].done).toBe(true);
+    expect(document.getElementById("goal-list").textContent).toContain("Zwischenziele: 1/1 erledigt");
+  });
+
+  it("edits and deletes a milestone for a goal", () => {
+    document.getElementById("goal-title").value = "Ziel mit editierbarem Zwischenziel";
+    document.getElementById("goal-date").value = "2026-03-22";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Altes Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.querySelector("#goal-list [data-goal-milestone-edit]")?.click();
+    const inlineEditInput = document.querySelector("#goal-list [data-goal-milestone-inline-edit] input");
+    inlineEditInput.value = "Neues Zwischenziel";
+    inlineEditInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    expect(document.getElementById("goal-list").textContent).toContain("Neues Zwischenziel");
+
+    document.querySelector("#goal-list [data-goal-milestone-delete]")?.click();
+
+    const raw = localStorage.getItem("focusflow-v1");
+    const parsed = JSON.parse(raw);
+    expect(parsed.goals[0].milestones).toHaveLength(0);
+    expect(document.getElementById("goal-list").textContent).toContain("Noch keine Zwischenziele");
   });
 
   it("switches to calendar view and renders source-colored events", () => {
@@ -72,6 +164,8 @@ describe("App UI integration (jsdom)", () => {
 
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
-    expect(document.querySelector(".calendar-event.source-detail")?.textContent).toContain("Architektur");
+    expect(document.querySelector(".lz-calendar-event.lz-source-detail")?.textContent).toContain(
+      "Architektur"
+    );
   });
 });
