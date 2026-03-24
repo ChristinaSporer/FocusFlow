@@ -1,5 +1,6 @@
 import { byId } from "./dom.js";
-import { formatDate, isWithinNextSixMonths, monthOf, nowIso } from "./date-utils.js";
+import { formatCalendarWeek, formatDate, isWithinNextSixMonths, monthOf, nowIso, weekOverlapsMonth } from "./date-utils.js";
+import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 import { buildRow, renderEmptyList } from "./list-render-utils.js";
 import { uid } from "./app-utils.js";
 
@@ -9,6 +10,23 @@ function toMinutes(hours) {
 
 function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
+}
+
+function roughPlansByGoalComparator(state, left, right) {
+  const leftGoalTitle = left.goalId
+    ? state.goals.find((goal) => goal.id === left.goalId)?.title || ""
+    : "";
+  const rightGoalTitle = right.goalId
+    ? state.goals.find((goal) => goal.id === right.goalId)?.title || ""
+    : "";
+
+  const goalOrder = leftGoalTitle.localeCompare(rightGoalTitle, "de", { sensitivity: "base" });
+  if (goalOrder !== 0) return goalOrder;
+
+  const weekOrder = (left.week || "").localeCompare(right.week || "");
+  if (weekOrder !== 0) return weekOrder;
+
+  return (left.date || "").localeCompare(right.date || "");
 }
 
 export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGoal }) {
@@ -282,7 +300,7 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
   list.innerHTML = "";
 
   const data = [...state.roughPlans]
-    .sort((a, b) => a.date.localeCompare(b.date))
+    .sort((a, b) => roughPlansByGoalComparator(state, a, b))
     .filter((plan) => isWithinNextSixMonths(plan.date));
 
   data.forEach((plan) => {
@@ -290,7 +308,8 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
     const primaryText = goal
       ? `${plan.hours} h geplant für ${goal.title}`
       : `${plan.hours} h geplant`;
-    const secondaryText = `${formatDate(plan.date)}${plan.note ? ` · ${plan.note}` : ""}`;
+    const weekLabel = formatCalendarWeek(plan.week || plan.date);
+    const secondaryText = `${weekLabel}${plan.note ? ` · ${plan.note}` : ""}`;
 
     const editBtn = document.createElement("button");
     editBtn.className = "btn btn-outline-secondary btn-sm";
@@ -318,41 +337,292 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
   }
 }
 
-export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth }) {
+export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth, onActivity }) {
   const list = byId("detail-list");
   list.innerHTML = "";
 
-  const data = [...state.detailPlans]
+  const monthlyRoughPlans = [...state.roughPlans]
+    .filter((plan) =>
+      plan.week ? weekOverlapsMonth(plan.week, selectedMonth) : monthOf(plan.date) === selectedMonth
+    )
+    .sort((a, b) => roughPlansByGoalComparator(state, a, b));
+
+  const monthlyDetailPlans = [...state.detailPlans]
     .filter((item) => monthOf(item.date) === selectedMonth)
     .sort((a, b) => a.date.localeCompare(b.date));
 
-  data.forEach((item) => {
+  function createDetailEntryRow(item, { onEdit } = {}) {
+    const { goal, milestone } = resolveDetailPlanContext(state, item);
     const flag = document.createElement("input");
     flag.type = "checkbox";
     flag.checked = item.done;
     flag.title = "Zwischenziel erreicht";
     flag.addEventListener("change", () => {
       dispatch({ type: "DETAIL_SET_DONE", payload: { id: item.id, done: flag.checked } });
+      onActivity?.();
       onRenderAll();
     });
 
-    const row = buildRow(
-      `${item.minutes} Min · ${item.topic}`,
-      `${formatDate(item.date)}${item.milestone ? ` · Zwischenziel: ${item.milestone}` : ""}`,
-      {
-        done: item.done,
-        onDelete: () => {
-          dispatch({ type: "DETAIL_DELETE", payload: { id: item.id } });
-          onRenderAll();
-        },
-        actions: [flag],
+    const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
+    const details = [formatDate(item.date)];
+    if (goal?.title) details.push(`Hauptziel: ${goal.title}`);
+    if (item.topic && item.topic !== focusTitle) details.push(item.topic);
+
+    const editButton = document.createElement("button");
+    editButton.className = "btn btn-outline-secondary btn-sm";
+    editButton.type = "button";
+    editButton.setAttribute("aria-label", "Detailplanung bearbeiten");
+    editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+    editButton.addEventListener("click", () => onEdit?.(item));
+
+    return buildRow(`${item.minutes} Min für ${focusTitle}`, details.join(" · "), {
+      done: item.done,
+      onDelete: () => {
+        dispatch({ type: "DETAIL_DELETE", payload: { id: item.id } });
+        onActivity?.();
+        onRenderAll();
+      },
+      actions: [flag, editButton],
+    });
+  }
+
+  monthlyRoughPlans.forEach((plan) => {
+    const goal = plan.goalId ? state.goals.find((item) => item.id === plan.goalId) : null;
+    const milestones = Array.isArray(goal?.milestones) ? goal.milestones : [];
+    const entries = [...state.detailPlans]
+      .filter((item) => item.roughPlanId === plan.id)
+      .sort((a, b) => a.date.localeCompare(b.date));
+
+    const block = document.createElement("li");
+    block.className = "list-group-item";
+
+    const header = document.createElement("div");
+    header.className = "d-flex flex-column gap-1";
+
+    const title = document.createElement("strong");
+    title.textContent = goal ? `${plan.hours} h geplant für ${goal.title}` : `${plan.hours} h geplant`;
+
+    const subtitle = document.createElement("small");
+    subtitle.className = "text-body-secondary";
+    subtitle.textContent = [formatCalendarWeek(plan.week || plan.date), plan.note || "", goal ? "Zwischenziele auswählbar" : "Kein Hauptziel zugeordnet"]
+      .filter(Boolean)
+      .join(" · ");
+    header.append(title, subtitle);
+
+    const plannedMinutes = toMinutes(plan.hours);
+    const allocatedMinutes = sum(entries.map((item) => Number(item.minutes)));
+    const allocation = document.createElement("small");
+    allocation.className = "text-body-secondary";
+    allocation.textContent = `Verteilt: ${allocatedMinutes} von ${plannedMinutes} Min · Offen: ${Math.max(0, plannedMinutes - allocatedMinutes)} Min`;
+    header.appendChild(allocation);
+    block.appendChild(header);
+
+    if (goal && milestones.length) {
+      const form = document.createElement("form");
+      form.className = "row g-2 mt-3";
+      form.setAttribute("data-detail-block-form", plan.id);
+
+      const editIdInput = document.createElement("input");
+      editIdInput.type = "hidden";
+      editIdInput.setAttribute("data-detail-edit-id", plan.id);
+      form.appendChild(editIdInput);
+
+      const dateCol = document.createElement("div");
+      dateCol.className = "col-12 col-lg-3";
+      const dateInput = document.createElement("input");
+      dateInput.type = "date";
+      dateInput.className = "form-control";
+      dateInput.required = true;
+      dateInput.value = plan.date;
+      dateInput.setAttribute("data-detail-date", plan.id);
+      dateCol.appendChild(dateInput);
+
+      const milestoneCol = document.createElement("div");
+      milestoneCol.className = "col-12 col-lg-4";
+      const milestoneSelect = document.createElement("select");
+      milestoneSelect.className = "form-control";
+      milestoneSelect.required = true;
+      milestoneSelect.setAttribute("data-detail-milestone-select", plan.id);
+
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "Zwischenziel auswählen";
+      milestoneSelect.appendChild(emptyOption);
+
+      milestones.forEach((milestone) => {
+        const option = document.createElement("option");
+        option.value = milestone.id;
+        option.textContent = milestone.done ? `${milestone.title} (erledigt)` : milestone.title;
+        milestoneSelect.appendChild(option);
+      });
+      milestoneCol.appendChild(milestoneSelect);
+
+      const minutesCol = document.createElement("div");
+      minutesCol.className = "col-12 col-lg-2";
+      const minutesInput = document.createElement("input");
+      minutesInput.type = "number";
+      minutesInput.className = "form-control";
+      minutesInput.min = "5";
+      minutesInput.step = "5";
+      minutesInput.placeholder = "Minuten";
+      minutesInput.required = true;
+      minutesInput.setAttribute("data-detail-minutes", plan.id);
+      minutesCol.appendChild(minutesInput);
+
+      const topicCol = document.createElement("div");
+      topicCol.className = "col-12 col-lg";
+      const topicInput = document.createElement("input");
+      topicInput.type = "text";
+      topicInput.className = "form-control";
+      topicInput.placeholder = "Lerninhalt (optional)";
+      topicInput.setAttribute("data-detail-topic", plan.id);
+      topicCol.appendChild(topicInput);
+
+      const buttonCol = document.createElement("div");
+      buttonCol.className = "col-12 col-lg-auto d-grid";
+      const submitButton = document.createElement("button");
+      submitButton.type = "submit";
+      submitButton.className = "btn btn-primary";
+      submitButton.textContent = "Zeit eintragen";
+      buttonCol.appendChild(submitButton);
+
+      const cancelCol = document.createElement("div");
+      cancelCol.className = "col-12 col-lg-auto d-grid";
+      const cancelButton = document.createElement("button");
+      cancelButton.type = "button";
+      cancelButton.className = "btn btn-outline-secondary d-none";
+      cancelButton.textContent = "Bearbeitung abbrechen";
+      cancelButton.setAttribute("data-detail-cancel", plan.id);
+      cancelCol.appendChild(cancelButton);
+
+      function resetBlockForm() {
+        editIdInput.value = "";
+        dateInput.value = plan.date;
+        milestoneSelect.value = "";
+        minutesInput.value = "";
+        topicInput.value = "";
+        submitButton.textContent = "Zeit eintragen";
+        cancelButton.classList.add("d-none");
       }
-    );
-    list.appendChild(row);
+
+      function startDetailEdit(item) {
+        editIdInput.value = item.id;
+        dateInput.value = item.date;
+        milestoneSelect.value = item.milestoneId || "";
+        minutesInput.value = item.minutes;
+        topicInput.value = item.topic || "";
+        submitButton.textContent = "Änderungen speichern";
+        cancelButton.classList.remove("d-none");
+        dateInput.focus();
+      }
+
+      cancelButton.addEventListener("click", resetBlockForm);
+
+      form.append(dateCol, milestoneCol, minutesCol, topicCol, buttonCol, cancelCol);
+      form.addEventListener("submit", (event) => {
+        event.preventDefault();
+
+        const editId = editIdInput.value;
+        const date = dateInput.value;
+        const milestoneId = milestoneSelect.value;
+        const minutes = Number(minutesInput.value);
+        const topic = topicInput.value.trim();
+        const selectedMilestone = milestones.find((item) => item.id === milestoneId);
+        if (!date || !milestoneId || !minutes || !selectedMilestone) return;
+
+        if (editId) {
+          dispatch({
+            type: "DETAIL_UPDATE",
+            payload: {
+              id: editId,
+              update: {
+                date,
+                minutes,
+                topic,
+                milestone: selectedMilestone.title,
+                milestoneId: selectedMilestone.id,
+                goalId: goal.id,
+                roughPlanId: plan.id,
+              },
+            },
+          });
+        } else {
+          dispatch({
+            type: "DETAIL_ADD",
+            payload: {
+              plan: {
+                id: uid(),
+                date,
+                minutes,
+                topic,
+                milestone: selectedMilestone.title,
+                milestoneId: selectedMilestone.id,
+                goalId: goal.id,
+                roughPlanId: plan.id,
+                done: false,
+              },
+            },
+          });
+        }
+
+        onActivity?.();
+        resetBlockForm();
+        onRenderAll();
+      });
+      block.appendChild(form);
+
+      if (entries.length) {
+        const entryList = document.createElement("ul");
+        entryList.className = "list-group mt-3";
+        entries.forEach((item) => entryList.appendChild(createDetailEntryRow(item, { onEdit: startDetailEdit })));
+        block.appendChild(entryList);
+      } else {
+        const entryList = document.createElement("ul");
+        entryList.className = "list-group mt-3";
+        renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
+        block.appendChild(entryList);
+      }
+    } else {
+      const hint = document.createElement("p");
+      hint.className = "text-body-secondary small mb-0 mt-3";
+      hint.textContent = goal
+        ? "Für dieses Hauptziel sind noch keine Zwischenziele vorhanden."
+        : "Diesem Grobplanungsblock ist noch kein Hauptziel zugeordnet.";
+      block.appendChild(hint);
+
+      const entryList = document.createElement("ul");
+      entryList.className = "list-group mt-3";
+      if (entries.length) {
+        entries.forEach((item) => entryList.appendChild(createDetailEntryRow(item)));
+      } else {
+        renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
+      }
+      block.appendChild(entryList);
+    }
+    list.appendChild(block);
   });
 
-  if (!data.length) {
-    renderEmptyList(list, "Keine Detailplanung für diesen Monat");
+  const unassignedEntries = monthlyDetailPlans.filter((item) => !monthlyRoughPlans.some((plan) => plan.id === item.roughPlanId));
+  if (unassignedEntries.length) {
+    const legacyBlock = document.createElement("li");
+    legacyBlock.className = "list-group-item";
+
+    const legacyTitle = document.createElement("strong");
+    legacyTitle.textContent = "Weitere Detailplanung";
+    const legacyHint = document.createElement("small");
+    legacyHint.className = "text-body-secondary d-block mt-1";
+    legacyHint.textContent = "Einträge ohne aktuelle Grobplanungszuordnung";
+    legacyBlock.append(legacyTitle, legacyHint);
+
+    const legacyList = document.createElement("ul");
+    legacyList.className = "list-group mt-3";
+    unassignedEntries.forEach((item) => legacyList.appendChild(createDetailEntryRow(item)));
+    legacyBlock.appendChild(legacyList);
+    list.appendChild(legacyBlock);
+  }
+
+  if (!monthlyRoughPlans.length && !unassignedEntries.length) {
+    renderEmptyList(list, "Keine Grobplanung für diesen Monat");
   }
 }
 

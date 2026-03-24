@@ -203,7 +203,7 @@
               <form id="rough-form" class="row g-2 mt-1">
                 <input type="hidden" id="rough-edit-id" />
                 <div class="col-12 col-md-4">
-                  <input type="date" id="rough-date" class="form-control" required />
+                  <input type="week" id="rough-week" class="form-control" required />
                 </div>
                 <div class="col-12 col-md-3">
                   <input
@@ -259,42 +259,9 @@
                   <input type="month" id="month-select" class="form-control" />
                 </div>
               </div>
-              <form id="detail-form" class="row g-2">
-                <div class="col-12 col-md-4">
-                  <input type="date" id="detail-date" class="form-control" required />
-                </div>
-                <div class="col-12 col-md-3">
-                  <input
-                    type="number"
-                    id="detail-minutes"
-                    class="form-control"
-                    min="5"
-                    step="5"
-                    placeholder="Minuten"
-                    required
-                  />
-                </div>
-                <div class="col-12 col-md">
-                  <input
-                    type="text"
-                    id="detail-topic"
-                    class="form-control"
-                    placeholder="Lerninhalt"
-                    required
-                  />
-                </div>
-                <div class="col-12 col-md">
-                  <input
-                    type="text"
-                    id="detail-milestone"
-                    class="form-control"
-                    placeholder="Zwischenziel"
-                  />
-                </div>
-                <div class="col-12 col-md-auto d-grid">
-                  <button class="btn btn-primary" type="submit">Eintragen</button>
-                </div>
-              </form>
+              <p class="text-body-secondary mt-1 mb-3">
+                Die Detailplanung baut auf den Grobplanungsblöcken des gewählten Monats auf.
+              </p>
               <ul id="detail-list" class="list-group lz-list-panel mt-3"></ul>
             </div>
           </section>

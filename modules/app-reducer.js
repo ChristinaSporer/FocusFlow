@@ -109,6 +109,13 @@ export function appReducer(currentState, action) {
       };
     case "DETAIL_ADD":
       return { ...currentState, detailPlans: [...currentState.detailPlans, action.payload.plan] };
+    case "DETAIL_UPDATE":
+      return {
+        ...currentState,
+        detailPlans: currentState.detailPlans.map((item) =>
+          item.id === action.payload.id ? { ...item, ...action.payload.update } : item
+        ),
+      };
     case "DETAIL_DELETE":
       return {
         ...currentState,

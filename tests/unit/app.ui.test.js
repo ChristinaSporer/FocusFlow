@@ -171,20 +171,42 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("goal-list").textContent).toContain("Noch keine Zwischenziele");
   });
 
-  it("switches to calendar view and renders source-colored events", () => {
-    document.getElementById("detail-date").value = "2026-03-10";
-    document.getElementById("detail-minutes").value = "90";
-    document.getElementById("detail-topic").value = "Architektur";
-    document.getElementById("detail-form").dispatchEvent(
+  it("creates detail planning inside a monthly rough-planning block and renders it in calendar view", () => {
+    document.getElementById("goal-title").value = "SE Ziel";
+    document.getElementById("goal-date").value = "2026-03-20";
+    document.getElementById("goal-form").dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true })
     );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Architektur vertiefen";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const goalId = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = goalId;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector("[data-detail-block-form]");
+    const milestoneSelect = detailForm.querySelector("select");
+    const minutesInput = detailForm.querySelector('input[type="number"]');
+    const topicInput = detailForm.querySelector('input[type="text"]');
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    minutesInput.value = "90";
+    topicInput.value = "Architektur";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     document.getElementById("tab-calendar").click();
 
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
     expect(document.querySelector(".lz-calendar-event.lz-source-detail")?.textContent).toContain(
-      "Architektur"
+      "Architektur vertiefen"
     );
   });
 
@@ -263,22 +285,75 @@ describe("App UI integration (jsdom)", () => {
     document.getElementById("month-select").value = "2026-04";
     document.getElementById("month-select").dispatchEvent(new Event("change", { bubbles: true }));
 
-    document.getElementById("detail-date").value = "2026-04-15";
-    document.getElementById("detail-minutes").value = "45";
-    document.getElementById("detail-topic").value = "April Thema";
-    document.getElementById("detail-form").dispatchEvent(
+    document.getElementById("goal-title").value = "April Goal";
+    document.getElementById("goal-date").value = "2026-04-20";
+    document.getElementById("goal-form").dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true })
     );
 
-    expect(document.getElementById("detail-list").textContent).toContain("April Thema");
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "April Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W16";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector("[data-detail-block-form]");
+    const milestoneSelect = detailForm.querySelector("select");
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('input[type="number"]').value = "45";
+    detailForm.querySelector('input[type="text"]').value = "April Thema";
+    detailForm.dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    expect(document.getElementById("detail-list").textContent).toContain("April Zwischenziel");
 
     document.getElementById("month-select").remove();
     document.getElementById("tab-calendar").click();
 
-    expect(document.getElementById("detail-list").textContent).not.toContain("April Thema");
+    expect(document.getElementById("detail-list").textContent).not.toContain("April Zwischenziel");
     expect(document.getElementById("detail-list").textContent).toContain(
-      "Keine Detailplanung für diesen Monat"
+      "Keine Grobplanung für diesen Monat"
     );
+  });
+
+  it("renders monthly rough-planning blocks with selectable milestones", () => {
+    document.getElementById("goal-title").value = "Block Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Erstes Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneCheckbox = document.querySelector("#goal-list [data-goal-milestone-toggle]");
+    milestoneCheckbox.checked = true;
+    milestoneCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "3";
+    document.getElementById("rough-note").value = "Sprintplanung";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    expect(document.getElementById("detail-list").textContent).toContain("3 h geplant für Block Goal");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 0 von 180 Min");
+    const blockForm = document.querySelector("[data-detail-block-form]");
+    expect(blockForm).toBeTruthy();
+    expect(blockForm.querySelector("select").textContent).toContain("Erstes Zwischenziel (erledigt)");
   });
 
   it("does not register duplicate handlers on second bootstrap", () => {
@@ -327,7 +402,7 @@ describe("App UI integration (jsdom)", () => {
     const dropdown = document.getElementById("rough-goal");
     const goalId = Array.from(dropdown.options)[1].value;
 
-    document.getElementById("rough-date").value = "2026-03-15";
+    document.getElementById("rough-week").value = "2026-W11";
     document.getElementById("rough-hours").value = "3";
     document.getElementById("rough-note").value = "Preparation";
     document.getElementById("rough-goal").value = goalId;
@@ -339,6 +414,7 @@ describe("App UI integration (jsdom)", () => {
     expect(list.textContent).toContain("3 h geplant");
     expect(list.textContent).toContain("Goal A");
     expect(list.textContent).toContain("Preparation");
+    expect(list.textContent).toContain("KW 11/2026");
   });
 
   it("edits rough plan including goal assignment", () => {
@@ -348,7 +424,7 @@ describe("App UI integration (jsdom)", () => {
       new Event("submit", { bubbles: true, cancelable: true })
     );
 
-    document.getElementById("rough-date").value = "2026-03-10";
+    document.getElementById("rough-week").value = "2026-W11";
     document.getElementById("rough-hours").value = "4";
     document.getElementById("rough-note").value = "Initial";
     document.getElementById("rough-form").dispatchEvent(
@@ -362,6 +438,7 @@ describe("App UI integration (jsdom)", () => {
     editButton.click();
 
     expect(document.getElementById("rough-edit-id").value).toBeTruthy();
+    expect(document.getElementById("rough-week").value).toBe("2026-W11");
     expect(document.getElementById("rough-hours").value).toBe("4");
     expect(document.getElementById("rough-note").value).toBe("Initial");
     expect(document.getElementById("rough-submit").textContent).toBe("Änderungen speichern");
@@ -389,7 +466,7 @@ describe("App UI integration (jsdom)", () => {
   });
 
   it("cancels rough plan edit and resets form", () => {
-    document.getElementById("rough-date").value = "2026-03-12";
+    document.getElementById("rough-week").value = "2026-W11";
     document.getElementById("rough-hours").value = "2";
     document.getElementById("rough-form").dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true })
@@ -404,11 +481,51 @@ describe("App UI integration (jsdom)", () => {
     document.getElementById("rough-cancel-edit").click();
 
     expect(document.getElementById("rough-edit-id").value).toBe("");
-    expect(document.getElementById("rough-date").value).toBe("");
+    expect(document.getElementById("rough-week").value).toBe("");
     expect(document.getElementById("rough-hours").value).toBe("");
     expect(document.getElementById("rough-note").value).toBe("");
     expect(document.getElementById("rough-goal").value).toBe("");
     expect(document.getElementById("rough-submit").textContent).toBe("Planen");
     expect(document.getElementById("rough-cancel-edit").classList.contains("d-none")).toBe(true);
+  });
+
+  it("edits an existing detail entry directly in the monthly block", () => {
+    document.getElementById("goal-title").value = "Edit Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Alt Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "3";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    let detailForm = document.querySelector("[data-detail-block-form]");
+    let milestoneSelect = detailForm.querySelector("select");
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('input[type="number"]').value = "30";
+    detailForm.querySelector('input[type="text"]').value = "Erster Stand";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    document.querySelector('[aria-label="Detailplanung bearbeiten"]').click();
+
+    detailForm = document.querySelector("[data-detail-block-form]");
+    expect(detailForm.querySelector('[data-detail-cancel]')?.classList.contains("d-none")).toBe(false);
+    detailForm.querySelector('input[type="number"]').value = "45";
+    detailForm.querySelector('input[type="text"]').value = "Überarbeitet";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    expect(document.getElementById("detail-list").textContent).toContain("45 Min für Alt Zwischenziel");
+    expect(document.getElementById("detail-list").textContent).toContain("Überarbeitet");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 45 von 180 Min");
   });
 });

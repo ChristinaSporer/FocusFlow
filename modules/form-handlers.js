@@ -1,5 +1,5 @@
 import { byId } from "./dom.js";
-import { monthOf } from "./date-utils.js";
+import { monthOf, weekDateFromValue, weekValueFromDate } from "./date-utils.js";
 import { uid } from "./app-utils.js";
 
 export function initFormHandlers({
@@ -52,7 +52,7 @@ export function initFormHandlers({
 
   function resetRoughForm() {
     const editId = byId("rough-edit-id");
-    const date = byId("rough-date");
+    const week = byId("rough-week");
     const hours = byId("rough-hours");
     const note = byId("rough-note");
     const goal = byId("rough-goal");
@@ -60,7 +60,7 @@ export function initFormHandlers({
     const cancel = byId("rough-cancel-edit");
 
     if (editId) editId.value = "";
-    if (date) date.value = "";
+    if (week) week.value = "";
     if (hours) hours.value = "";
     if (note) note.value = "";
     if (goal) goal.value = "";
@@ -70,7 +70,7 @@ export function initFormHandlers({
 
   function startRoughEdit(plan) {
     const editId = byId("rough-edit-id");
-    const date = byId("rough-date");
+    const week = byId("rough-week");
     const hours = byId("rough-hours");
     const note = byId("rough-note");
     const goal = byId("rough-goal");
@@ -78,13 +78,13 @@ export function initFormHandlers({
     const cancel = byId("rough-cancel-edit");
 
     if (editId) editId.value = plan.id;
-    if (date) date.value = plan.date;
+    if (week) week.value = plan.week || weekValueFromDate(plan.date);
     if (hours) hours.value = plan.hours;
     if (note) note.value = plan.note || "";
     if (goal) goal.value = plan.goalId || "";
     if (submit) submit.textContent = "Änderungen speichern";
     if (cancel) cancel.classList.remove("d-none");  
-    if (date) date.focus();
+    if (week) week.focus();
   }
 
   function startGoalEdit(goal) {
@@ -142,24 +142,25 @@ export function initFormHandlers({
   byId("rough-form").addEventListener("submit", (event) => {
     event.preventDefault();
     const editId = byId("rough-edit-id").value;
-    const date = byId("rough-date").value;
+    const week = byId("rough-week").value;
+    const date = weekDateFromValue(week);
     const hours = Number(byId("rough-hours").value);
     const note = byId("rough-note").value.trim();
     const goalId = byId("rough-goal").value || null;
-    if (!date || !hours) return;
+    if (!week || !date || !hours) return;
 
     if (editId) {
       dispatch({
         type: "ROUGH_UPDATE",
         payload: {
           id: editId,
-          update: { date, hours, note, goalId },
+          update: { week, date, hours, note, goalId },
         },
       });
     } else {
       dispatch({
         type: "ROUGH_ADD",
-        payload: { plan: { id: uid(), date, hours, note, goalId } },
+        payload: { plan: { id: uid(), week, date, hours, note, goalId } },
       });
     }
 
@@ -170,24 +171,27 @@ export function initFormHandlers({
 
   byId("rough-cancel-edit")?.addEventListener("click", resetRoughForm);
 
-  byId("detail-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const date = byId("detail-date").value;
-    const minutes = Number(byId("detail-minutes").value);
-    const topic = byId("detail-topic").value.trim();
-    const milestone = byId("detail-milestone").value.trim();
-    if (!date || !minutes || !topic) return;
+  const detailForm = byId("detail-form");
+  if (detailForm) {
+    detailForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const date = byId("detail-date").value;
+      const minutes = Number(byId("detail-minutes").value);
+      const topic = byId("detail-topic").value.trim();
+      const milestone = byId("detail-milestone").value.trim();
+      if (!date || !minutes || !topic) return;
 
-    dispatch({
-      type: "DETAIL_ADD",
-      payload: {
-        plan: { id: uid(), date, minutes, topic, milestone, done: false },
-      },
+      dispatch({
+        type: "DETAIL_ADD",
+        payload: {
+          plan: { id: uid(), date, minutes, topic, milestone, done: false },
+        },
+      });
+      event.target.reset();
+      touchActivity();
+      renderAll();
     });
-    event.target.reset();
-    touchActivity();
-    renderAll();
-  });
+  }
 
   byId("month-select").addEventListener("change", renderAll);
 

@@ -1,5 +1,6 @@
 import { byId } from "./dom.js";
 import { addDays, formatYmd, monthOf } from "./date-utils.js";
+import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 
 const SOURCE_META = {
   detail: { label: "Detailplanung", className: "lz-source-detail" },
@@ -23,13 +24,21 @@ export function createCalendarManager({ getState, dispatch }) {
   function getCalendarEvents() {
     const state = getState();
 
-    const detailEvents = state.detailPlans.map((item) => ({
-      id: item.id,
-      source: "detail",
-      date: item.date,
-      title: `${item.topic} (${item.minutes} Min)`,
-      hint: item.milestone ? `Zwischenziel: ${item.milestone}` : "",
-    }));
+    const detailEvents = state.detailPlans.map((item) => {
+      const { goal, milestone } = resolveDetailPlanContext(state, item);
+      const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
+      const hintParts = [];
+      if (goal?.title) hintParts.push(`Hauptziel: ${goal.title}`);
+      if (item.topic && item.topic !== focusTitle) hintParts.push(item.topic);
+
+      return {
+        id: item.id,
+        source: "detail",
+        date: item.date,
+        title: `${focusTitle} (${item.minutes} Min)`,
+        hint: hintParts.join(" · "),
+      };
+    });
 
     const roughEvents = state.roughPlans.map((plan) => ({
       id: plan.id,

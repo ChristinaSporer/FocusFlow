@@ -1,5 +1,6 @@
 import { byId } from "./dom.js";
 import { formatYmd, monthOf, nowIso } from "./date-utils.js";
+import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 import { uid } from "./app-utils.js";
 import { hashText, parseIcsEvents, serializeEventsToIcs } from "./ics-utils.js";
 
@@ -74,12 +75,20 @@ export function createIcsManager({ getState, dispatch }) {
   function buildExportEvents() {
     const state = getState();
 
-    const detail = state.detailPlans.map((item) => ({
-      uid: item.id || uid(),
-      date: item.date,
-      summary: `Detailplanung: ${item.topic}`,
-      description: `${item.minutes} Minuten${item.milestone ? `; Zwischenziel: ${item.milestone}` : ""}`,
-    }));
+    const detail = state.detailPlans.map((item) => {
+      const { goal, milestone } = resolveDetailPlanContext(state, item);
+      const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
+      const descriptionParts = [`${item.minutes} Minuten`];
+      if (goal?.title) descriptionParts.push(`Hauptziel: ${goal.title}`);
+      if (item.topic && item.topic !== focusTitle) descriptionParts.push(`Lerninhalt: ${item.topic}`);
+
+      return {
+        uid: item.id || uid(),
+        date: item.date,
+        summary: `Detailplanung: ${focusTitle}`,
+        description: descriptionParts.join("; "),
+      };
+    });
 
     const rough = state.roughPlans.map((item) => ({
       uid: item.id || uid(),

@@ -47,8 +47,20 @@ function baseState() {
         milestones: [{ id: "m1", title: "MS1", done: false }],
       },
     ],
-    roughPlans: [{ id: "r1", date: "2026-04-02", hours: 2, note: "Read" }],
-    detailPlans: [{ id: "d1", date: "2026-04-03", topic: "Topic", minutes: 60, done: false }],
+    roughPlans: [{ id: "r1", date: "2026-04-02", hours: 2, note: "Read", goalId: "g1" }],
+    detailPlans: [
+      {
+        id: "d1",
+        date: "2026-04-03",
+        topic: "Topic",
+        milestone: "MS1",
+        milestoneId: "m1",
+        goalId: "g1",
+        roughPlanId: "r1",
+        minutes: 60,
+        done: false,
+      },
+    ],
     trackedSessions: [{ id: "t1", minutes: 30 }],
     importedEvents: [{ id: "i1", sourceKey: "a", summary: "old" }],
     settings: {
@@ -492,7 +504,7 @@ describe("modules/form-handlers", () => {
       '<button id="goal-cancel-edit" type="button" class="d-none"></button>',
       '<form id="rough-form"><button id="rough-submit" type="submit">X</button></form>',
       '<input id="rough-edit-id" value="">',
-      '<input id="rough-date" value="">',
+      '<input id="rough-week" value="">',
       '<input id="rough-hours" value="">',
       '<input id="rough-note" value="">',
       '<select id="rough-goal"><option value="">Kein Ziel</option></select>',
@@ -621,7 +633,7 @@ describe("modules/form-handlers", () => {
     const { deps } = setupHandlers();
 
     const roughForm = document.getElementById("rough-form");
-    document.getElementById("rough-date").value = "2026-03-29";
+    document.getElementById("rough-week").value = "2026-W13";
     document.getElementById("rough-hours").value = "2";
     document.getElementById("rough-note").value = "Note";
     roughForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
@@ -908,7 +920,7 @@ describe("modules/calendar-manager", () => {
     const detailEventsOnDate = Array.from(document.querySelectorAll(".lz-calendar-event.lz-source-detail"))
       .filter((element) => element.parentElement.querySelector(".lz-calendar-day-number")?.textContent === "24")
       .map((element) => element.textContent);
-    expect(detailEventsOnDate).toEqual(["Alpha (30 Min)", "Design (45 Min)"]);
+    expect(detailEventsOnDate).toEqual(["Alpha (30 Min)", "MS1 (45 Min)"]);
 
     const allEventsByDate = Array.from(document.querySelectorAll(".lz-calendar-event")).map((element) => ({
       text: element.textContent,
@@ -1039,25 +1051,34 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("achieved-list").textContent).toContain("Erreicht am");
   });
 
-  it("renders rough/detail/tracked lists including empty states and action handlers", () => {
+  it("renders rough/detail/tracked lists including block-based detail planning", () => {
     const dispatch = vi.fn();
     const onRenderAll = vi.fn();
 
     renderRoughPlans({
       state: {
         roughPlans: [
-          { id: "r1", date: "2026-03-24", hours: 2, note: "Heute" },
-          { id: "r2", date: "2027-03-24", hours: 2, note: "Zu spät" },
+          { id: "r1", date: "2026-03-24", week: "2026-W13", hours: 2, note: "Heute", goalId: "g1" },
+          { id: "r3", date: "2026-03-26", week: "2026-W13", hours: 1, note: "Vorher", goalId: "g2" },
+          { id: "r2", date: "2027-03-24", week: "2027-W12", hours: 2, note: "Zu spät" },
+        ],
+        goals: [
+          { id: "g1", title: "Goal", milestones: [] },
+          { id: "g2", title: "A Goal", milestones: [] },
         ],
       },
       dispatch,
       onRenderAll,
     });
     expect(document.getElementById("rough-list").textContent).toContain("2 h geplant");
+    expect(document.getElementById("rough-list").textContent).toContain("KW 13/2026");
     expect(document.getElementById("rough-list").textContent).not.toContain("Zu spät");
 
+    const roughRows = Array.from(document.querySelectorAll("#rough-list .list-group-item"));
+    expect(roughRows[0].textContent).toContain("A Goal");
+
     document.querySelector("#rough-list .btn-outline-danger").click();
-    expect(dispatch).toHaveBeenCalledWith({ type: "ROUGH_DELETE", payload: { id: "r1" } });
+    expect(dispatch).toHaveBeenCalledWith({ type: "ROUGH_DELETE", payload: { id: "r3" } });
 
     document.getElementById("rough-list").innerHTML = "";
     renderRoughPlans({ state: { roughPlans: [] }, dispatch, onRenderAll });
@@ -1065,15 +1086,39 @@ describe("modules/render-main-view", () => {
 
     renderDetailPlans({
       state: {
+        goals: [
+          {
+            id: "g1",
+            title: "Goal",
+            milestones: [{ id: "m1", title: "M", done: true }],
+          },
+        ],
+        roughPlans: [{ id: "r1", date: "2026-03-25", week: "2026-W13", hours: 2, note: "Block", goalId: "g1" }],
         detailPlans: [
-          { id: "d1", date: "2026-03-25", minutes: 45, topic: "A", milestone: "M", done: false },
-          { id: "d2", date: "2026-04-01", minutes: 30, topic: "B", milestone: "", done: true },
+          {
+            id: "d1",
+            date: "2026-03-25",
+            minutes: 45,
+            topic: "A",
+            milestone: "M",
+            milestoneId: "m1",
+            goalId: "g1",
+            roughPlanId: "r1",
+            done: false,
+          },
+          { id: "d2", date: "2026-03-26", minutes: 30, topic: "Legacy", milestone: "", done: true },
         ],
       },
       dispatch,
       onRenderAll,
       selectedMonth: "2026-03",
     });
+
+    expect(document.getElementById("detail-list").textContent).toContain("2 h geplant für Goal");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 45 von 120 Min");
+    expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
+    expect(document.querySelector('[data-detail-block-form="r1"]')).toBeTruthy();
+    expect(document.querySelector('[aria-label="Detailplanung bearbeiten"]')).toBeTruthy();
 
     const detailCheckbox = document.querySelector("#detail-list input[type='checkbox']");
     detailCheckbox.checked = true;
@@ -1084,8 +1129,8 @@ describe("modules/render-main-view", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "DETAIL_DELETE", payload: { id: "d1" } });
 
     document.getElementById("detail-list").innerHTML = "";
-    renderDetailPlans({ state: { detailPlans: [] }, dispatch, onRenderAll, selectedMonth: "2026-03" });
-    expect(document.getElementById("detail-list").textContent).toContain("Keine Detailplanung");
+    renderDetailPlans({ state: { goals: [], roughPlans: [], detailPlans: [] }, dispatch, onRenderAll, selectedMonth: "2026-03" });
+    expect(document.getElementById("detail-list").textContent).toContain("Keine Grobplanung");
 
     renderTrackedSessions({
       state: {
@@ -1102,6 +1147,63 @@ describe("modules/render-main-view", () => {
     document.getElementById("track-list").innerHTML = "";
     renderTrackedSessions({ state: { trackedSessions: [] }, dispatch, onRenderAll });
     expect(document.getElementById("track-list").textContent).toContain("Noch keine getrackte Lernzeit");
+  });
+
+  it("shows a rough planning week in both overlapping months", () => {
+    const dispatch = vi.fn();
+    const onRenderAll = vi.fn();
+    const state = {
+      goals: [
+        {
+          id: "g1",
+          title: "Cross Goal",
+          milestones: [{ id: "m1", title: "Milestone", done: false }],
+        },
+      ],
+      roughPlans: [
+        {
+          id: "r-cross",
+          date: "2026-03-30",
+          week: "2026-W14",
+          hours: 2,
+          note: "KW mit Monatswechsel",
+          goalId: "g1",
+        },
+      ],
+      detailPlans: [
+        {
+          id: "d-cross-1",
+          date: "2026-03-31",
+          minutes: 120,
+          topic: "März Eintrag",
+          milestone: "Milestone",
+          milestoneId: "m1",
+          goalId: "g1",
+          roughPlanId: "r-cross",
+          done: false,
+        },
+        {
+          id: "d-cross-2",
+          date: "2026-04-02",
+          minutes: 200,
+          topic: "April Eintrag",
+          milestone: "Milestone",
+          milestoneId: "m1",
+          goalId: "g1",
+          roughPlanId: "r-cross",
+          done: false,
+        },
+      ],
+    };
+
+    renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth: "2026-03" });
+    expect(document.getElementById("detail-list").textContent).toContain("Cross Goal");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 320 von 120 Min");
+
+    document.getElementById("detail-list").innerHTML = "";
+    renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth: "2026-04" });
+    expect(document.getElementById("detail-list").textContent).toContain("Cross Goal");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 320 von 120 Min");
   });
 
   it("renders stats for zero-planned and non-zero planned branches", () => {
@@ -1200,6 +1302,15 @@ describe("modules/app-reducer", () => {
     state = appReducer(state, {
       type: "DETAIL_ADD",
       payload: { plan: { id: "d2", date: "2026-04-11", minutes: 45, done: false } },
+    });
+    state = appReducer(state, {
+      type: "DETAIL_UPDATE",
+      payload: { id: "d2", update: { roughPlanId: "r1", goalId: "g1", milestoneId: "m1" } },
+    });
+    expect(state.detailPlans.find((plan) => plan.id === "d2")).toMatchObject({
+      roughPlanId: "r1",
+      goalId: "g1",
+      milestoneId: "m1",
     });
     state = appReducer(state, { type: "DETAIL_SET_DONE", payload: { id: "d2", done: true } });
     expect(state.detailPlans.find((plan) => plan.id === "d2").done).toBe(true);

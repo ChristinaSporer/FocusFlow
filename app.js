@@ -57,7 +57,7 @@ function renderAll() {
     ...renderContext,
     onEditRoughPlan: roughFormController.startRoughEdit,
   });
-  renderDetailPlans({ ...renderContext, selectedMonth });
+  renderDetailPlans({ ...renderContext, selectedMonth, onActivity: touchActivity });
   renderTrackedSessions(renderContext);
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
