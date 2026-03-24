@@ -199,7 +199,7 @@
         <div class="col">
           <section class="card shadow-sm h-100">
             <div class="card-body">
-              <h2 class="h4">2) Grobplanung Lernzeit (6 Monate)</h2>
+              <h2 class="h4">2) Grobplanung Lernzeit</h2>
               <form id="rough-form" class="row g-2 mt-1">
                 <input type="hidden" id="rough-edit-id" />
                 <div class="col-12 col-md-4">
@@ -217,17 +217,17 @@
                   />
                 </div>
                 <div class="col-12 col-md">
-                  <input
-                    type="text"
-                    id="rough-note"
-                    class="form-control"
-                    placeholder="Thema (optional)"
-                  />
-                </div>
-                <div class="col-12 col-md">
                   <select id="rough-goal" class="form-control">
                     <option value="">Kein Ziel zugeordnet</option>
                   </select>
+                </div>
+                <div class="col-12">
+                  <textarea
+                    id="rough-note"
+                    class="form-control"
+                    placeholder="Beschreibung (optional)"
+                    rows="1"
+                  ></textarea>
                 </div>
                 <div class="col-12 col-md-auto d-grid">
                   <button id="rough-submit" class="btn btn-primary" type="submit">Planen</button>
@@ -250,7 +250,7 @@
         <div class="col">
           <section class="card shadow-sm h-100">
             <div class="card-body">
-              <h2 class="h4">3) Detailplanung + Zwischenziele (1 Monat)</h2>
+              <h2 class="h4">3) Detailplanung</h2>
               <div class="row g-2 align-items-center mb-3 mt-1">
                 <div class="col-auto">
                   <label class="form-label mb-0" for="month-select">Monat:</label>
@@ -268,8 +268,8 @@
                     type="number"
                     id="detail-minutes"
                     class="form-control"
-                    min="15"
-                    step="15"
+                    min="5"
+                    step="5"
                     placeholder="Minuten"
                     required
                   />
