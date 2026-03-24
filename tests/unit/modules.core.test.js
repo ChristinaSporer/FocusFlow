@@ -1148,7 +1148,8 @@ describe("modules/render-main-view", () => {
 
     document.getElementById("detail-list").innerHTML = "";
     renderDetailPlans({ state: { goals: [], roughPlans: [], detailPlans: [] }, dispatch, onRenderAll, selectedMonth: "2026-03" });
-    expect(document.getElementById("detail-list").textContent).toContain("Keine Grobplanung");
+    expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
+    expect(document.querySelector('[data-detail-block-form="additional"]')).toBeTruthy();
 
     renderTrackedSessions({
       state: {

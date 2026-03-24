@@ -415,6 +415,9 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     .filter((item) => monthOf(item.date) === selectedMonth)
     .sort((a, b) => a.date.localeCompare(b.date));
 
+  const todayIso = nowIso().slice(0, 10);
+  const defaultMonthDate = todayIso.startsWith(selectedMonth) ? todayIso : `${selectedMonth}-01`;
+
   function createDetailEntryRow(item, { onEdit } = {}) {
     const { goal, milestone } = resolveDetailPlanContext(state, item);
     const flag = document.createElement("input");
@@ -450,6 +453,192 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     });
   }
 
+  function createDetailBlockForm({
+    blockKey,
+    defaultDate,
+    goal,
+    milestones,
+    roughPlanId,
+    onDone,
+  }) {
+    const form = document.createElement("form");
+    form.className = "row g-2 mt-3";
+    form.setAttribute("data-detail-block-form", blockKey);
+
+    const editIdInput = document.createElement("input");
+    editIdInput.type = "hidden";
+    editIdInput.setAttribute("data-detail-edit-id", blockKey);
+    form.appendChild(editIdInput);
+
+    const dateCol = document.createElement("div");
+    dateCol.className = "col-12 col-lg-3";
+    const dateInput = document.createElement("input");
+    dateInput.type = "date";
+    dateInput.className = "form-control";
+    dateInput.required = true;
+    dateInput.value = defaultDate;
+    dateInput.setAttribute("data-detail-date", blockKey);
+    dateCol.appendChild(dateInput);
+
+    const milestoneCol = document.createElement("div");
+    milestoneCol.className = "col-12 col-lg-4";
+    const milestoneSelect = document.createElement("select");
+    milestoneSelect.className = "form-control";
+    milestoneSelect.setAttribute("data-detail-milestone-select", blockKey);
+
+    const emptyOption = document.createElement("option");
+    emptyOption.value = "";
+    emptyOption.textContent = "Kein Zwischenziel (optional)";
+    milestoneSelect.appendChild(emptyOption);
+
+    milestones.forEach((milestone) => {
+      const option = document.createElement("option");
+      option.value = milestone.id;
+      const goalLabel = milestone.goal?.title ? ` - ${milestone.goal.title}` : "";
+      option.textContent = milestone.done
+        ? `${milestone.title}${goalLabel} (erledigt)`
+        : `${milestone.title}${goalLabel}`;
+      milestoneSelect.appendChild(option);
+    });
+    milestoneCol.appendChild(milestoneSelect);
+
+    const hoursCol = document.createElement("div");
+    hoursCol.className = "col-12 col-lg-2";
+    const hoursInput = document.createElement("input");
+    hoursInput.type = "number";
+    hoursInput.className = "form-control";
+    hoursInput.min = "0";
+    hoursInput.step = "0.5";
+    hoursInput.placeholder = "Stunden";
+    hoursInput.setAttribute("data-detail-hours", blockKey);
+    hoursCol.appendChild(hoursInput);
+
+    const minutesCol = document.createElement("div");
+    minutesCol.className = "col-12 col-lg-2";
+    const minutesInput = document.createElement("input");
+    minutesInput.type = "number";
+    minutesInput.className = "form-control";
+    minutesInput.min = "0";
+    minutesInput.step = "1";
+    minutesInput.placeholder = "Minuten";
+    minutesInput.setAttribute("data-detail-minutes", blockKey);
+    minutesCol.appendChild(minutesInput);
+
+    const topicCol = document.createElement("div");
+    topicCol.className = "col-12 col-lg";
+    const topicInput = document.createElement("input");
+    topicInput.type = "text";
+    topicInput.className = "form-control";
+    topicInput.placeholder = "Lerninhalt (optional)";
+    topicInput.setAttribute("data-detail-topic", blockKey);
+    topicCol.appendChild(topicInput);
+
+    const buttonCol = document.createElement("div");
+    buttonCol.className = "col-12 col-lg-auto d-grid";
+    const submitButton = document.createElement("button");
+    submitButton.type = "submit";
+    submitButton.className = "btn btn-primary";
+    submitButton.textContent = "Zeit eintragen";
+    buttonCol.appendChild(submitButton);
+
+    const cancelCol = document.createElement("div");
+    cancelCol.className = "col-12 col-lg-auto d-grid";
+    const cancelButton = document.createElement("button");
+    cancelButton.type = "button";
+    cancelButton.className = "btn btn-outline-secondary d-none";
+    cancelButton.textContent = "Bearbeitung abbrechen";
+    cancelButton.setAttribute("data-detail-cancel", blockKey);
+    cancelCol.appendChild(cancelButton);
+
+    function resetBlockForm() {
+      editIdInput.value = "";
+      dateInput.value = defaultDate;
+      milestoneSelect.value = "";
+      hoursInput.value = "";
+      minutesInput.value = "";
+      topicInput.value = "";
+      submitButton.textContent = "Zeit eintragen";
+      cancelButton.classList.add("d-none");
+    }
+
+    function startDetailEdit(item) {
+      editIdInput.value = item.id;
+      dateInput.value = item.date;
+      milestoneSelect.value = item.milestoneId || "";
+      hoursInput.value = Math.floor(Number(item.minutes || 0) / 60);
+      minutesInput.value = Number(item.minutes || 0) % 60;
+      topicInput.value = item.topic || "";
+      submitButton.textContent = "Änderungen speichern";
+      cancelButton.classList.remove("d-none");
+      dateInput.focus();
+    }
+
+    cancelButton.addEventListener("click", resetBlockForm);
+
+    form.append(dateCol, milestoneCol, hoursCol, minutesCol, topicCol, buttonCol, cancelCol);
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+
+      const editId = editIdInput.value;
+      const date = dateInput.value;
+      const milestoneId = milestoneSelect.value;
+      const hasHours = hoursInput.value !== "";
+      const hasMinutes = minutesInput.value !== "";
+      const hoursValue = hasHours ? Number(hoursInput.value) : 0;
+      const minuteValue = hasMinutes ? Number(minutesInput.value) : 0;
+      const minutes = Math.round(hoursValue * 60 + minuteValue);
+      const topic = topicInput.value.trim();
+      const selectedMilestone = milestones.find((item) => item.id === milestoneId) || null;
+
+      if (!date) return;
+      if (!Number.isFinite(hoursValue) || !Number.isFinite(minuteValue)) return;
+      if (hoursValue < 0 || minuteValue < 0) return;
+      if (!hasHours && !hasMinutes) return;
+      if (minutes <= 0) return;
+      if (!selectedMilestone && !topic) return;
+
+      const payloadPlan = {
+        date,
+        minutes,
+        topic,
+        milestone: selectedMilestone?.title || "",
+        milestoneId: selectedMilestone?.id || null,
+        goalId: selectedMilestone?.goalId || goal?.id || null,
+        roughPlanId: roughPlanId || null,
+      };
+
+      if (editId) {
+        dispatch({
+          type: "DETAIL_UPDATE",
+          payload: {
+            id: editId,
+            update: payloadPlan,
+          },
+        });
+      } else {
+        dispatch({
+          type: "DETAIL_ADD",
+          payload: {
+            plan: {
+              id: uid(),
+              ...payloadPlan,
+              done: false,
+            },
+          },
+        });
+      }
+
+      onActivity?.();
+      resetBlockForm();
+      onDone?.();
+    });
+
+    return {
+      form,
+      startDetailEdit,
+    };
+  }
+
   monthlyRoughPlans.forEach((plan) => {
     const goal = plan.goalId ? state.goals.find((item) => item.id === plan.goalId) : null;
     const milestones = Array.isArray(goal?.milestones) ? goal.milestones : [];
@@ -481,233 +670,73 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     header.appendChild(allocation);
     block.appendChild(header);
 
-    if (goal && milestones.length) {
-      const form = document.createElement("form");
-      form.className = "row g-2 mt-3";
-      form.setAttribute("data-detail-block-form", plan.id);
+    const hint = document.createElement("p");
+    hint.className = "text-body-secondary small mb-0 mt-3";
+    hint.textContent = milestones.length
+      ? "Zwischenziel kann ausgewählt werden oder Freitext ohne Zwischenziel."
+      : "Kein Zwischenziel erforderlich: Detailplanung per Freitext möglich.";
+    block.appendChild(hint);
 
-      const editIdInput = document.createElement("input");
-      editIdInput.type = "hidden";
-      editIdInput.setAttribute("data-detail-edit-id", plan.id);
-      form.appendChild(editIdInput);
+    const { form, startDetailEdit } = createDetailBlockForm({
+      blockKey: plan.id,
+      defaultDate: plan.date,
+      goal,
+      milestones,
+      roughPlanId: plan.id,
+      onDone: onRenderAll,
+    });
+    block.appendChild(form);
 
-      const dateCol = document.createElement("div");
-      dateCol.className = "col-12 col-lg-3";
-      const dateInput = document.createElement("input");
-      dateInput.type = "date";
-      dateInput.className = "form-control";
-      dateInput.required = true;
-      dateInput.value = plan.date;
-      dateInput.setAttribute("data-detail-date", plan.id);
-      dateCol.appendChild(dateInput);
-
-      const milestoneCol = document.createElement("div");
-      milestoneCol.className = "col-12 col-lg-4";
-      const milestoneSelect = document.createElement("select");
-      milestoneSelect.className = "form-control";
-      milestoneSelect.required = true;
-      milestoneSelect.setAttribute("data-detail-milestone-select", plan.id);
-
-      const emptyOption = document.createElement("option");
-      emptyOption.value = "";
-      emptyOption.textContent = "Zwischenziel auswählen";
-      milestoneSelect.appendChild(emptyOption);
-
-      milestones.forEach((milestone) => {
-        const option = document.createElement("option");
-        option.value = milestone.id;
-        option.textContent = milestone.done ? `${milestone.title} (erledigt)` : milestone.title;
-        milestoneSelect.appendChild(option);
-      });
-      milestoneCol.appendChild(milestoneSelect);
-
-      const hoursCol = document.createElement("div");
-      hoursCol.className = "col-12 col-lg-2";
-      const hoursInput = document.createElement("input");
-      hoursInput.type = "number";
-      hoursInput.className = "form-control";
-      hoursInput.min = "0";
-      hoursInput.step = "0.5";
-      hoursInput.placeholder = "Stunden";
-      hoursInput.setAttribute("data-detail-hours", plan.id);
-      hoursCol.appendChild(hoursInput);
-
-      const minutesCol = document.createElement("div");
-      minutesCol.className = "col-12 col-lg-2";
-      const minutesInput = document.createElement("input");
-      minutesInput.type = "number";
-      minutesInput.className = "form-control";
-      minutesInput.min = "0";
-      minutesInput.step = "1";
-      minutesInput.placeholder = "Minuten";
-      minutesInput.setAttribute("data-detail-minutes", plan.id);
-      minutesCol.appendChild(minutesInput);
-
-      const topicCol = document.createElement("div");
-      topicCol.className = "col-12 col-lg";
-      const topicInput = document.createElement("input");
-      topicInput.type = "text";
-      topicInput.className = "form-control";
-      topicInput.placeholder = "Lerninhalt (optional)";
-      topicInput.setAttribute("data-detail-topic", plan.id);
-      topicCol.appendChild(topicInput);
-
-      const buttonCol = document.createElement("div");
-      buttonCol.className = "col-12 col-lg-auto d-grid";
-      const submitButton = document.createElement("button");
-      submitButton.type = "submit";
-      submitButton.className = "btn btn-primary";
-      submitButton.textContent = "Zeit eintragen";
-      buttonCol.appendChild(submitButton);
-
-      const cancelCol = document.createElement("div");
-      cancelCol.className = "col-12 col-lg-auto d-grid";
-      const cancelButton = document.createElement("button");
-      cancelButton.type = "button";
-      cancelButton.className = "btn btn-outline-secondary d-none";
-      cancelButton.textContent = "Bearbeitung abbrechen";
-      cancelButton.setAttribute("data-detail-cancel", plan.id);
-      cancelCol.appendChild(cancelButton);
-
-      function resetBlockForm() {
-        editIdInput.value = "";
-        dateInput.value = plan.date;
-        milestoneSelect.value = "";
-        hoursInput.value = "";
-        minutesInput.value = "";
-        topicInput.value = "";
-        submitButton.textContent = "Zeit eintragen";
-        cancelButton.classList.add("d-none");
-      }
-
-      function startDetailEdit(item) {
-        editIdInput.value = item.id;
-        dateInput.value = item.date;
-        milestoneSelect.value = item.milestoneId || "";
-        hoursInput.value = Math.floor(Number(item.minutes || 0) / 60);
-        minutesInput.value = Number(item.minutes || 0) % 60;
-        topicInput.value = item.topic || "";
-        submitButton.textContent = "Änderungen speichern";
-        cancelButton.classList.remove("d-none");
-        dateInput.focus();
-      }
-
-      cancelButton.addEventListener("click", resetBlockForm);
-
-      form.append(dateCol, milestoneCol, hoursCol, minutesCol, topicCol, buttonCol, cancelCol);
-      form.addEventListener("submit", (event) => {
-        event.preventDefault();
-
-        const editId = editIdInput.value;
-        const date = dateInput.value;
-        const milestoneId = milestoneSelect.value;
-        const hasHours = hoursInput.value !== "";
-        const hasMinutes = minutesInput.value !== "";
-        const hoursValue = hasHours ? Number(hoursInput.value) : 0;
-        const minuteValue = hasMinutes ? Number(minutesInput.value) : 0;
-        const minutes = Math.round(hoursValue * 60 + minuteValue);
-        const topic = topicInput.value.trim();
-        const selectedMilestone = milestones.find((item) => item.id === milestoneId);
-        if (!date || !milestoneId || !selectedMilestone) return;
-        if (!Number.isFinite(hoursValue) || !Number.isFinite(minuteValue)) return;
-        if (hoursValue < 0 || minuteValue < 0) return;
-        if (!hasHours && !hasMinutes) return;
-        if (minutes <= 0) return;
-
-        if (editId) {
-          dispatch({
-            type: "DETAIL_UPDATE",
-            payload: {
-              id: editId,
-              update: {
-                date,
-                minutes,
-                topic,
-                milestone: selectedMilestone.title,
-                milestoneId: selectedMilestone.id,
-                goalId: goal.id,
-                roughPlanId: plan.id,
-              },
-            },
-          });
-        } else {
-          dispatch({
-            type: "DETAIL_ADD",
-            payload: {
-              plan: {
-                id: uid(),
-                date,
-                minutes,
-                topic,
-                milestone: selectedMilestone.title,
-                milestoneId: selectedMilestone.id,
-                goalId: goal.id,
-                roughPlanId: plan.id,
-                done: false,
-              },
-            },
-          });
-        }
-
-        onActivity?.();
-        resetBlockForm();
-        onRenderAll();
-      });
-      block.appendChild(form);
-
-      if (entries.length) {
-        const entryList = document.createElement("ul");
-        entryList.className = "list-group mt-3";
-        entries.forEach((item) => entryList.appendChild(createDetailEntryRow(item, { onEdit: startDetailEdit })));
-        block.appendChild(entryList);
-      } else {
-        const entryList = document.createElement("ul");
-        entryList.className = "list-group mt-3";
-        renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
-        block.appendChild(entryList);
-      }
+    const entryList = document.createElement("ul");
+    entryList.className = "list-group mt-3";
+    if (entries.length) {
+      entries.forEach((item) => entryList.appendChild(createDetailEntryRow(item, { onEdit: startDetailEdit })));
     } else {
-      const hint = document.createElement("p");
-      hint.className = "text-body-secondary small mb-0 mt-3";
-      hint.textContent = goal
-        ? "Für dieses Hauptziel sind noch keine Zwischenziele vorhanden."
-        : "Diesem Grobplanungsblock ist noch kein Hauptziel zugeordnet.";
-      block.appendChild(hint);
-
-      const entryList = document.createElement("ul");
-      entryList.className = "list-group mt-3";
-      if (entries.length) {
-        entries.forEach((item) => entryList.appendChild(createDetailEntryRow(item)));
-      } else {
-        renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
-      }
-      block.appendChild(entryList);
+      renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
     }
+    block.appendChild(entryList);
     list.appendChild(block);
   });
 
-  const unassignedEntries = monthlyDetailPlans.filter((item) => !monthlyRoughPlans.some((plan) => plan.id === item.roughPlanId));
-  if (unassignedEntries.length) {
-    const legacyBlock = document.createElement("li");
-    legacyBlock.className = "list-group-item";
+  const monthlyRoughPlanIds = new Set(monthlyRoughPlans.map((plan) => plan.id));
+  const additionalEntries = monthlyDetailPlans.filter(
+    (item) => !item.roughPlanId || !monthlyRoughPlanIds.has(item.roughPlanId)
+  );
 
-    const legacyTitle = document.createElement("strong");
-    legacyTitle.textContent = "Weitere Detailplanung";
-    const legacyHint = document.createElement("small");
-    legacyHint.className = "text-body-secondary d-block mt-1";
-    legacyHint.textContent = "Einträge ohne aktuelle Grobplanungszuordnung";
-    legacyBlock.append(legacyTitle, legacyHint);
+  const additionalBlock = document.createElement("li");
+  additionalBlock.className = "list-group-item";
 
-    const legacyList = document.createElement("ul");
-    legacyList.className = "list-group mt-3";
-    unassignedEntries.forEach((item) => legacyList.appendChild(createDetailEntryRow(item)));
-    legacyBlock.appendChild(legacyList);
-    list.appendChild(legacyBlock);
+  const additionalTitle = document.createElement("strong");
+  additionalTitle.textContent = "Weitere Detailplanung";
+  const additionalHint = document.createElement("small");
+  additionalHint.className = "text-body-secondary d-block mt-1";
+  additionalHint.textContent = "Freitext oder optionales Zwischenziel - auch ohne Grobplanung";
+  additionalBlock.append(additionalTitle, additionalHint);
+
+  const additionalGoalMilestones = state.goals.flatMap((goal) =>
+    (goal.milestones || []).map((milestone) => ({ ...milestone, goalId: goal.id, goal }))
+  );
+
+  const { form: additionalForm, startDetailEdit: startAdditionalEdit } = createDetailBlockForm({
+    blockKey: "additional",
+    defaultDate: defaultMonthDate,
+    goal: null,
+    milestones: additionalGoalMilestones,
+    roughPlanId: null,
+    onDone: onRenderAll,
+  });
+  additionalBlock.appendChild(additionalForm);
+
+  const additionalList = document.createElement("ul");
+  additionalList.className = "list-group mt-3";
+  if (additionalEntries.length) {
+    additionalEntries.forEach((item) => additionalList.appendChild(createDetailEntryRow(item, { onEdit: startAdditionalEdit })));
+  } else {
+    renderEmptyList(additionalList, "Noch keine weitere Detailplanung");
   }
+  additionalBlock.appendChild(additionalList);
 
-  if (!monthlyRoughPlans.length && !unassignedEntries.length) {
-    renderEmptyList(list, "Keine Grobplanung für diesen Monat");
-  }
+  list.appendChild(additionalBlock);
 }
 
 export function renderTrackedSessions({ state, dispatch, onRenderAll }) {

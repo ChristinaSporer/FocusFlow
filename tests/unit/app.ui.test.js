@@ -321,10 +321,8 @@ describe("App UI integration (jsdom)", () => {
     document.getElementById("month-select").remove();
     document.getElementById("tab-calendar").click();
 
-    expect(document.getElementById("detail-list").textContent).not.toContain("April Zwischenziel");
-    expect(document.getElementById("detail-list").textContent).toContain(
-      "Keine Grobplanung für diesen Monat"
-    );
+    expect(document.getElementById("detail-list").textContent).not.toContain("45 Min für April Zwischenziel");
+    expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
   });
 
   it("renders monthly rough-planning blocks with selectable milestones", () => {
@@ -577,5 +575,55 @@ describe("App UI integration (jsdom)", () => {
     expect(planHoursOnly.minutes).toBe(150);
     expect(document.getElementById("detail-list").textContent).toContain("80 Min für Zeitformat Zwischenziel");
     expect(document.getElementById("detail-list").textContent).toContain("150 Min für Zeitformat Zwischenziel");
+  });
+
+  it("allows detail planning with free text and optional milestone in a rough block", () => {
+    document.getElementById("goal-title").value = "Freitext Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Optionales Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "4";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector('[data-detail-block-form]');
+    detailForm.querySelector('[data-detail-hours]').value = "0";
+    detailForm.querySelector('[data-detail-minutes]').value = "35";
+    detailForm.querySelector('input[type="text"]').value = "Freitext ohne Zwischenziel";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const freeTextDetail = parsed.detailPlans.find((item) => item.topic === "Freitext ohne Zwischenziel");
+    expect(freeTextDetail).toBeTruthy();
+    expect(freeTextDetail.milestoneId).toBe(null);
+    expect(document.getElementById("detail-list").textContent).toContain("35 Min für Freitext ohne Zwischenziel");
+  });
+
+  it("always shows additional detail block and allows detail planning without rough planning", () => {
+    const additionalForm = document.querySelector('[data-detail-block-form="additional"]');
+    expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
+    expect(additionalForm).toBeTruthy();
+
+    additionalForm.querySelector('[data-detail-hours]').value = "1";
+    additionalForm.querySelector('[data-detail-minutes]').value = "15";
+    additionalForm.querySelector('input[type="text"]').value = "Unabhängige Detailplanung";
+    additionalForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const extraDetail = parsed.detailPlans.find((item) => item.topic === "Unabhängige Detailplanung");
+    expect(extraDetail).toBeTruthy();
+    expect(extraDetail.roughPlanId).toBe(null);
+    expect(document.getElementById("detail-list").textContent).toContain("75 Min für Unabhängige Detailplanung");
   });
 });
