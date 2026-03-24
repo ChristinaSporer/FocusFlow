@@ -141,6 +141,34 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("goal-list").textContent).toContain("Zwischenziele: 1/1 erledigt");
   });
 
+  it("toggles open goal details between expanded and collapsed", () => {
+    document.getElementById("goal-title").value = "Klappbares Ziel";
+    document.getElementById("goal-date").value = "2026-03-22";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Klappbares Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const toggleButton = document.querySelector("#goal-list [data-goal-collapse-toggle]");
+    const goalBody = document.querySelector("#goal-list [data-goal-body]");
+    expect(toggleButton).toBeTruthy();
+    expect(goalBody).toBeTruthy();
+    expect(goalBody.classList.contains("d-none")).toBe(false);
+
+    toggleButton.click();
+    expect(goalBody.classList.contains("d-none")).toBe(true);
+    expect(toggleButton.getAttribute("aria-label")).toBe("Ausklappen");
+
+    toggleButton.click();
+    expect(goalBody.classList.contains("d-none")).toBe(false);
+    expect(toggleButton.getAttribute("aria-label")).toBe("Einklappen");
+  });
+
   it("edits and deletes a milestone for a goal", () => {
     document.getElementById("goal-title").value = "Ziel mit editierbarem Zwischenziel";
     document.getElementById("goal-date").value = "2026-03-22";

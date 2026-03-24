@@ -95,6 +95,22 @@ function roughPlansByWeekComparator(left, right) {
 export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGoal }) {
   const list = byId("goal-list");
   const achieved = byId("achieved-list");
+
+  const collapsedGoalState = new Map(
+    Array.from(list.querySelectorAll("[data-goal-body]"))
+      .map((node) => [node.getAttribute("data-goal-body"), node.classList.contains("d-none")])
+  );
+
+  function setGoalCollapsed(toggleButton, goalBody, collapsed) {
+    goalBody.classList.toggle("d-none", collapsed);
+    toggleButton.setAttribute("aria-expanded", String(!collapsed));
+    toggleButton.setAttribute("aria-label", collapsed ? "Ausklappen" : "Einklappen");
+    toggleButton.title = collapsed ? "Ausklappen" : "Einklappen";
+    toggleButton.innerHTML = collapsed
+      ? '<i class="bi bi-chevron-down" aria-hidden="true"></i>'
+      : '<i class="bi bi-chevron-up" aria-hidden="true"></i>';
+  }
+
   list.innerHTML = "";
   achieved.innerHTML = "";
 
@@ -196,10 +212,16 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     editButton.className = "btn btn-outline-secondary btn-sm";
     editButton.type = "button";
     editButton.setAttribute("aria-label", "Bearbeiten");
+    editButton.setAttribute("data-goal-edit", goal.id);
     editButton.innerHTML = '<i class="bi bi-pencil"></i>';
     editButton.addEventListener("click", () => {
       onEditGoal?.(goal);
     });
+
+    const toggleButton = document.createElement("button");
+    toggleButton.className = "btn btn-outline-primary btn-sm";
+    toggleButton.type = "button";
+    toggleButton.setAttribute("data-goal-collapse-toggle", goal.id);
 
     const goalDetails = [`Bis ${formatDate(goal.targetDate)}`];
     if (goal.description) {
@@ -238,6 +260,7 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
     const milestoneSection = document.createElement("div");
     milestoneSection.className = "mt-2";
+    milestoneSection.setAttribute("data-goal-body", goal.id);
 
     const milestoneHeading = document.createElement("small");
     milestoneHeading.className = "text-body-secondary d-block mb-1";
@@ -409,7 +432,17 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
     addMilestoneForm.append(addMilestoneInput, addMilestoneButton);
     milestoneSection.appendChild(addMilestoneForm);
+
+    setGoalCollapsed(toggleButton, milestoneSection, collapsedGoalState.get(goal.id) || false);
+    toggleButton.addEventListener("click", () => {
+      const isCollapsed = !milestoneSection.classList.contains("d-none");
+      setGoalCollapsed(toggleButton, milestoneSection, isCollapsed);
+    });
+
     info.appendChild(milestoneSection);
+
+    const actionsContainer = goalRow.querySelector(".ms-auto");
+    actionsContainer.insertBefore(toggleButton, editButton);
 
     list.appendChild(goalRow);
   });
