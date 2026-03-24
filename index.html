@@ -48,14 +48,38 @@
               </button>
             </div>
             <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
-              <label for="theme-mode" class="form-label mb-0 small text-body-secondary"
-                >Darstellung</label
-              >
-              <select id="theme-mode" class="form-select form-select-sm w-auto" aria-label="Theme">
-                <option value="auto">Auto (System)</option>
-                <option value="light">Hell</option>
-                <option value="dark">Dunkel</option>
-              </select>
+              <span class="form-label mb-0 small text-body-secondary">Darstellung</span>
+              <div class="btn-group btn-group-sm" role="group" aria-label="Darstellung">
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="theme-mode"
+                  id="theme-mode-auto"
+                  value="auto"
+                  autocomplete="off"
+                />
+                <label class="btn btn-outline-secondary" for="theme-mode-auto">Auto (System)</label>
+
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="theme-mode"
+                  id="theme-mode-light"
+                  value="light"
+                  autocomplete="off"
+                />
+                <label class="btn btn-outline-secondary" for="theme-mode-light">Hell</label>
+
+                <input
+                  type="radio"
+                  class="btn-check"
+                  name="theme-mode"
+                  id="theme-mode-dark"
+                  value="dark"
+                  autocomplete="off"
+                />
+                <label class="btn btn-outline-secondary" for="theme-mode-dark">Dunkel</label>
+              </div>
             </div>
             <div class="d-flex flex-wrap justify-content-lg-end gap-2">
               <button id="load-demo" class="btn btn-secondary" type="button">Demo-Daten laden</button>
@@ -367,10 +391,18 @@
     </main>
 
     <footer class="container pb-4">
-      <div class="legal-footer border-top pt-3 text-center text-body-secondary">
-        <a class="legal-link" href="impressum.html">Impressum</a>
+      <div class="border-top pt-3 text-center text-body-secondary small">
+        <a
+          class="link-secondary link-underline-opacity-0 link-underline-opacity-100-hover"
+          href="impressum.html"
+          >Impressum</a
+        >
         <span aria-hidden="true" class="mx-2">|</span>
-        <a class="legal-link" href="datenschutz.html">Datenschutzerkl&auml;rung</a>
+        <a
+          class="link-secondary link-underline-opacity-0 link-underline-opacity-100-hover"
+          href="datenschutz.html"
+          >Datenschutzerkl&auml;rung</a
+        >
       </div>
     </footer>
 

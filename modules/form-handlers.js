@@ -153,12 +153,26 @@ export function initFormHandlers({
     renderAll();
   });
 
-  byId("theme-mode").addEventListener("change", (event) => {
+  function applyThemeModeSelection(rawValue) {
     dispatch({
       type: "SET_THEME_MODE",
-      payload: { themeMode: normalizeThemeMode(event.target.value) },
+      payload: { themeMode: normalizeThemeMode(rawValue) },
     });
     applyTheme();
+  }
+
+  const themeModeSelect = byId("theme-mode");
+  if (themeModeSelect) {
+    themeModeSelect.addEventListener("change", (event) => {
+      applyThemeModeSelection(event.target.value);
+    });
+  }
+
+  document.querySelectorAll('input[name="theme-mode"]').forEach((input) => {
+    input.addEventListener("change", (event) => {
+      if (!event.target.checked) return;
+      applyThemeModeSelection(event.target.value);
+    });
   });
 
   byId("ics-import").addEventListener("click", async () => {

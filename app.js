@@ -85,7 +85,17 @@ function setInitialValues() {
     dispatch({ type: "SET_THEME_MODE", payload: { themeMode: normalizedTheme } });
   }
 
-  byId("theme-mode").value = getState().settings.themeMode;
+  const themeModeValue = getState().settings.themeMode;
+  const themeModeSelect = byId("theme-mode");
+  if (themeModeSelect) {
+    themeModeSelect.value = themeModeValue;
+  }
+
+  const themeModeRadio = document.querySelector(`input[name="theme-mode"][value="${themeModeValue}"]`);
+  if (themeModeRadio) {
+    themeModeRadio.checked = true;
+  }
+
   themeManager.applyTheme();
   timerManager.syncFromState();
 

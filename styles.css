@@ -32,38 +32,6 @@ body {
   color: var(--text);
 }
 
-.legal-footer {
-  font-size: 0.84rem;
-}
-
-.legal-link {
-  color: inherit;
-  text-decoration: none;
-}
-
-.legal-link:hover,
-.legal-link:focus-visible {
-  text-decoration: underline;
-}
-
-.legal-page {
-  max-width: 900px;
-}
-
-.legal-page h1 {
-  font-size: 1.7rem;
-}
-
-.legal-page h2 {
-  margin-top: 1.5rem;
-  font-size: 1.15rem;
-}
-
-.legal-page p,
-.legal-page li {
-  line-height: 1.55;
-}
-
 .lz-list-panel {
   max-height: 280px;
   overflow: auto;

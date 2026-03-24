@@ -375,7 +375,9 @@ describe("modules/form-handlers", () => {
       '<input id="inactivity-days" value="">',
       '<button id="enable-notifications" type="button"></button>',
       '<button id="load-demo" type="button"></button>',
-      '<select id="theme-mode"><option value="auto">auto</option><option value="dark">dark</option></select>',
+      '<input type="radio" name="theme-mode" id="theme-mode-auto" value="auto">',
+      '<input type="radio" name="theme-mode" id="theme-mode-light" value="light">',
+      '<input type="radio" name="theme-mode" id="theme-mode-dark" value="dark">',
       '<button id="ics-import" type="button"></button>',
       '<input id="ics-file" type="file">',
       '<button id="ics-export" type="button"></button>',
@@ -536,8 +538,8 @@ describe("modules/form-handlers", () => {
     document.getElementById("load-demo").click();
     expect(deps.loadDemoData).toHaveBeenCalledTimes(1);
 
-    const theme = document.getElementById("theme-mode");
-    theme.value = "dark";
+    const theme = document.getElementById("theme-mode-dark");
+    theme.checked = true;
     theme.dispatchEvent(new Event("change", { bubbles: true }));
     expect(normalizeThemeMode).toHaveBeenCalledWith("dark");
     expect(deps.dispatch).toHaveBeenCalledWith({
