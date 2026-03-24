@@ -25,6 +25,11 @@ let goalFormController = {
   resetGoalForm() {},
   startGoalEdit() {},
 };
+let roughFormController = {
+  populateGoalDropdown() {},
+  startRoughEdit() {},
+  resetRoughForm() {},
+};
 
 function getState() {
   return state;
@@ -46,8 +51,12 @@ function renderAll() {
   // Apply the active tab/view immediately before heavy rendering.
   calendarManager.renderViewState();
 
+  roughFormController.populateGoalDropdown?.(getState());
   renderGoals({ ...renderContext, onActivity: touchActivity, onEditGoal: goalFormController.startGoalEdit });
-  renderRoughPlans(renderContext);
+  renderRoughPlans({
+    ...renderContext,
+    onEditRoughPlan: roughFormController.startRoughEdit,
+  });
   renderDetailPlans({ ...renderContext, selectedMonth });
   renderTrackedSessions(renderContext);
   renderStats({ state: getState(), currentMonth: selectedMonth });
@@ -67,7 +76,8 @@ function loadDemoData() {
       },
     },
   });
-  goalFormController.resetGoalForm();
+  goalFormController.resetGoalForm?.();
+  roughFormController.resetRoughForm?.();
   setInitialValues();
 }
 
@@ -120,7 +130,7 @@ function setInitialValues() {
 function initHandlers() {
   if (handlersInitialized) return;
 
-  goalFormController = initFormHandlers({
+  const handlersResult = initFormHandlers({
     dispatch,
     renderAll,
     touchActivity,
@@ -140,6 +150,17 @@ function initHandlers() {
     importJsonFile: jsonManager.importFromFile,
     exportJsonFile: jsonManager.exportToFile,
   });
+
+  goalFormController = {
+    resetGoalForm: handlersResult.resetGoalForm,
+    startGoalEdit: handlersResult.startGoalEdit,
+  };
+
+  roughFormController = {
+    populateGoalDropdown: handlersResult.populateGoalDropdown,
+    startRoughEdit: handlersResult.startRoughEdit,
+    resetRoughForm: handlersResult.resetRoughForm,
+  };
 
   handlersInitialized = true;
 }

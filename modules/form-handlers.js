@@ -31,6 +31,62 @@ export function initFormHandlers({
     byId("goal-cancel-edit").classList.add("d-none");
   }
 
+  function populateGoalDropdown(state) {
+    const dropdown = byId("rough-goal");
+    if (!dropdown) return;
+
+    const openGoals = state.goals.filter((goal) => !goal.completed);
+    const currentOptions = Array.from(dropdown.options).slice(1);
+
+    currentOptions.forEach((option) => option.remove());
+
+    openGoals
+      .sort((a, b) => a.targetDate.localeCompare(b.targetDate))
+      .forEach((goal) => {
+        const option = document.createElement("option");
+        option.value = goal.id;
+        option.textContent = goal.title;
+        dropdown.appendChild(option);
+      });
+  }
+
+  function resetRoughForm() {
+    const editId = byId("rough-edit-id");
+    const date = byId("rough-date");
+    const hours = byId("rough-hours");
+    const note = byId("rough-note");
+    const goal = byId("rough-goal");
+    const submit = byId("rough-submit");
+    const cancel = byId("rough-cancel-edit");
+
+    if (editId) editId.value = "";
+    if (date) date.value = "";
+    if (hours) hours.value = "";
+    if (note) note.value = "";
+    if (goal) goal.value = "";
+    if (submit) submit.textContent = "Planen";
+    if (cancel) cancel.classList.add("d-none");
+  }
+
+  function startRoughEdit(plan) {
+    const editId = byId("rough-edit-id");
+    const date = byId("rough-date");
+    const hours = byId("rough-hours");
+    const note = byId("rough-note");
+    const goal = byId("rough-goal");
+    const submit = byId("rough-submit");
+    const cancel = byId("rough-cancel-edit");
+
+    if (editId) editId.value = plan.id;
+    if (date) date.value = plan.date;
+    if (hours) hours.value = plan.hours;
+    if (note) note.value = plan.note || "";
+    if (goal) goal.value = plan.goalId || "";
+    if (submit) submit.textContent = "Änderungen speichern";
+    if (cancel) cancel.classList.remove("d-none");  
+    if (date) date.focus();
+  }
+
   function startGoalEdit(goal) {
     byId("goal-edit-id").value = goal.id;
     byId("goal-title").value = goal.title;
@@ -81,18 +137,38 @@ export function initFormHandlers({
 
   byId("goal-cancel-edit").addEventListener("click", resetGoalForm);
 
+  resetRoughForm();
+
   byId("rough-form").addEventListener("submit", (event) => {
     event.preventDefault();
+    const editId = byId("rough-edit-id").value;
     const date = byId("rough-date").value;
     const hours = Number(byId("rough-hours").value);
     const note = byId("rough-note").value.trim();
+    const goalId = byId("rough-goal").value || null;
     if (!date || !hours) return;
 
-    dispatch({ type: "ROUGH_ADD", payload: { plan: { id: uid(), date, hours, note } } });
-    event.target.reset();
+    if (editId) {
+      dispatch({
+        type: "ROUGH_UPDATE",
+        payload: {
+          id: editId,
+          update: { date, hours, note, goalId },
+        },
+      });
+    } else {
+      dispatch({
+        type: "ROUGH_ADD",
+        payload: { plan: { id: uid(), date, hours, note, goalId } },
+      });
+    }
+
+    resetRoughForm();
     touchActivity();
     renderAll();
   });
+
+  byId("rough-cancel-edit")?.addEventListener("click", resetRoughForm);
 
   byId("detail-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -215,6 +291,7 @@ export function initFormHandlers({
     if (!ok) return;
     dispatch({ type: "REPLACE_STATE", payload: { state: defaultData() } });
     resetGoalForm();
+    resetRoughForm();
     setInitialValues();
     renderAll();
   });
@@ -222,5 +299,8 @@ export function initFormHandlers({
   return {
     resetGoalForm,
     startGoalEdit,
+    populateGoalDropdown,
+    startRoughEdit,
+    resetRoughForm,
   };
 }

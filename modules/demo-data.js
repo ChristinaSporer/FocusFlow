@@ -41,8 +41,8 @@ export function buildDemoState({ themeMode }) {
       },
     ],
     roughPlans: [
-      { id: uid(), date: in5.toISOString().slice(0, 10), hours: 3, note: "Wiederholung UML" },
-      { id: uid(), date: in10.toISOString().slice(0, 10), hours: 4, note: "Altklausuren" },
+      { id: uid(), date: in5.toISOString().slice(0, 10), hours: 3, note: "Wiederholung UML", goalId: null },
+      { id: uid(), date: in10.toISOString().slice(0, 10), hours: 4, note: "Altklausuren", goalId: null },
     ],
     detailPlans: [
       {

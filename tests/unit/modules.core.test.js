@@ -490,10 +490,13 @@ describe("modules/form-handlers", () => {
       '<input id="goal-date" value="">',
       '<textarea id="goal-description"></textarea>',
       '<button id="goal-cancel-edit" type="button" class="d-none"></button>',
-      '<form id="rough-form"></form>',
+      '<form id="rough-form"><button id="rough-submit" type="submit">X</button></form>',
+      '<input id="rough-edit-id" value="">',
       '<input id="rough-date" value="">',
       '<input id="rough-hours" value="">',
       '<input id="rough-note" value="">',
+      '<select id="rough-goal"><option value="">Kein Ziel</option></select>',
+      '<button id="rough-cancel-edit" type="button" class="d-none"></button>',
       '<form id="detail-form"></form>',
       '<input id="detail-date" value="">',
       '<input id="detail-minutes" value="">',
@@ -1250,6 +1253,39 @@ describe("modules/app-reducer", () => {
 
     const unchanged = appReducer(state, { type: "UNKNOWN_ACTION" });
     expect(unchanged).toBe(state);
+  });
+
+  it("updates rough plans with ROUGH_UPDATE", () => {
+    let state = baseState();
+
+    state = appReducer(state, {
+      type: "ROUGH_UPDATE",
+      payload: {
+        id: "r1",
+        update: { date: "2026-04-01", hours: 5, note: "Updated", goalId: "g1" },
+      },
+    });
+
+    const plan = state.roughPlans.find((p) => p.id === "r1");
+    expect(plan).toMatchObject({
+      id: "r1",
+      date: "2026-04-01",
+      hours: 5,
+      note: "Updated",
+      goalId: "g1",
+    });
+
+    state = appReducer(state, {
+      type: "ROUGH_UPDATE",
+      payload: { id: "r1", update: { goalId: null } },
+    });
+    expect(state.roughPlans.find((p) => p.id === "r1").goalId).toBeNull();
+
+    const unchanged = appReducer(state, {
+      type: "ROUGH_UPDATE",
+      payload: { id: "unknown", update: { hours: 99 } },
+    });
+    expect(unchanged).toEqual(state);
   });
 });
 

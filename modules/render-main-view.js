@@ -277,7 +277,7 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
   }
 }
 
-export function renderRoughPlans({ state, dispatch, onRenderAll }) {
+export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan }) {
   const list = byId("rough-list");
   list.innerHTML = "";
 
@@ -286,10 +286,24 @@ export function renderRoughPlans({ state, dispatch, onRenderAll }) {
     .filter((plan) => isWithinNextSixMonths(plan.date));
 
   data.forEach((plan) => {
+    const goal = plan.goalId ? state.goals.find((g) => g.id === plan.goalId) : null;
+    const primaryText = goal
+      ? `${plan.hours} h geplant für ${goal.title}`
+      : `${plan.hours} h geplant`;
+    const secondaryText = `${formatDate(plan.date)}${plan.note ? ` · ${plan.note}` : ""}`;
+
+    const editBtn = document.createElement("button");
+    editBtn.className = "btn btn-outline-secondary btn-sm";
+    editBtn.type = "button";
+    editBtn.setAttribute("aria-label", "Bearbeiten");
+    editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+    editBtn.addEventListener("click", () => onEditRoughPlan?.(plan));
+
     const row = buildRow(
-      `${plan.hours} h geplant`,
-      `${formatDate(plan.date)}${plan.note ? ` · ${plan.note}` : ""}`,
+      primaryText,
+      secondaryText,
       {
+        actions: [editBtn],
         onDelete: () => {
           dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
           onRenderAll();

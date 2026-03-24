@@ -201,6 +201,7 @@
             <div class="card-body">
               <h2 class="h4">2) Grobplanung Lernzeit (6 Monate)</h2>
               <form id="rough-form" class="row g-2 mt-1">
+                <input type="hidden" id="rough-edit-id" />
                 <div class="col-12 col-md-4">
                   <input type="date" id="rough-date" class="form-control" required />
                 </div>
@@ -223,8 +224,22 @@
                     placeholder="Thema (optional)"
                   />
                 </div>
+                <div class="col-12 col-md">
+                  <select id="rough-goal" class="form-control">
+                    <option value="">Kein Ziel zugeordnet</option>
+                  </select>
+                </div>
                 <div class="col-12 col-md-auto d-grid">
-                  <button class="btn btn-primary" type="submit">Planen</button>
+                  <button id="rough-submit" class="btn btn-primary" type="submit">Planen</button>
+                </div>
+                <div class="col-12 col-md-auto d-grid">
+                  <button
+                    id="rough-cancel-edit"
+                    class="btn btn-outline-secondary d-none"
+                    type="button"
+                  >
+                    Bearbeitung abbrechen
+                  </button>
                 </div>
               </form>
               <ul id="rough-list" class="list-group lz-list-panel"></ul>

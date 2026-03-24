@@ -294,4 +294,121 @@ describe("App UI integration (jsdom)", () => {
     expect(parsed.goals).toHaveLength(1);
     expect(parsed.goals[0].title).toBe("Einmaliges Ziel");
   });
+
+  it("populates goal dropdown with open goals sorted by targetDate", () => {
+    document.getElementById("goal-title").value = "First Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("goal-title").value = "Second Goal";
+    document.getElementById("goal-date").value = "2026-03-20";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const dropdown = document.getElementById("rough-goal");
+    const options = Array.from(dropdown.options);
+    expect(options).toHaveLength(3);
+    expect(options[0].value).toBe("");
+    expect(options[0].textContent).toBe("Kein Ziel zugeordnet");
+    expect(options[1].textContent).toBe("Second Goal");
+    expect(options[2].textContent).toBe("First Goal");
+  });
+
+  it("adds rough plan with goal assignment and displays goal title", () => {
+    document.getElementById("goal-title").value = "Goal A";
+    document.getElementById("goal-date").value = "2026-04-10";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const dropdown = document.getElementById("rough-goal");
+    const goalId = Array.from(dropdown.options)[1].value;
+
+    document.getElementById("rough-date").value = "2026-03-15";
+    document.getElementById("rough-hours").value = "3";
+    document.getElementById("rough-note").value = "Preparation";
+    document.getElementById("rough-goal").value = goalId;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const list = document.getElementById("rough-list");
+    expect(list.textContent).toContain("3 h geplant");
+    expect(list.textContent).toContain("Goal A");
+    expect(list.textContent).toContain("Preparation");
+  });
+
+  it("edits rough plan including goal assignment", () => {
+    document.getElementById("goal-title").value = "Goal X";
+    document.getElementById("goal-date").value = "2026-04-15";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-date").value = "2026-03-10";
+    document.getElementById("rough-hours").value = "4";
+    document.getElementById("rough-note").value = "Initial";
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const list = document.getElementById("rough-list");
+    const editButton = list.querySelector("button[aria-label='Bearbeiten']");
+    expect(editButton).toBeTruthy();
+
+    editButton.click();
+
+    expect(document.getElementById("rough-edit-id").value).toBeTruthy();
+    expect(document.getElementById("rough-hours").value).toBe("4");
+    expect(document.getElementById("rough-note").value).toBe("Initial");
+    expect(document.getElementById("rough-submit").textContent).toBe("Änderungen speichern");
+    expect(document.getElementById("rough-cancel-edit").classList.contains("d-none")).toBe(false);
+
+    document.getElementById("rough-hours").value = "5";
+    document.getElementById("rough-note").value = "Updated";
+    document.getElementById("rough-goal").value = Array.from(
+      document.getElementById("rough-goal").options
+    )[1].value;
+
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const plan = parsed.roughPlans[0];
+    expect(plan.hours).toBe(5);
+    expect(plan.note).toBe("Updated");
+    expect(plan.goalId).toBeTruthy();
+
+    expect(document.getElementById("rough-edit-id").value).toBe("");
+    expect(document.getElementById("rough-submit").textContent).toBe("Planen");
+    expect(document.getElementById("rough-cancel-edit").classList.contains("d-none")).toBe(true);
+  });
+
+  it("cancels rough plan edit and resets form", () => {
+    document.getElementById("rough-date").value = "2026-03-12";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const list = document.getElementById("rough-list");
+    const editButton = list.querySelector("button[aria-label='Bearbeiten']");
+    editButton.click();
+
+    expect(document.getElementById("rough-edit-id").value).toBeTruthy();
+
+    document.getElementById("rough-cancel-edit").click();
+
+    expect(document.getElementById("rough-edit-id").value).toBe("");
+    expect(document.getElementById("rough-date").value).toBe("");
+    expect(document.getElementById("rough-hours").value).toBe("");
+    expect(document.getElementById("rough-note").value).toBe("");
+    expect(document.getElementById("rough-goal").value).toBe("");
+    expect(document.getElementById("rough-submit").textContent).toBe("Planen");
+    expect(document.getElementById("rough-cancel-edit").classList.contains("d-none")).toBe(true);
+  });
 });
