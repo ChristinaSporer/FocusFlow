@@ -65,17 +65,36 @@ export function createCalendarManager({ getState, dispatch }) {
     const state = getState();
     const listView = byId("list-view");
     const calendarView = byId("calendar-view");
+    const backupView = byId("backup-view");
     const listTab = byId("tab-list");
     const calendarTab = byId("tab-calendar");
+    const backupTab = byId("tab-backup");
 
-    const active = state.settings.activeView === "calendar" ? "calendar" : "list";
-    listView.classList.toggle("d-none", active !== "list");
-    calendarView.classList.toggle("d-none", active !== "calendar");
+    const active = ["list", "calendar", "backup"].includes(state.settings.activeView)
+      ? state.settings.activeView
+      : "list";
+    if (listView) {
+      listView.classList.toggle("d-none", active !== "list");
+    }
+    if (calendarView) {
+      calendarView.classList.toggle("d-none", active !== "calendar");
+    }
+    if (backupView) {
+      backupView.classList.toggle("d-none", active !== "backup");
+    }
 
-    listTab.classList.toggle("active", active === "list");
-    calendarTab.classList.toggle("active", active === "calendar");
-    listTab.setAttribute("aria-selected", String(active === "list"));
-    calendarTab.setAttribute("aria-selected", String(active === "calendar"));
+    if (listTab) {
+      listTab.classList.toggle("active", active === "list");
+      listTab.setAttribute("aria-selected", String(active === "list"));
+    }
+    if (calendarTab) {
+      calendarTab.classList.toggle("active", active === "calendar");
+      calendarTab.setAttribute("aria-selected", String(active === "calendar"));
+    }
+    if (backupTab) {
+      backupTab.classList.toggle("active", active === "backup");
+      backupTab.setAttribute("aria-selected", String(active === "backup"));
+    }
   }
 
   function renderCalendarLegend() {

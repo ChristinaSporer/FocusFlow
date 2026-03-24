@@ -15,6 +15,7 @@ import {
 import { createCalendarManager } from "../../modules/calendar-manager.js";
 import { initFormHandlers } from "../../modules/form-handlers.js";
 import { createIcsManager } from "../../modules/ics-manager.js";
+import { createJsonManager } from "../../modules/json-manager.js";
 import {
   STORAGE_KEY,
   createStore,
@@ -346,6 +347,140 @@ describe("modules/ics-manager", () => {
   });
 });
 
+describe("modules/json-manager", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-24T10:00:00.000Z"));
+    document.body.innerHTML = '<div id="json-status"></div>';
+
+    if (!URL.createObjectURL) {
+      Object.defineProperty(URL, "createObjectURL", {
+        configurable: true,
+        value: vi.fn(() => "blob:mock-url"),
+      });
+    }
+
+    if (!URL.revokeObjectURL) {
+      Object.defineProperty(URL, "revokeObjectURL", {
+        configurable: true,
+        value: vi.fn(),
+      });
+    }
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    document.body.innerHTML = "";
+  });
+
+  function createManager(stateOverride = {}) {
+    const state = {
+      ...defaultData(),
+      ...stateOverride,
+      settings: { ...defaultData().settings, ...(stateOverride.settings || {}) },
+      timer: { ...defaultData().timer, ...(stateOverride.timer || {}) },
+    };
+
+    const manager = createJsonManager({
+      getState: () => state,
+    });
+
+    return { manager, state };
+  }
+
+  it("exports state as JSON file", async () => {
+    const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:json-export");
+    const revokeUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    const { manager } = createManager({
+      goals: [{ id: "g1", title: "Goal" }],
+    });
+
+    const result = manager.exportToFile();
+    expect(result).toEqual({
+      ok: true,
+      status: "Backup als focusflow-backup-2026-03-24.json exportiert.",
+      fileName: "focusflow-backup-2026-03-24.json",
+    });
+
+    const blobArg = createUrlSpy.mock.calls[0][0];
+    const text = await blobArg.text();
+    const parsed = JSON.parse(text);
+    expect(parsed.goals).toHaveLength(1);
+    expect(document.getElementById("json-status").textContent).toBe(
+      "Backup als focusflow-backup-2026-03-24.json exportiert."
+    );
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(revokeUrlSpy).toHaveBeenCalledWith("blob:json-export");
+  });
+
+  it("imports valid JSON and merges collections/settings", async () => {
+    const { manager } = createManager({
+      goals: [{ id: "g1", title: "Bestand" }],
+      settings: { activeView: "list", inactivityDays: 3 },
+    });
+
+    const file = {
+      name: "backup.json",
+      text: vi.fn(async () =>
+        JSON.stringify({
+          goals: [{ id: "g1", title: "Import aktualisiert" }, { id: "g2", title: "Neu" }],
+          settings: { activeView: "backup", inactivityDays: 5, themeMode: "dark" },
+        })
+      ),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(true);
+    expect(result.state.goals).toHaveLength(2);
+    expect(result.state.goals.find((goal) => goal.id === "g1").title).toBe("Import aktualisiert");
+    expect(result.state.settings.activeView).toBe("backup");
+    expect(result.state.settings.inactivityDays).toBe(5);
+    expect(result.state.settings.themeMode).toBe("dark");
+  });
+
+  it("handles invalid/missing import file paths", async () => {
+    const { manager } = createManager();
+
+    const missing = await manager.importFromFile();
+    expect(missing).toEqual({ ok: false, status: "Bitte zuerst eine JSON-Datei auswählen." });
+
+    const invalidFile = {
+      name: "broken.json",
+      text: vi.fn(async () => "{not-json"),
+    };
+    const invalid = await manager.importFromFile(invalidFile);
+    expect(invalid).toEqual({ ok: false, status: "Import fehlgeschlagen. Bitte gültige JSON-Datei prüfen." });
+    expect(document.getElementById("json-status").textContent).toBe(
+      "Import fehlgeschlagen. Bitte gültige JSON-Datei prüfen."
+    );
+  });
+
+  it("imports partially and reports warnings for invalid records", async () => {
+    const { manager } = createManager({ goals: [{ id: "g1", title: "Bestand" }] });
+
+    const file = {
+      name: "partial.json",
+      text: vi.fn(async () =>
+        JSON.stringify({
+          goals: [{ id: "g2", title: "Neu" }, { title: "Ohne ID" }],
+          roughPlans: "wrong",
+          settings: { activeView: "unknown-view" },
+        })
+      ),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(true);
+    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.state.goals.find((goal) => goal.id === "g2")).toBeTruthy();
+    expect(result.state.settings.activeView).toBe("list");
+    expect(result.status).toContain("teilweise erfolgreich");
+  });
+});
+
 describe("modules/form-handlers", () => {
   function mountFormHandlersDom() {
     document.body.innerHTML = [
@@ -367,6 +502,7 @@ describe("modules/form-handlers", () => {
       '<input id="month-select" value="2026-03">',
       '<button id="tab-list" data-view="list" type="button"></button>',
       '<button id="tab-calendar" data-view="calendar" type="button"></button>',
+      '<button id="tab-backup" data-view="backup" type="button"></button>',
       '<button id="calendar-prev" type="button"></button>',
       '<button id="calendar-next" type="button"></button>',
       '<button id="timer-start" type="button"></button>',
@@ -381,6 +517,9 @@ describe("modules/form-handlers", () => {
       '<button id="ics-import" type="button"></button>',
       '<input id="ics-file" type="file">',
       '<button id="ics-export" type="button"></button>',
+      '<button id="json-import" type="button"></button>',
+      '<input id="json-file" type="file">',
+      '<button id="json-export" type="button"></button>',
       '<button id="reset-data" type="button"></button>',
     ].join("");
   }
@@ -404,6 +543,8 @@ describe("modules/form-handlers", () => {
       stopTimer: vi.fn(),
       importIcsFile: vi.fn(async () => ({ ok: false })),
       exportIcsFile: vi.fn(),
+      importJsonFile: vi.fn(async () => ({ ok: false })),
+      exportJsonFile: vi.fn(),
       ...overrides,
     };
 
@@ -499,6 +640,12 @@ describe("modules/form-handlers", () => {
       type: "SET_ACTIVE_VIEW",
       payload: { view: "calendar" },
     });
+
+    document.getElementById("tab-backup").click();
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_ACTIVE_VIEW",
+      payload: { view: "backup" },
+    });
   });
 
   it("handles calendar, timer and settings controls", () => {
@@ -524,13 +671,17 @@ describe("modules/form-handlers", () => {
     expect(deps.dispatch).toHaveBeenCalledWith({ type: "SET_INACTIVITY_DAYS", payload: { days: 5 } });
   });
 
-  it("handles notification, demo, theme and ics/reset actions", async () => {
+  it("handles notification, demo, theme, import/export and reset actions", async () => {
     const importIcsFile = vi
       .fn()
       .mockResolvedValueOnce({ ok: false })
       .mockResolvedValueOnce({ ok: true, calendarMonth: "2026-04" });
+    const importJsonFile = vi
+      .fn()
+      .mockResolvedValueOnce({ ok: false })
+      .mockResolvedValueOnce({ ok: true, state: { restored: true } });
     const normalizeThemeMode = vi.fn(() => "dark");
-    const { deps } = setupHandlers({ importIcsFile, normalizeThemeMode });
+    const { deps } = setupHandlers({ importIcsFile, importJsonFile, normalizeThemeMode });
 
     document.getElementById("enable-notifications").click();
     expect(deps.activateNotifications).toHaveBeenCalledTimes(1);
@@ -566,10 +717,33 @@ describe("modules/form-handlers", () => {
     document.getElementById("ics-export").click();
     expect(deps.exportIcsFile).toHaveBeenCalledTimes(1);
 
+    const jsonFileInput = document.getElementById("json-file");
+    Object.defineProperty(jsonFileInput, "files", {
+      configurable: true,
+      value: [{ name: "backup.json" }],
+    });
+
+    document.getElementById("json-import").click();
+    await Promise.resolve();
+    expect(importJsonFile).toHaveBeenNthCalledWith(1, { name: "backup.json" });
+
+    document.getElementById("json-import").click();
+    await Promise.resolve();
+    expect(importJsonFile).toHaveBeenNthCalledWith(2, { name: "backup.json" });
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "REPLACE_STATE",
+      payload: { state: { restored: true } },
+    });
+    expect(deps.setInitialValues).toHaveBeenCalledTimes(1);
+
+    document.getElementById("json-export").click();
+    expect(deps.exportJsonFile).toHaveBeenCalledTimes(1);
+
     const confirmSpy = vi.spyOn(globalThis, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const dispatchCountBeforeReset = deps.dispatch.mock.calls.length;
     document.getElementById("reset-data").click();
     expect(confirmSpy).toHaveBeenCalledTimes(1);
-    expect(deps.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "REPLACE_STATE" }));
+    expect(deps.dispatch).toHaveBeenCalledTimes(dispatchCountBeforeReset);
 
     document.getElementById("reset-data").click();
     expect(confirmSpy).toHaveBeenCalledTimes(2);
@@ -578,7 +752,7 @@ describe("modules/form-handlers", () => {
       type: "REPLACE_STATE",
       payload: { state: { ok: true } },
     });
-    expect(deps.setInitialValues).toHaveBeenCalledTimes(1);
+    expect(deps.setInitialValues).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -587,8 +761,10 @@ describe("modules/calendar-manager", () => {
     document.body.innerHTML = [
       '<div id="list-view"></div>',
       '<div id="calendar-view"></div>',
+      '<div id="backup-view"></div>',
       '<button id="tab-list" type="button"></button>',
       '<button id="tab-calendar" type="button"></button>',
+      '<button id="tab-backup" type="button"></button>',
       '<div id="calendar-month-label"></div>',
       '<div id="calendar-grid"></div>',
       '<div id="calendar-legend"></div>',
@@ -650,27 +826,38 @@ describe("modules/calendar-manager", () => {
     expect(state.settings.calendarMonth).toBe("2026-05");
   });
 
-  it("renders list/calendar view state for all branches", () => {
+  it("renders list/calendar/backup view state for all branches", () => {
     const { manager, state } = createManager();
 
     state.settings.activeView = "list";
     manager.renderViewState();
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
+    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
     expect(document.getElementById("tab-list").getAttribute("aria-selected")).toBe("true");
     expect(document.getElementById("tab-calendar").getAttribute("aria-selected")).toBe("false");
+    expect(document.getElementById("tab-backup").getAttribute("aria-selected")).toBe("false");
 
     state.settings.activeView = "calendar";
     manager.renderViewState();
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(false);
+    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
     expect(document.getElementById("tab-list").getAttribute("aria-selected")).toBe("false");
     expect(document.getElementById("tab-calendar").getAttribute("aria-selected")).toBe("true");
+
+    state.settings.activeView = "backup";
+    manager.renderViewState();
+    expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
+    expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
+    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(false);
+    expect(document.getElementById("tab-backup").getAttribute("aria-selected")).toBe("true");
 
     state.settings.activeView = "unknown";
     manager.renderViewState();
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
+    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
   });
 
   it("returns early in renderCalendar when grid/label are missing", () => {

@@ -188,6 +188,14 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
+  it("switches to backup view tab", () => {
+    document.getElementById("tab-backup").click();
+
+    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(false);
+    expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
+    expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
+  });
+
   it("loads demo data and uses fallback notification text when Notification API is missing", () => {
     Reflect.deleteProperty(window, "Notification");
 

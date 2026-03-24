@@ -19,6 +19,8 @@ export function initFormHandlers({
   stopTimer,
   importIcsFile,
   exportIcsFile,
+  importJsonFile,
+  exportJsonFile,
 }) {
   function resetGoalForm() {
     byId("goal-edit-id").value = "";
@@ -113,7 +115,8 @@ export function initFormHandlers({
 
   byId("month-select").addEventListener("change", renderAll);
 
-  [byId("tab-list"), byId("tab-calendar")].forEach((btn) => {
+  [byId("tab-list"), byId("tab-calendar"), byId("tab-backup")].forEach((btn) => {
+    if (!btn) return;
     btn.addEventListener("click", () => {
       dispatch({ type: "SET_ACTIVE_VIEW", payload: { view: btn.dataset.view } });
       renderAll();
@@ -190,6 +193,21 @@ export function initFormHandlers({
 
   byId("ics-export").addEventListener("click", () => {
     exportIcsFile();
+  });
+
+  byId("json-import")?.addEventListener("click", async () => {
+    const input = byId("json-file");
+    const file = input?.files && input.files[0];
+    const result = await importJsonFile?.(file);
+    if (!result?.ok) return;
+
+    dispatch({ type: "REPLACE_STATE", payload: { state: result.state } });
+    setInitialValues();
+    renderAll();
+  });
+
+  byId("json-export")?.addEventListener("click", () => {
+    exportJsonFile?.();
   });
 
   byId("reset-data").addEventListener("click", () => {

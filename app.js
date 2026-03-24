@@ -16,6 +16,7 @@ import { createTimerManager } from "./modules/timer-manager.js";
 import { createReminderManager } from "./modules/reminder-manager.js";
 import { createCalendarManager } from "./modules/calendar-manager.js";
 import { createIcsManager } from "./modules/ics-manager.js";
+import { createJsonManager } from "./modules/json-manager.js";
 
 const store = createStore(loadState(), appReducer);
 let state = store.getState();
@@ -42,6 +43,9 @@ function renderAll() {
   const selectedMonth = byId("month-select")?.value || monthOf(new Date());
   const renderContext = { state: getState(), dispatch, onRenderAll: renderAll };
 
+  // Apply the active tab/view immediately before heavy rendering.
+  calendarManager.renderViewState();
+
   renderGoals({ ...renderContext, onActivity: touchActivity, onEditGoal: goalFormController.startGoalEdit });
   renderRoughPlans(renderContext);
   renderDetailPlans({ ...renderContext, selectedMonth });
@@ -49,7 +53,6 @@ function renderAll() {
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
   reminderManager.runReminders();
-  calendarManager.renderViewState();
   calendarManager.renderCalendar();
 }
 
@@ -134,6 +137,8 @@ function initHandlers() {
     stopTimer: timerManager.stopTimer,
     importIcsFile: icsManager.importFromFile,
     exportIcsFile: icsManager.exportToFile,
+    importJsonFile: jsonManager.importFromFile,
+    exportJsonFile: jsonManager.exportToFile,
   });
 
   handlersInitialized = true;
@@ -165,6 +170,10 @@ const reminderManager = createReminderManager({
 const icsManager = createIcsManager({
   getState,
   dispatch,
+});
+
+const jsonManager = createJsonManager({
+  getState,
 });
 
 export function bootstrap() {

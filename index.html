@@ -50,6 +50,16 @@
               >
                 Kalender
               </button>
+              <button
+                id="tab-backup"
+                class="btn btn-outline-primary"
+                type="button"
+                data-view="backup"
+                role="tab"
+                aria-selected="false"
+              >
+                Backup
+              </button>
             </div>
             <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
               <span class="form-label mb-0 small text-body-secondary">Darstellung</span>
@@ -389,6 +399,42 @@
             </p>
 
             <div id="calendar-grid" class="lz-calendar-grid"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="backup-view" class="mb-4 d-none">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <h2 class="h4">Backup &amp; Wiederherstellung (JSON)</h2>
+            <p class="text-body-secondary small mt-1">
+              Exportiere den kompletten App-Stand als JSON-Datei oder importiere einen vorhandenen
+              Backup-Stand.
+            </p>
+
+            <div class="row g-2 align-items-center mb-2">
+              <div class="col-12 col-lg-5">
+                <input
+                  id="json-file"
+                  class="form-control"
+                  type="file"
+                  accept=".json,application/json"
+                />
+              </div>
+              <div class="col-12 col-sm-auto d-grid">
+                <button id="json-import" type="button" class="btn btn-primary">
+                  JSON importieren
+                </button>
+              </div>
+              <div class="col-12 col-sm-auto d-grid">
+                <button id="json-export" type="button" class="btn btn-secondary">
+                  App-Daten als JSON exportieren
+                </button>
+              </div>
+            </div>
+            <p id="json-status" class="text-body-secondary small mb-0">
+              Noch kein JSON-Import oder -Export durchgef&uuml;hrt.
+            </p>
           </div>
         </div>
       </section>
