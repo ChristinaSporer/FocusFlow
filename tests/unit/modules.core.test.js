@@ -998,7 +998,10 @@ describe("modules/render-main-view", () => {
             description: "",
             completed: true,
             completedAt: "2026-03-24T09:00:00.000Z",
-            milestones: [],
+            milestones: [
+              { id: "m2", title: "Done MS", done: true },
+              { id: "m3", title: "Open MS", done: false },
+            ],
           },
         ],
       },
@@ -1016,6 +1019,21 @@ describe("modules/render-main-view", () => {
     document.querySelector('[data-goal-milestone-toggle="m1"]').dispatchEvent(new Event("change", { bubbles: true }));
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: "GOAL_TOGGLE_MILESTONE", payload: expect.objectContaining({ milestoneId: "m1" }) })
+    );
+
+    expect(document.getElementById("goal-list").textContent).not.toContain("Goal 2");
+    expect(document.getElementById("achieved-list").textContent).toContain("Goal 2");
+    expect(document.getElementById("achieved-list").textContent).toContain("Done MS (erledigt)");
+    expect(document.getElementById("achieved-list").textContent).toContain("Open MS (offen)");
+
+    const achievedToggle = document.querySelector('#achieved-list [data-goal-toggle="g2"]');
+    achievedToggle.checked = false;
+    achievedToggle.dispatchEvent(new Event("change", { bubbles: true }));
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "GOAL_SET_COMPLETED",
+        payload: expect.objectContaining({ id: "g2", completed: false, completedAt: null }),
+      })
     );
 
     document.querySelector('[data-goal-milestone-edit="m1"]').click();
@@ -1040,11 +1058,11 @@ describe("modules/render-main-view", () => {
     addMilestoneForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "GOAL_ADD_MILESTONE" }));
 
-    document.querySelector('[aria-label="Bearbeiten"]').click();
+    document.querySelector("#goal-list > li .ms-auto .btn-outline-secondary").click();
     expect(onEditGoal).toHaveBeenCalled();
 
-    document.querySelector('[aria-label="Löschen"]').click();
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "GOAL_DELETE", payload: { id: "g2" } }));
+    document.querySelector("#goal-list > li .ms-auto .btn-outline-danger").click();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "GOAL_DELETE", payload: { id: "g1" } }));
 
     expect(onActivity).toHaveBeenCalled();
     expect(onRenderAll).toHaveBeenCalled();

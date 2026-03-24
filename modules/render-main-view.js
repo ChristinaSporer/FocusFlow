@@ -41,6 +41,77 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     const milestones = Array.isArray(goal.milestones) ? goal.milestones : [];
     const completedMilestones = milestones.filter((milestone) => milestone.done).length;
 
+    if (goal.completed) {
+      const doneRow = document.createElement("li");
+      doneRow.className = "list-group-item list-group-item-success";
+
+      const doneWrap = document.createElement("div");
+      doneWrap.className = "d-flex flex-column gap-1";
+
+      const doneTitleRow = document.createElement("label");
+      doneTitleRow.className = "form-check d-flex align-items-start gap-2 mb-0";
+
+      const doneCheckbox = document.createElement("input");
+      doneCheckbox.type = "checkbox";
+      doneCheckbox.checked = true;
+      doneCheckbox.title = "Als offen markieren";
+      doneCheckbox.className = "form-check-input mt-1";
+      doneCheckbox.setAttribute("data-goal-toggle", goal.id);
+      doneCheckbox.addEventListener("change", () => {
+        dispatch({
+          type: "GOAL_SET_COMPLETED",
+          payload: {
+            id: goal.id,
+            completed: doneCheckbox.checked,
+            completedAt: doneCheckbox.checked ? nowIso() : null,
+          },
+        });
+        onActivity();
+        onRenderAll();
+      });
+
+      const doneTitleText = document.createElement("span");
+      doneTitleText.textContent = goal.title;
+      doneTitleText.className = "text-body-secondary";
+
+      doneTitleRow.append(doneCheckbox, doneTitleText);
+      doneWrap.appendChild(doneTitleRow);
+
+      if (goal.description) {
+        const doneDescription = document.createElement("small");
+        doneDescription.className = "text-body-secondary";
+        doneDescription.textContent = goal.description;
+        doneWrap.appendChild(doneDescription);
+      }
+
+      if (milestones.length) {
+        const milestoneSummary = document.createElement("small");
+        milestoneSummary.className = "text-body-secondary";
+        milestoneSummary.textContent = `Zwischenziele erledigt: ${completedMilestones}/${milestones.length}`;
+        doneWrap.appendChild(milestoneSummary);
+
+        const milestoneList = document.createElement("ul");
+        milestoneList.className = "mb-0 ps-3 small text-body-secondary";
+        milestones.forEach((milestone) => {
+          const milestoneItem = document.createElement("li");
+          milestoneItem.textContent = milestone.done
+            ? `${milestone.title} (erledigt)`
+            : `${milestone.title} (offen)`;
+          milestoneList.appendChild(milestoneItem);
+        });
+        doneWrap.appendChild(milestoneList);
+      }
+
+      const reachedAt = document.createElement("small");
+      reachedAt.className = "text-body-secondary";
+      reachedAt.textContent = `Erreicht am ${formatDate(goal.completedAt)}`;
+      doneWrap.appendChild(reachedAt);
+
+      doneRow.appendChild(doneWrap);
+      achieved.appendChild(doneRow);
+      return;
+    }
+
     const checkbox = document.createElement("input");
     checkbox.type = "checkbox";
     checkbox.checked = goal.completed;
@@ -278,16 +349,9 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     info.appendChild(milestoneSection);
 
     list.appendChild(goalRow);
-
-    if (goal.completed) {
-      const doneRow = document.createElement("li");
-      doneRow.className = "list-group-item list-group-item-success";
-      doneRow.innerHTML = `<div class="d-flex flex-column gap-1"><span>${goal.title}</span>${goal.description ? `<small class="text-body-secondary">${goal.description}</small>` : ""}${milestones.length ? `<small class="text-body-secondary">Zwischenziele erledigt: ${completedMilestones}/${milestones.length}</small>` : ""}<small class="text-body-secondary">Erreicht am ${formatDate(goal.completedAt)}</small></div>`;
-      achieved.appendChild(doneRow);
-    }
   });
 
-  if (!sorted.length) {
+  if (!list.children.length) {
     renderEmptyList(list, "Keine Ziele vorhanden");
   }
   if (!achieved.children.length) {
@@ -457,15 +521,25 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
       });
       milestoneCol.appendChild(milestoneSelect);
 
+      const hoursCol = document.createElement("div");
+      hoursCol.className = "col-12 col-lg-2";
+      const hoursInput = document.createElement("input");
+      hoursInput.type = "number";
+      hoursInput.className = "form-control";
+      hoursInput.min = "0";
+      hoursInput.step = "0.5";
+      hoursInput.placeholder = "Stunden";
+      hoursInput.setAttribute("data-detail-hours", plan.id);
+      hoursCol.appendChild(hoursInput);
+
       const minutesCol = document.createElement("div");
       minutesCol.className = "col-12 col-lg-2";
       const minutesInput = document.createElement("input");
       minutesInput.type = "number";
       minutesInput.className = "form-control";
-      minutesInput.min = "5";
-      minutesInput.step = "5";
+      minutesInput.min = "0";
+      minutesInput.step = "1";
       minutesInput.placeholder = "Minuten";
-      minutesInput.required = true;
       minutesInput.setAttribute("data-detail-minutes", plan.id);
       minutesCol.appendChild(minutesInput);
 
@@ -499,6 +573,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
         editIdInput.value = "";
         dateInput.value = plan.date;
         milestoneSelect.value = "";
+        hoursInput.value = "";
         minutesInput.value = "";
         topicInput.value = "";
         submitButton.textContent = "Zeit eintragen";
@@ -509,7 +584,8 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
         editIdInput.value = item.id;
         dateInput.value = item.date;
         milestoneSelect.value = item.milestoneId || "";
-        minutesInput.value = item.minutes;
+        hoursInput.value = Math.floor(Number(item.minutes || 0) / 60);
+        minutesInput.value = Number(item.minutes || 0) % 60;
         topicInput.value = item.topic || "";
         submitButton.textContent = "Änderungen speichern";
         cancelButton.classList.remove("d-none");
@@ -518,17 +594,25 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
 
       cancelButton.addEventListener("click", resetBlockForm);
 
-      form.append(dateCol, milestoneCol, minutesCol, topicCol, buttonCol, cancelCol);
+      form.append(dateCol, milestoneCol, hoursCol, minutesCol, topicCol, buttonCol, cancelCol);
       form.addEventListener("submit", (event) => {
         event.preventDefault();
 
         const editId = editIdInput.value;
         const date = dateInput.value;
         const milestoneId = milestoneSelect.value;
-        const minutes = Number(minutesInput.value);
+        const hasHours = hoursInput.value !== "";
+        const hasMinutes = minutesInput.value !== "";
+        const hoursValue = hasHours ? Number(hoursInput.value) : 0;
+        const minuteValue = hasMinutes ? Number(minutesInput.value) : 0;
+        const minutes = Math.round(hoursValue * 60 + minuteValue);
         const topic = topicInput.value.trim();
         const selectedMilestone = milestones.find((item) => item.id === milestoneId);
-        if (!date || !milestoneId || !minutes || !selectedMilestone) return;
+        if (!date || !milestoneId || !selectedMilestone) return;
+        if (!Number.isFinite(hoursValue) || !Number.isFinite(minuteValue)) return;
+        if (hoursValue < 0 || minuteValue < 0) return;
+        if (!hasHours && !hasMinutes) return;
+        if (minutes <= 0) return;
 
         if (editId) {
           dispatch({

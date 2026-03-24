@@ -194,10 +194,12 @@ describe("App UI integration (jsdom)", () => {
 
     const detailForm = document.querySelector("[data-detail-block-form]");
     const milestoneSelect = detailForm.querySelector("select");
-    const minutesInput = detailForm.querySelector('input[type="number"]');
+    const hoursInput = detailForm.querySelector('[data-detail-hours]');
+    const minutesInput = detailForm.querySelector('[data-detail-minutes]');
     const topicInput = detailForm.querySelector('input[type="text"]');
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    minutesInput.value = "90";
+    hoursInput.value = "1";
+    minutesInput.value = "30";
     topicInput.value = "Architektur";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -307,7 +309,8 @@ describe("App UI integration (jsdom)", () => {
     const detailForm = document.querySelector("[data-detail-block-form]");
     const milestoneSelect = detailForm.querySelector("select");
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    detailForm.querySelector('input[type="number"]').value = "45";
+    detailForm.querySelector('[data-detail-hours]').value = "0";
+    detailForm.querySelector('[data-detail-minutes]').value = "45";
     detailForm.querySelector('input[type="text"]').value = "April Thema";
     detailForm.dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true })
@@ -512,7 +515,8 @@ describe("App UI integration (jsdom)", () => {
     let detailForm = document.querySelector("[data-detail-block-form]");
     let milestoneSelect = detailForm.querySelector("select");
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    detailForm.querySelector('input[type="number"]').value = "30";
+    detailForm.querySelector('[data-detail-hours]').value = "0";
+    detailForm.querySelector('[data-detail-minutes]').value = "30";
     detailForm.querySelector('input[type="text"]').value = "Erster Stand";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -520,12 +524,58 @@ describe("App UI integration (jsdom)", () => {
 
     detailForm = document.querySelector("[data-detail-block-form]");
     expect(detailForm.querySelector('[data-detail-cancel]')?.classList.contains("d-none")).toBe(false);
-    detailForm.querySelector('input[type="number"]').value = "45";
+    detailForm.querySelector('[data-detail-hours]').value = "0";
+    detailForm.querySelector('[data-detail-minutes]').value = "45";
     detailForm.querySelector('input[type="text"]').value = "Überarbeitet";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     expect(document.getElementById("detail-list").textContent).toContain("45 Min für Alt Zwischenziel");
     expect(document.getElementById("detail-list").textContent).toContain("Überarbeitet");
     expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 45 von 180 Min");
+  });
+
+  it("accepts minutes-only and decimal-hours-only detail time input", () => {
+    document.getElementById("goal-title").value = "Zeitformat Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Zeitformat Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "5";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector("[data-detail-block-form]");
+    const milestoneSelect = detailForm.querySelector("select");
+
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('[data-detail-hours]').value = "";
+    detailForm.querySelector('[data-detail-minutes]').value = "80";
+    detailForm.querySelector('input[type="text"]').value = "Nur Minuten";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('[data-detail-hours]').value = "2.5";
+    detailForm.querySelector('[data-detail-minutes]').value = "";
+    detailForm.querySelector('input[type="text"]').value = "Nur Stunden";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const planMinutesOnly = parsed.detailPlans.find((item) => item.topic === "Nur Minuten");
+    const planHoursOnly = parsed.detailPlans.find((item) => item.topic === "Nur Stunden");
+
+    expect(planMinutesOnly.minutes).toBe(80);
+    expect(planHoursOnly.minutes).toBe(150);
+    expect(document.getElementById("detail-list").textContent).toContain("80 Min für Zeitformat Zwischenziel");
+    expect(document.getElementById("detail-list").textContent).toContain("150 Min für Zeitformat Zwischenziel");
   });
 });
