@@ -194,12 +194,12 @@ describe("App UI integration (jsdom)", () => {
 
     const detailForm = document.querySelector("[data-detail-block-form]");
     const milestoneSelect = detailForm.querySelector("select");
-    const hoursInput = detailForm.querySelector('[data-detail-hours]');
-    const minutesInput = detailForm.querySelector('[data-detail-minutes]');
+    const startInput = detailForm.querySelector('[data-detail-start]');
+    const endInput = detailForm.querySelector('[data-detail-end]');
     const topicInput = detailForm.querySelector('input[type="text"]');
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    hoursInput.value = "1";
-    minutesInput.value = "30";
+    startInput.value = "09:00";
+    endInput.value = "10:30";
     topicInput.value = "Architektur";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -309,8 +309,8 @@ describe("App UI integration (jsdom)", () => {
     const detailForm = document.querySelector("[data-detail-block-form]");
     const milestoneSelect = detailForm.querySelector("select");
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    detailForm.querySelector('[data-detail-hours]').value = "0";
-    detailForm.querySelector('[data-detail-minutes]').value = "45";
+    detailForm.querySelector('[data-detail-start]').value = "09:00";
+    detailForm.querySelector('[data-detail-end]').value = "09:45";
     detailForm.querySelector('input[type="text"]').value = "April Thema";
     detailForm.dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true })
@@ -513,8 +513,8 @@ describe("App UI integration (jsdom)", () => {
     let detailForm = document.querySelector("[data-detail-block-form]");
     let milestoneSelect = detailForm.querySelector("select");
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    detailForm.querySelector('[data-detail-hours]').value = "0";
-    detailForm.querySelector('[data-detail-minutes]').value = "30";
+    detailForm.querySelector('[data-detail-start]').value = "10:00";
+    detailForm.querySelector('[data-detail-end]').value = "10:30";
     detailForm.querySelector('input[type="text"]').value = "Erster Stand";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -522,8 +522,8 @@ describe("App UI integration (jsdom)", () => {
 
     detailForm = document.querySelector("[data-detail-block-form]");
     expect(detailForm.querySelector('[data-detail-cancel]')?.classList.contains("d-none")).toBe(false);
-    detailForm.querySelector('[data-detail-hours]').value = "0";
-    detailForm.querySelector('[data-detail-minutes]').value = "45";
+    detailForm.querySelector('[data-detail-start]').value = "11:00";
+    detailForm.querySelector('[data-detail-end]').value = "11:45";
     detailForm.querySelector('input[type="text"]').value = "Überarbeitet";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -532,7 +532,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 45 von 180 Min");
   });
 
-  it("accepts minutes-only and decimal-hours-only detail time input", () => {
+  it("derives detail minutes from selected start and end time", () => {
     document.getElementById("goal-title").value = "Zeitformat Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document.getElementById("goal-form").dispatchEvent(
@@ -556,23 +556,23 @@ describe("App UI integration (jsdom)", () => {
     const milestoneSelect = detailForm.querySelector("select");
 
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    detailForm.querySelector('[data-detail-hours]').value = "";
-    detailForm.querySelector('[data-detail-minutes]').value = "80";
-    detailForm.querySelector('input[type="text"]').value = "Nur Minuten";
+    detailForm.querySelector('[data-detail-start]').value = "08:00";
+    detailForm.querySelector('[data-detail-end]').value = "09:20";
+    detailForm.querySelector('input[type="text"]').value = "Fruehe Einheit";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
-    detailForm.querySelector('[data-detail-hours]').value = "2.5";
-    detailForm.querySelector('[data-detail-minutes]').value = "";
-    detailForm.querySelector('input[type="text"]').value = "Nur Stunden";
+    detailForm.querySelector('[data-detail-start]').value = "10:00";
+    detailForm.querySelector('[data-detail-end]').value = "12:30";
+    detailForm.querySelector('input[type="text"]').value = "Mittags Einheit";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
     const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
-    const planMinutesOnly = parsed.detailPlans.find((item) => item.topic === "Nur Minuten");
-    const planHoursOnly = parsed.detailPlans.find((item) => item.topic === "Nur Stunden");
+    const earlyPlan = parsed.detailPlans.find((item) => item.topic === "Fruehe Einheit");
+    const middayPlan = parsed.detailPlans.find((item) => item.topic === "Mittags Einheit");
 
-    expect(planMinutesOnly.minutes).toBe(80);
-    expect(planHoursOnly.minutes).toBe(150);
+    expect(earlyPlan.minutes).toBe(80);
+    expect(middayPlan.minutes).toBe(150);
     expect(document.getElementById("detail-list").textContent).toContain("80 Min für Zeitformat Zwischenziel");
     expect(document.getElementById("detail-list").textContent).toContain("150 Min für Zeitformat Zwischenziel");
   });
@@ -598,8 +598,8 @@ describe("App UI integration (jsdom)", () => {
     );
 
     const detailForm = document.querySelector('[data-detail-block-form]');
-    detailForm.querySelector('[data-detail-hours]').value = "0";
-    detailForm.querySelector('[data-detail-minutes]').value = "35";
+    detailForm.querySelector('[data-detail-start]').value = "13:00";
+    detailForm.querySelector('[data-detail-end]').value = "13:35";
     detailForm.querySelector('input[type="text"]').value = "Freitext ohne Zwischenziel";
     detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 
@@ -615,8 +615,8 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
     expect(additionalForm).toBeTruthy();
 
-    additionalForm.querySelector('[data-detail-hours]').value = "1";
-    additionalForm.querySelector('[data-detail-minutes]').value = "15";
+    additionalForm.querySelector('[data-detail-start]').value = "14:00";
+    additionalForm.querySelector('[data-detail-end]').value = "15:15";
     additionalForm.querySelector('input[type="text"]').value = "Unabhängige Detailplanung";
     additionalForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
 

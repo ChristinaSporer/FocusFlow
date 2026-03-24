@@ -12,6 +12,23 @@ function sum(array) {
   return array.reduce((acc, value) => acc + value, 0);
 }
 
+function parseTimeToMinutes(value) {
+  if (typeof value !== "string" || !value.includes(":")) return NaN;
+  const [hoursPart, minutesPart] = value.split(":");
+  const hours = Number(hoursPart);
+  const minutes = Number(minutesPart);
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes)) return NaN;
+  if (hours < 0 || hours > 23 || minutes < 0 || minutes > 59) return NaN;
+  return hours * 60 + minutes;
+}
+
+function formatMinutesAsTime(totalMinutes) {
+  const normalized = Math.max(0, Math.floor(Number(totalMinutes) || 0));
+  const hours = String(Math.floor(normalized / 60)).padStart(2, "0");
+  const minutes = String(normalized % 60).padStart(2, "0");
+  return `${hours}:${minutes}`;
+}
+
 function roughPlansByGoalComparator(state, left, right) {
   const leftGoalTitle = left.goalId
     ? state.goals.find((goal) => goal.id === left.goalId)?.title || ""
@@ -432,6 +449,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
 
     const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
     const details = [formatDate(item.date)];
+    if (item.startTime && item.endTime) details.push(`${item.startTime}-${item.endTime}`);
     if (goal?.title) details.push(`Hauptziel: ${goal.title}`);
     if (item.topic && item.topic !== focusTitle) details.push(item.topic);
 
@@ -471,7 +489,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     form.appendChild(editIdInput);
 
     const dateCol = document.createElement("div");
-    dateCol.className = "col-12 col-lg-3";
+    dateCol.className = "col-12 col-lg-4";
     const dateInput = document.createElement("input");
     dateInput.type = "date";
     dateInput.className = "form-control";
@@ -502,30 +520,26 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     });
     milestoneCol.appendChild(milestoneSelect);
 
-    const hoursCol = document.createElement("div");
-    hoursCol.className = "col-12 col-lg-2";
-    const hoursInput = document.createElement("input");
-    hoursInput.type = "number";
-    hoursInput.className = "form-control";
-    hoursInput.min = "0";
-    hoursInput.step = "0.5";
-    hoursInput.placeholder = "Stunden";
-    hoursInput.setAttribute("data-detail-hours", blockKey);
-    hoursCol.appendChild(hoursInput);
+    const startCol = document.createElement("div");
+    startCol.className = "col-12 col-md-6 col-lg-4";
+    const startInput = document.createElement("input");
+    startInput.type = "time";
+    startInput.className = "form-control";
+    startInput.placeholder = "Von";
+    startInput.setAttribute("data-detail-start", blockKey);
+    startCol.appendChild(startInput);
 
-    const minutesCol = document.createElement("div");
-    minutesCol.className = "col-12 col-lg-2";
-    const minutesInput = document.createElement("input");
-    minutesInput.type = "number";
-    minutesInput.className = "form-control";
-    minutesInput.min = "0";
-    minutesInput.step = "1";
-    minutesInput.placeholder = "Minuten";
-    minutesInput.setAttribute("data-detail-minutes", blockKey);
-    minutesCol.appendChild(minutesInput);
+    const endCol = document.createElement("div");
+    endCol.className = "col-12 col-md-6 col-lg-4";
+    const endInput = document.createElement("input");
+    endInput.type = "time";
+    endInput.className = "form-control";
+    endInput.placeholder = "Bis";
+    endInput.setAttribute("data-detail-end", blockKey);
+    endCol.appendChild(endInput);
 
     const topicCol = document.createElement("div");
-    topicCol.className = "col-12 col-lg";
+    topicCol.className = "col-12 col-lg-8";
     const topicInput = document.createElement("input");
     topicInput.type = "text";
     topicInput.className = "form-control";
@@ -534,7 +548,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     topicCol.appendChild(topicInput);
 
     const buttonCol = document.createElement("div");
-    buttonCol.className = "col-12 col-lg-auto d-grid";
+    buttonCol.className = "col-12 col-md-6 col-lg-3 d-grid";
     const submitButton = document.createElement("button");
     submitButton.type = "submit";
     submitButton.className = "btn btn-primary";
@@ -542,7 +556,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     buttonCol.appendChild(submitButton);
 
     const cancelCol = document.createElement("div");
-    cancelCol.className = "col-12 col-lg-auto d-grid";
+    cancelCol.className = "col-12 col-md-6 col-lg-3 d-grid";
     const cancelButton = document.createElement("button");
     cancelButton.type = "button";
     cancelButton.className = "btn btn-outline-secondary d-none";
@@ -554,8 +568,8 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
       editIdInput.value = "";
       dateInput.value = defaultDate;
       milestoneSelect.value = "";
-      hoursInput.value = "";
-      minutesInput.value = "";
+      startInput.value = "";
+      endInput.value = "";
       topicInput.value = "";
       submitButton.textContent = "Zeit eintragen";
       cancelButton.classList.add("d-none");
@@ -565,8 +579,17 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
       editIdInput.value = item.id;
       dateInput.value = item.date;
       milestoneSelect.value = item.milestoneId || "";
-      hoursInput.value = Math.floor(Number(item.minutes || 0) / 60);
-      minutesInput.value = Number(item.minutes || 0) % 60;
+      const startMinutes = parseTimeToMinutes(item.startTime || "");
+      const endMinutes = parseTimeToMinutes(item.endTime || "");
+      if (Number.isFinite(startMinutes) && Number.isFinite(endMinutes) && endMinutes > startMinutes) {
+        startInput.value = item.startTime;
+        endInput.value = item.endTime;
+      } else {
+        const fallbackStart = 9 * 60;
+        const fallbackEnd = fallbackStart + Number(item.minutes || 0);
+        startInput.value = formatMinutesAsTime(fallbackStart);
+        endInput.value = formatMinutesAsTime(fallbackEnd);
+      }
       topicInput.value = item.topic || "";
       submitButton.textContent = "Änderungen speichern";
       cancelButton.classList.remove("d-none");
@@ -575,31 +598,31 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
 
     cancelButton.addEventListener("click", resetBlockForm);
 
-    form.append(dateCol, milestoneCol, hoursCol, minutesCol, topicCol, buttonCol, cancelCol);
+    form.append(dateCol, startCol, endCol, milestoneCol, topicCol, buttonCol, cancelCol);
     form.addEventListener("submit", (event) => {
       event.preventDefault();
 
       const editId = editIdInput.value;
       const date = dateInput.value;
       const milestoneId = milestoneSelect.value;
-      const hasHours = hoursInput.value !== "";
-      const hasMinutes = minutesInput.value !== "";
-      const hoursValue = hasHours ? Number(hoursInput.value) : 0;
-      const minuteValue = hasMinutes ? Number(minutesInput.value) : 0;
-      const minutes = Math.round(hoursValue * 60 + minuteValue);
+      const startTime = startInput.value;
+      const endTime = endInput.value;
+      const startMinutes = parseTimeToMinutes(startTime);
+      const endMinutes = parseTimeToMinutes(endTime);
+      const minutes = endMinutes - startMinutes;
       const topic = topicInput.value.trim();
       const selectedMilestone = milestones.find((item) => item.id === milestoneId) || null;
 
       if (!date) return;
-      if (!Number.isFinite(hoursValue) || !Number.isFinite(minuteValue)) return;
-      if (hoursValue < 0 || minuteValue < 0) return;
-      if (!hasHours && !hasMinutes) return;
+      if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) return;
       if (minutes <= 0) return;
       if (!selectedMilestone && !topic) return;
 
       const payloadPlan = {
         date,
         minutes,
+        startTime,
+        endTime,
         topic,
         milestone: selectedMilestone?.title || "",
         milestoneId: selectedMilestone?.id || null,
