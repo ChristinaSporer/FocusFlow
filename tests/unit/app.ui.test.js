@@ -787,4 +787,155 @@ describe("App UI integration (jsdom)", () => {
     expect(extraDetail.roughPlanId).toBe(null);
     expect(document.getElementById("detail-list").textContent).toContain("75 Min für Unabhängige Detailplanung");
   });
+
+  it("links tracked time to selected detail item and shows progress", () => {
+    document.getElementById("goal-title").value = "Tracking Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Tracking Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W13";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector("[data-detail-block-form]");
+    const milestoneSelect = detailForm.querySelector("select");
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('[data-detail-start]').value = "09:00";
+    detailForm.querySelector('[data-detail-end]').value = "10:00";
+    detailForm.querySelector('input[type="text"]').value = "Session A";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    const startTrackingButton = document.querySelector("[data-detail-start-tracking]");
+    const detailId = startTrackingButton.getAttribute("data-detail-start-tracking");
+    startTrackingButton.click();
+
+    expect(document.getElementById("track-detail-select").value).toBe(detailId);
+
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    document.getElementById("timer-stop").click();
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const session = parsed.trackedSessions.find((item) => item.detailPlanId === detailId);
+    expect(session).toBeTruthy();
+    expect(session.minutes).toBe(2);
+    expect(document.getElementById("detail-list").textContent).toContain("Getrackt: 2 von 60 Min");
+  });
+
+  it("auto-stops and stores current timer when switching detail item", () => {
+    document.getElementById("goal-title").value = "Switch Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Switch Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W13";
+    document.getElementById("rough-hours").value = "3";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector("[data-detail-block-form]");
+    const milestoneSelect = detailForm.querySelector("select");
+
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('[data-detail-start]').value = "09:00";
+    detailForm.querySelector('[data-detail-end]').value = "09:30";
+    detailForm.querySelector('input[type="text"]').value = "Switch A";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('[data-detail-start]').value = "10:00";
+    detailForm.querySelector('[data-detail-end]').value = "10:30";
+    detailForm.querySelector('input[type="text"]').value = "Switch B";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    let buttons = Array.from(document.querySelectorAll("[data-detail-start-tracking]"));
+    expect(buttons).toHaveLength(2);
+
+    const firstId = buttons[0].getAttribute("data-detail-start-tracking");
+    const secondId = buttons[1].getAttribute("data-detail-start-tracking");
+
+    buttons[0].click();
+    document.getElementById("track-note").value = "Laufende Session";
+    vi.advanceTimersByTime(60 * 1000);
+
+    buttons = Array.from(document.querySelectorAll("[data-detail-start-tracking]"));
+    buttons[1].click();
+
+    const parsedAfterSwitch = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const firstSession = parsedAfterSwitch.trackedSessions.find((item) => item.detailPlanId === firstId);
+    expect(firstSession).toBeTruthy();
+    expect(firstSession.note).toContain("Laufende Session");
+    expect(firstSession.note).toContain("Automatisch beendet");
+    expect(document.getElementById("track-detail-select").value).toBe(secondId);
+  });
+
+  it("stores manual tracked session with selected detail plan and note", () => {
+    document.getElementById("goal-title").value = "Manual Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Manual Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W13";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const detailForm = document.querySelector("[data-detail-block-form]");
+    const milestoneSelect = detailForm.querySelector("select");
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    detailForm.querySelector('[data-detail-start]').value = "12:00";
+    detailForm.querySelector('[data-detail-end]').value = "12:30";
+    detailForm.querySelector('input[type="text"]').value = "Manual Detail";
+    detailForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    const detailId = document
+      .querySelector("[data-detail-start-tracking]")
+      .getAttribute("data-detail-start-tracking");
+
+    document.getElementById("track-detail-select").value = detailId;
+    document.getElementById("track-detail-select").dispatchEvent(new Event("change", { bubbles: true }));
+    document.getElementById("track-note").value = "Manuelle Nachtragung";
+    document.getElementById("track-manual-date").value = "2026-03-24";
+    document.getElementById("track-manual-minutes").value = "35";
+    document.getElementById("track-manual-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    const manualSession = parsed.trackedSessions.find(
+      (session) => session.detailPlanId === detailId && session.note === "Manuelle Nachtragung"
+    );
+    expect(manualSession).toBeTruthy();
+    expect(manualSession.minutes).toBe(35);
+    expect(document.getElementById("track-list").textContent).toContain("Manuelle Nachtragung");
+    expect(document.getElementById("track-list").textContent).toContain("Detail:");
+  });
 });

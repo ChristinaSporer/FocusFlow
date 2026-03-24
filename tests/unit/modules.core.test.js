@@ -30,6 +30,7 @@ import {
   renderGoals,
   renderRoughPlans,
   renderStats,
+  renderTimerDetailPlanSelect,
   renderTrackedSessions,
 } from "../../modules/render-main-view.js";
 import { createThemeManager, normalizeThemeMode } from "../../modules/theme-manager.js";
@@ -71,7 +72,7 @@ function baseState() {
       calendarMonth: null,
       themeMode: "auto",
     },
-    timer: { start: null },
+    timer: { start: null, selectedDetailPlanId: null },
   };
 }
 
@@ -522,6 +523,9 @@ describe("modules/form-handlers", () => {
       '<button id="calendar-next" type="button"></button>',
       '<button id="timer-start" type="button"></button>',
       '<button id="timer-stop" type="button"></button>',
+      '<select id="track-detail-select"><option value="">Kein Detail</option><option value="d1">D1</option></select>',
+      '<form id="track-manual-form"><input id="track-manual-date" value="2026-03-24"><input id="track-manual-minutes" value=""><button id="track-manual-submit" type="submit">save</button></form>',
+      '<input id="track-note" value="">',
       '<form id="settings-form"></form>',
       '<input id="inactivity-days" value="">',
       '<button id="enable-notifications" type="button"></button>',
@@ -556,6 +560,8 @@ describe("modules/form-handlers", () => {
       renderCalendar: vi.fn(),
       startTimer: vi.fn(),
       stopTimer: vi.fn(),
+      setSelectedTimerDetailPlan: vi.fn(),
+      addManualTrackedSession: vi.fn(() => true),
       importIcsFile: vi.fn(async () => ({ ok: false })),
       exportIcsFile: vi.fn(),
       importJsonFile: vi.fn(async () => ({ ok: false })),
@@ -673,8 +679,24 @@ describe("modules/form-handlers", () => {
 
     document.getElementById("timer-start").click();
     document.getElementById("timer-stop").click();
+    document.getElementById("track-detail-select").value = "d1";
+    document.getElementById("track-detail-select").dispatchEvent(new Event("change", { bubbles: true }));
+    document.getElementById("track-note").value = "Manual note";
+    document.getElementById("track-manual-minutes").value = "45";
+    document.getElementById("track-manual-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
     expect(deps.startTimer).toHaveBeenCalledTimes(1);
     expect(deps.stopTimer).toHaveBeenCalledTimes(1);
+    expect(deps.setSelectedTimerDetailPlan).toHaveBeenCalledWith("d1");
+    expect(deps.addManualTrackedSession).toHaveBeenCalledWith({
+      date: "2026-03-24",
+      minutes: 45,
+      note: "Manual note",
+      detailPlanId: "d1",
+    });
+    expect(document.getElementById("track-manual-minutes").value).toBe("");
+    expect(document.getElementById("track-note").value).toBe("");
 
     const settingsForm = document.getElementById("settings-form");
     document.getElementById("inactivity-days").value = "0";
@@ -941,6 +963,7 @@ describe("modules/render-main-view", () => {
       '<ul id="rough-list"></ul>',
       '<ul id="detail-list"></ul>',
       '<ul id="track-list"></ul>',
+      '<select id="track-detail-select"></select>',
       '<div id="stats"></div>',
       '<div id="time-progress" aria-valuenow="0"></div>',
       '<div id="goal-progress" aria-valuenow="0"></div>',
@@ -1072,6 +1095,7 @@ describe("modules/render-main-view", () => {
   it("renders rough/detail/tracked lists including block-based detail planning", () => {
     const dispatch = vi.fn();
     const onRenderAll = vi.fn();
+    const onStartTrackingDetail = vi.fn();
 
     renderRoughPlans({
       state: {
@@ -1149,17 +1173,24 @@ describe("modules/render-main-view", () => {
           },
           { id: "d2", date: "2026-03-26", minutes: 30, topic: "Legacy", milestone: "", done: true },
         ],
+        trackedSessions: [{ id: "t1", detailPlanId: "d1", minutes: 15, start: "2026-03-24T10:00:00.000Z" }],
       },
       dispatch,
       onRenderAll,
       selectedMonth: "2026-03",
+      onStartTrackingDetail,
     });
 
     expect(document.getElementById("detail-list").textContent).toContain("2 h geplant für Goal");
     expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 45 von 120 Min");
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
+    expect(document.getElementById("detail-list").textContent).toContain("Getrackt: 15 von 45 Min");
     expect(document.querySelector('[data-detail-block-form="r1"]')).toBeTruthy();
     expect(document.querySelector('[aria-label="Detailplanung bearbeiten"]')).toBeTruthy();
+    expect(document.querySelector('[data-detail-start-tracking="d1"]')).toBeTruthy();
+
+    document.querySelector('[data-detail-start-tracking="d1"]').click();
+    expect(onStartTrackingDetail).toHaveBeenCalledWith("d1", "M");
 
     const detailCheckbox = document.querySelector("#detail-list input[type='checkbox']");
     detailCheckbox.checked = true;
@@ -1170,25 +1201,45 @@ describe("modules/render-main-view", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "DETAIL_DELETE", payload: { id: "d1" } });
 
     document.getElementById("detail-list").innerHTML = "";
-    renderDetailPlans({ state: { goals: [], roughPlans: [], detailPlans: [] }, dispatch, onRenderAll, selectedMonth: "2026-03" });
+    renderDetailPlans({
+      state: { goals: [], roughPlans: [], detailPlans: [], trackedSessions: [] },
+      dispatch,
+      onRenderAll,
+      selectedMonth: "2026-03",
+    });
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
     expect(document.querySelector('[data-detail-block-form="additional"]')).toBeTruthy();
 
     renderTrackedSessions({
       state: {
+        detailPlans: [
+          { id: "d1", date: "2026-03-24", topic: "A", milestone: "", minutes: 25 },
+        ],
         trackedSessions: [
-          { id: "t1", start: "2026-03-24T10:00:00.000Z", minutes: 25, note: "X" },
+          { id: "t1", start: "2026-03-24T10:00:00.000Z", minutes: 25, note: "X", detailPlanId: "d1" },
         ],
       },
       dispatch,
       onRenderAll,
     });
+    expect(document.getElementById("track-list").textContent).toContain("Detail:");
     document.querySelector("#track-list .btn-outline-danger").click();
     expect(dispatch).toHaveBeenCalledWith({ type: "TRACKED_DELETE", payload: { id: "t1" } });
 
     document.getElementById("track-list").innerHTML = "";
-    renderTrackedSessions({ state: { trackedSessions: [] }, dispatch, onRenderAll });
+    renderTrackedSessions({ state: { trackedSessions: [], detailPlans: [] }, dispatch, onRenderAll });
     expect(document.getElementById("track-list").textContent).toContain("Noch keine getrackte Lernzeit");
+
+    renderTimerDetailPlanSelect({
+      state: {
+        detailPlans: [
+          { id: "d1", date: "2026-03-24", topic: "Alpha", milestone: "", minutes: 20 },
+        ],
+        goals: [],
+        timer: { start: null, selectedDetailPlanId: "d1" },
+      },
+    });
+    expect(document.getElementById("track-detail-select").value).toBe("d1");
   });
 
   it("shows a rough planning week in both overlapping months", () => {
@@ -1357,14 +1408,25 @@ describe("modules/app-reducer", () => {
     });
     state = appReducer(state, { type: "DETAIL_SET_DONE", payload: { id: "d2", done: true } });
     expect(state.detailPlans.find((plan) => plan.id === "d2").done).toBe(true);
+
+    state = appReducer(state, {
+      type: "TIMER_SET_SELECTED_DETAIL_PLAN",
+      payload: { detailPlanId: "d2" },
+    });
+    expect(state.timer.selectedDetailPlanId).toBe("d2");
+
     state = appReducer(state, { type: "DETAIL_DELETE", payload: { id: "d1" } });
     expect(state.detailPlans.find((plan) => plan.id === "d1")).toBeUndefined();
 
     state = appReducer(state, {
       type: "TIMER_START",
-      payload: { start: "2026-03-24T08:00:00Z" },
+      payload: { start: "2026-03-24T08:00:00Z", selectedDetailPlanId: "d2" },
     });
     expect(state.timer.start).toBe("2026-03-24T08:00:00Z");
+    expect(state.timer.selectedDetailPlanId).toBe("d2");
+
+    state = appReducer(state, { type: "DETAIL_DELETE", payload: { id: "d2" } });
+    expect(state.timer.selectedDetailPlanId).toBeNull();
 
     state = appReducer(state, {
       type: "TIMER_STOP_AND_STORE_SESSION",
@@ -1372,6 +1434,12 @@ describe("modules/app-reducer", () => {
     });
     expect(state.timer.start).toBeNull();
     expect(state.trackedSessions.find((session) => session.id === "t2")).toBeTruthy();
+
+    state = appReducer(state, {
+      type: "TRACKED_ADD",
+      payload: { session: { id: "t3", minutes: 35, note: "manual" } },
+    });
+    expect(state.trackedSessions.find((session) => session.id === "t3")).toBeTruthy();
 
     state = appReducer(state, { type: "TRACKED_DELETE", payload: { id: "t1" } });
     expect(state.trackedSessions.find((session) => session.id === "t1")).toBeUndefined();
@@ -1471,6 +1539,7 @@ describe("modules/state-store", () => {
     expect(loaded.settings.activeView).toBe("calendar");
     expect(loaded.settings.themeMode).toBe("auto");
     expect(loaded.timer.start).toBeNull();
+    expect(loaded.timer.selectedDetailPlanId).toBeNull();
   });
 
   it("persists state and supports store methods", () => {
@@ -1654,13 +1723,17 @@ describe("modules/timer-manager", () => {
   });
 
   function setupTimerManager(initialState) {
-    const state = initialState || { timer: { start: null } };
+    const state = initialState || { timer: { start: null, selectedDetailPlanId: null } };
     const dispatch = vi.fn((action) => {
       if (action.type === "TIMER_START") {
         state.timer.start = action.payload.start;
+        state.timer.selectedDetailPlanId = action.payload.selectedDetailPlanId ?? state.timer.selectedDetailPlanId;
       }
       if (action.type === "TIMER_STOP_AND_STORE_SESSION") {
         state.timer.start = null;
+      }
+      if (action.type === "TIMER_SET_SELECTED_DETAIL_PLAN") {
+        state.timer.selectedDetailPlanId = action.payload.detailPlanId;
       }
     });
 
@@ -1698,7 +1771,7 @@ describe("modules/timer-manager", () => {
     expect(dispatch).toHaveBeenCalledTimes(1);
     expect(dispatch).toHaveBeenCalledWith({
       type: "TIMER_START",
-      payload: { start: "2026-03-24T10:00:00.000Z" },
+      payload: { start: "2026-03-24T10:00:00.000Z", selectedDetailPlanId: null },
     });
 
     vi.advanceTimersByTime(1000);
@@ -1710,7 +1783,7 @@ describe("modules/timer-manager", () => {
 
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
-    const state = { timer: { start: "2026-03-24T09:57:30.000Z" } };
+    const state = { timer: { start: "2026-03-24T09:57:30.000Z", selectedDetailPlanId: "d1" } };
 
     const dispatch = vi.fn((action) => {
       if (action.type === "TIMER_STOP_AND_STORE_SESSION") {
@@ -1733,6 +1806,7 @@ describe("modules/timer-manager", () => {
     expect(action.type).toBe("TIMER_STOP_AND_STORE_SESSION");
     expect(action.payload.session.note).toBe("Deep Work");
     expect(action.payload.session.minutes).toBe(3);
+    expect(action.payload.session.detailPlanId).toBe("d1");
     expect(action.payload.session.id).toBeTruthy();
     expect(document.getElementById("track-note").value).toBe("");
     expect(onActivity).toHaveBeenCalledTimes(1);
@@ -1741,7 +1815,7 @@ describe("modules/timer-manager", () => {
 
   it("syncs interval from state and supports dispose", () => {
     document.body.innerHTML = '<div id="timer-display"></div>';
-    const state = { timer: { start: "2026-03-24T09:59:58.000Z" } };
+    const state = { timer: { start: "2026-03-24T09:59:58.000Z", selectedDetailPlanId: null } };
 
     const manager = createTimerManager({
       getState: () => state,
@@ -1762,6 +1836,98 @@ describe("modules/timer-manager", () => {
     manager.dispose();
     vi.advanceTimersByTime(5000);
     expect(document.getElementById("timer-display").textContent).toBe("00:00:00");
+  });
+
+  it("switches running timer when started from another detail plan", () => {
+    document.body.innerHTML = '<div id="timer-display"></div><input id="track-note" value="Deep Work">';
+    const onActivity = vi.fn();
+    const onRenderAll = vi.fn();
+    const state = { timer: { start: "2026-03-24T09:58:00.000Z", selectedDetailPlanId: "d1" } };
+
+    const dispatch = vi.fn((action) => {
+      if (action.type === "TIMER_STOP_AND_STORE_SESSION") {
+        state.timer.start = null;
+      }
+      if (action.type === "TIMER_SET_SELECTED_DETAIL_PLAN") {
+        state.timer.selectedDetailPlanId = action.payload.detailPlanId;
+      }
+      if (action.type === "TIMER_START") {
+        state.timer.start = action.payload.start;
+        state.timer.selectedDetailPlanId = action.payload.selectedDetailPlanId;
+      }
+    });
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity,
+      onRenderAll,
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    manager.startTimerForDetailPlan("d2", "Neues Detail");
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TIMER_STOP_AND_STORE_SESSION",
+        payload: expect.objectContaining({
+          session: expect.objectContaining({
+            detailPlanId: "d1",
+          }),
+        }),
+      })
+    );
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "TIMER_SET_SELECTED_DETAIL_PLAN",
+      payload: { detailPlanId: "d2" },
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "TIMER_START",
+      payload: { start: "2026-03-24T10:00:00.000Z", selectedDetailPlanId: "d2" },
+    });
+    expect(document.getElementById("track-note").value).toBe("");
+    expect(state.timer.start).toBe("2026-03-24T10:00:00.000Z");
+    expect(state.timer.selectedDetailPlanId).toBe("d2");
+    expect(onRenderAll).toHaveBeenCalled();
+    expect(onActivity).toHaveBeenCalled();
+  });
+
+  it("adds manual tracked session with detail and note", () => {
+    const onActivity = vi.fn();
+    const onRenderAll = vi.fn();
+    const state = { timer: { start: null, selectedDetailPlanId: null } };
+    const dispatch = vi.fn();
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity,
+      onRenderAll,
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    const ok = manager.addManualSession({
+      date: "2026-03-24",
+      minutes: 40,
+      note: "Manuell",
+      detailPlanId: "d1",
+    });
+
+    expect(ok).toBe(true);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TRACKED_ADD",
+        payload: expect.objectContaining({
+          session: expect.objectContaining({
+            minutes: 40,
+            note: "Manuell",
+            detailPlanId: "d1",
+          }),
+        }),
+      })
+    );
+    expect(onActivity).toHaveBeenCalledTimes(1);
+    expect(onRenderAll).toHaveBeenCalledTimes(1);
   });
 });
 

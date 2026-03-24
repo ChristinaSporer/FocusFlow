@@ -40,18 +40,26 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     const state = getState();
     if (state.timer.start) return;
 
-    dispatch({ type: "TIMER_START", payload: { start: nowIso() } });
+    dispatch({
+      type: "TIMER_START",
+      payload: {
+        start: nowIso(),
+        selectedDetailPlanId: state.timer.selectedDetailPlanId || null,
+      },
+    });
     onActivity();
     renderTimer();
     ensureInterval();
   }
 
-  function stopTimer() {
+  function stopTimer(options = {}) {
     const state = getState();
     if (!state.timer.start) return;
 
     const noteField = byId("track-note");
-    const note = noteField?.value.trim() || "";
+    const baseNote = noteField?.value.trim() || "";
+    const autoNote = options.autoStopNote?.trim() || "";
+    const note = [baseNote, autoNote].filter(Boolean).join(" | ");
     const end = new Date();
     const start = new Date(state.timer.start);
     const minutes = Math.max(1, Math.round((end - start) / 60000));
@@ -62,17 +70,83 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
       end: end.toISOString(),
       minutes,
       note,
+      detailPlanId: state.timer.selectedDetailPlanId || null,
     };
 
     dispatch({ type: "TIMER_STOP_AND_STORE_SESSION", payload: { session } });
 
-    if (noteField) {
+    if (noteField && options.clearNote !== false) {
       noteField.value = "";
     }
 
     onActivity();
     stopInterval();
     onRenderAll();
+  }
+
+  function setSelectedDetailPlan(detailPlanId) {
+    dispatch({
+      type: "TIMER_SET_SELECTED_DETAIL_PLAN",
+      payload: { detailPlanId: detailPlanId || null },
+    });
+    onRenderAll();
+  }
+
+  function startTimerForDetailPlan(detailPlanId, detailLabel) {
+    const selectedDetailPlanId = detailPlanId || null;
+    const stateBefore = getState();
+
+    if (stateBefore.timer.start) {
+      const switchLabel = String(detailLabel || "Detailplanung").trim();
+      stopTimer({
+        autoStopNote: `Automatisch beendet: Wechsel zu ${switchLabel}`,
+      });
+    }
+
+    dispatch({
+      type: "TIMER_SET_SELECTED_DETAIL_PLAN",
+      payload: { detailPlanId: selectedDetailPlanId },
+    });
+    dispatch({
+      type: "TIMER_START",
+      payload: {
+        start: nowIso(),
+        selectedDetailPlanId,
+      },
+    });
+    onActivity();
+    renderTimer();
+    ensureInterval();
+    onRenderAll();
+  }
+
+  function addManualSession({ date, minutes, note, detailPlanId }) {
+    const normalizedDate = String(date || "").trim();
+    const parsedMinutes = Number(minutes);
+    if (!normalizedDate || !Number.isFinite(parsedMinutes) || parsedMinutes <= 0) {
+      return false;
+    }
+
+    const roundedMinutes = Math.max(1, Math.round(parsedMinutes));
+    const start = new Date(`${normalizedDate}T12:00:00`);
+    if (Number.isNaN(start.getTime())) {
+      return false;
+    }
+
+    const end = new Date(start.getTime() + roundedMinutes * 60000);
+    const session = {
+      id: uid(),
+      start: start.toISOString(),
+      end: end.toISOString(),
+      minutes: roundedMinutes,
+      note: String(note || "").trim(),
+      detailPlanId: detailPlanId || null,
+    };
+
+    dispatch({ type: "TRACKED_ADD", payload: { session } });
+    onActivity();
+    onRenderAll();
+    return true;
   }
 
   function syncFromState() {
@@ -93,6 +167,9 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     renderTimer,
     startTimer,
     stopTimer,
+    setSelectedDetailPlan,
+    startTimerForDetailPlan,
+    addManualSession,
     syncFromState,
     dispose,
   };

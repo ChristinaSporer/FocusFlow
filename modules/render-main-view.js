@@ -55,6 +55,24 @@ function formatMinutesAsTime(totalMinutes) {
   return `${hours}:${minutes}`;
 }
 
+function getDetailPlanFocusTitle(state, detailPlan) {
+  const { milestone } = resolveDetailPlanContext(state, detailPlan);
+  return milestone?.title || detailPlan.milestone || detailPlan.topic || "Detailplanung";
+}
+
+function buildDetailPlanSelectionLabel(state, detailPlan) {
+  const { goal } = resolveDetailPlanContext(state, detailPlan);
+  const focusTitle = getDetailPlanFocusTitle(state, detailPlan);
+  const parts = [formatDate(detailPlan.date), focusTitle];
+  if (goal?.title) {
+    parts.push(goal.title);
+  }
+  if (detailPlan.startTime && detailPlan.endTime) {
+    parts.push(`${detailPlan.startTime}-${detailPlan.endTime}`);
+  }
+  return parts.filter(Boolean).join(" · ");
+}
+
 function roughPlansByGoalComparator(state, left, right) {
   const leftGoalTitle = left.goalId
     ? state.goals.find((goal) => goal.id === left.goalId)?.title || ""
@@ -495,7 +513,14 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
   }
 }
 
-export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth, onActivity }) {
+export function renderDetailPlans({
+  state,
+  dispatch,
+  onRenderAll,
+  selectedMonth,
+  onActivity,
+  onStartTrackingDetail,
+}) {
   const list = byId("detail-list");
 
   // Keep the current collapse state when re-rendering (e.g., after checkbox changes).
@@ -522,6 +547,13 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
   const monthlyDetailPlans = [...state.detailPlans]
     .filter((item) => monthOf(item.date) === selectedMonth)
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  const trackedMinutesByDetailId = (state.trackedSessions || []).reduce((map, session) => {
+    if (!session.detailPlanId) return map;
+    const current = map.get(session.detailPlanId) || 0;
+    map.set(session.detailPlanId, current + Number(session.minutes || 0));
+    return map;
+  }, new Map());
 
   const collapsibleBlockControls = [];
 
@@ -590,6 +622,10 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     if (goal?.title) details.push(`Hauptziel: ${goal.title}`);
     if (item.topic && item.topic !== focusTitle) details.push(item.topic);
 
+    const trackedMinutes = trackedMinutesByDetailId.get(item.id) || 0;
+    const plannedMinutes = Number(item.minutes || 0);
+    const progressPercent = plannedMinutes > 0 ? Math.min(100, Math.round((trackedMinutes / plannedMinutes) * 100)) : 0;
+
     const editButton = document.createElement("button");
     editButton.className = "btn btn-outline-secondary btn-sm";
     editButton.type = "button";
@@ -597,15 +633,47 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     editButton.innerHTML = '<i class="bi bi-pencil"></i>';
     editButton.addEventListener("click", () => onEdit?.(item));
 
-    return buildRow(`${item.minutes} Min für ${focusTitle}`, details.join(" · "), {
+    const trackingButton = document.createElement("button");
+    trackingButton.className = "btn btn-outline-primary btn-sm";
+    trackingButton.type = "button";
+    trackingButton.setAttribute("aria-label", "Tracking starten");
+    trackingButton.setAttribute("title", "Tracking starten");
+    trackingButton.setAttribute("data-detail-start-tracking", item.id);
+    trackingButton.innerHTML = '<i class="bi bi-stopwatch"></i>';
+    trackingButton.addEventListener("click", () => {
+      onStartTrackingDetail?.(item.id, focusTitle);
+    });
+
+    const row = buildRow(`${item.minutes} Min für ${focusTitle}`, details.join(" · "), {
       done: item.done,
       onDelete: () => {
         dispatch({ type: "DETAIL_DELETE", payload: { id: item.id } });
         onActivity?.();
         onRenderAll();
       },
-      actions: [flag, editButton],
+      actions: [flag, trackingButton, editButton],
     });
+
+    const info = row.querySelector(".flex-grow-1");
+    const trackedText = document.createElement("small");
+    trackedText.className = "text-body-secondary";
+    trackedText.textContent = `Getrackt: ${trackedMinutes} von ${plannedMinutes} Min`;
+
+    const progressWrap = document.createElement("div");
+    progressWrap.className = "progress";
+
+    const progressBar = document.createElement("div");
+    progressBar.className = "progress-bar bg-info";
+    progressBar.setAttribute("role", "progressbar");
+    progressBar.setAttribute("aria-valuemin", "0");
+    progressBar.setAttribute("aria-valuemax", "100");
+    progressBar.setAttribute("aria-valuenow", String(progressPercent));
+    progressBar.style.width = `${progressPercent}%`;
+
+    progressWrap.appendChild(progressBar);
+    info.append(trackedText, progressWrap);
+
+    return row;
   }
 
   function createDetailBlockForm({
@@ -957,12 +1025,18 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll }) {
   const list = byId("track-list");
   list.innerHTML = "";
 
+  const detailPlans = state.detailPlans || [];
   const data = [...state.trackedSessions].sort((a, b) => b.start.localeCompare(a.start));
 
   data.forEach((session) => {
+    const linkedDetailPlan = detailPlans.find((item) => item.id === session.detailPlanId) || null;
+    const linkedDetailText = linkedDetailPlan
+      ? `Detail: ${buildDetailPlanSelectionLabel(state, linkedDetailPlan)}`
+      : "";
+
     const row = buildRow(
       `${session.minutes} Min fokussierte Lernzeit`,
-      `${formatDate(session.start)}${session.note ? ` · ${session.note}` : ""}`,
+      [formatDate(session.start), session.note, linkedDetailText].filter(Boolean).join(" · "),
       {
         onDelete: () => {
           dispatch({ type: "TRACKED_DELETE", payload: { id: session.id } });
@@ -976,6 +1050,36 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll }) {
   if (!data.length) {
     renderEmptyList(list, "Noch keine getrackte Lernzeit");
   }
+}
+
+export function renderTimerDetailPlanSelect({ state }) {
+  const select = byId("track-detail-select");
+  if (!select) return;
+
+  const selectedId = state.timer?.selectedDetailPlanId || "";
+  const detailPlans = [...state.detailPlans].sort((left, right) => {
+    const byDate = left.date.localeCompare(right.date);
+    if (byDate !== 0) return byDate;
+    return getDetailPlanFocusTitle(state, left).localeCompare(getDetailPlanFocusTitle(state, right), "de", {
+      sensitivity: "base",
+    });
+  });
+
+  select.innerHTML = "";
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Kein Detailplanungspunkt";
+  select.appendChild(defaultOption);
+
+  detailPlans.forEach((detailPlan) => {
+    const option = document.createElement("option");
+    option.value = detailPlan.id;
+    option.textContent = buildDetailPlanSelectionLabel(state, detailPlan);
+    select.appendChild(option);
+  });
+
+  select.value = detailPlans.some((item) => item.id === selectedId) ? selectedId : "";
 }
 
 export function renderStats({ state, currentMonth }) {

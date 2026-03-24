@@ -17,6 +17,8 @@ export function initFormHandlers({
   renderCalendar,
   startTimer,
   stopTimer,
+  setSelectedTimerDetailPlan,
+  addManualTrackedSession,
   importIcsFile,
   exportIcsFile,
   importJsonFile,
@@ -219,6 +221,29 @@ export function initFormHandlers({
 
   byId("timer-start").addEventListener("click", startTimer);
   byId("timer-stop").addEventListener("click", stopTimer);
+  byId("track-detail-select")?.addEventListener("change", (event) => {
+    setSelectedTimerDetailPlan?.(event.target.value || null);
+  });
+  byId("track-manual-form")?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const date = byId("track-manual-date")?.value;
+    const minutes = Number(byId("track-manual-minutes")?.value);
+    const note = byId("track-note")?.value || "";
+    const detailPlanId = byId("track-detail-select")?.value || null;
+
+    const ok = addManualTrackedSession?.({
+      date,
+      minutes,
+      note,
+      detailPlanId,
+    });
+
+    if (!ok) return;
+    const minutesInput = byId("track-manual-minutes");
+    if (minutesInput) minutesInput.value = "";
+    const noteInput = byId("track-note");
+    if (noteInput) noteInput.value = "";
+  });
 
   byId("settings-form").addEventListener("submit", (event) => {
     event.preventDefault();

@@ -6,6 +6,7 @@ import {
   renderGoals,
   renderRoughPlans,
   renderStats,
+  renderTimerDetailPlanSelect,
   renderTrackedSessions,
 } from "./modules/render-main-view.js";
 import { createStore, defaultData, loadState } from "./modules/state-store.js";
@@ -57,7 +58,13 @@ function renderAll() {
     ...renderContext,
     onEditRoughPlan: roughFormController.startRoughEdit,
   });
-  renderDetailPlans({ ...renderContext, selectedMonth, onActivity: touchActivity });
+  renderDetailPlans({
+    ...renderContext,
+    selectedMonth,
+    onActivity: touchActivity,
+    onStartTrackingDetail: timerManager.startTimerForDetailPlan,
+  });
+  renderTimerDetailPlanSelect({ state: getState() });
   renderTrackedSessions(renderContext);
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
@@ -91,6 +98,10 @@ function setInitialValues() {
   }
 
   byId("inactivity-days").value = getState().settings.inactivityDays;
+  const manualTrackDate = byId("track-manual-date");
+  if (manualTrackDate && !manualTrackDate.value) {
+    manualTrackDate.value = now.toISOString().slice(0, 10);
+  }
 
   const currentThemeMode = getState().settings.themeMode;
   const normalizedTheme = normalizeThemeMode(currentThemeMode);
@@ -145,6 +156,8 @@ function initHandlers() {
     renderCalendar: calendarManager.renderCalendar,
     startTimer: timerManager.startTimer,
     stopTimer: timerManager.stopTimer,
+    setSelectedTimerDetailPlan: timerManager.setSelectedDetailPlan,
+    addManualTrackedSession: timerManager.addManualSession,
     importIcsFile: icsManager.importFromFile,
     exportIcsFile: icsManager.exportToFile,
     importJsonFile: jsonManager.importFromFile,

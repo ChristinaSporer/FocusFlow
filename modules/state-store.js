@@ -16,6 +16,7 @@ export const defaultData = () => ({
   },
   timer: {
     start: null,
+    selectedDetailPlanId: null,
   },
 });
 

@@ -120,6 +120,13 @@ export function appReducer(currentState, action) {
       return {
         ...currentState,
         detailPlans: currentState.detailPlans.filter((item) => item.id !== action.payload.id),
+        timer:
+          currentState.timer?.selectedDetailPlanId === action.payload.id
+            ? {
+                ...currentState.timer,
+                selectedDetailPlanId: null,
+              }
+            : currentState.timer,
       };
     case "DETAIL_SET_DONE":
       return {
@@ -133,12 +140,29 @@ export function appReducer(currentState, action) {
         ...currentState,
         trackedSessions: currentState.trackedSessions.filter((item) => item.id !== action.payload.id),
       };
+    case "TRACKED_ADD":
+      return {
+        ...currentState,
+        trackedSessions: [...currentState.trackedSessions, action.payload.session],
+      };
     case "TIMER_START":
       return {
         ...currentState,
         timer: {
           ...currentState.timer,
           start: action.payload.start,
+          selectedDetailPlanId:
+            Object.prototype.hasOwnProperty.call(action.payload, "selectedDetailPlanId")
+              ? action.payload.selectedDetailPlanId
+              : currentState.timer?.selectedDetailPlanId || null,
+        },
+      };
+    case "TIMER_SET_SELECTED_DETAIL_PLAN":
+      return {
+        ...currentState,
+        timer: {
+          ...currentState.timer,
+          selectedDetailPlanId: action.payload.detailPlanId,
         },
       };
     case "TIMER_STOP_AND_STORE_SESSION":
