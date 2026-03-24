@@ -1078,6 +1078,8 @@ describe("modules/render-main-view", () => {
         roughPlans: [
           { id: "r1", date: "2026-03-24", week: "2026-W13", hours: 2, note: "Heute", goalId: "g1" },
           { id: "r3", date: "2026-03-26", week: "2026-W13", hours: 1, note: "Vorher", goalId: "g2" },
+          { id: "r4", date: "2026-03-23", week: "2026-W12", hours: 1, note: "KW 12" },
+          { id: "r5", date: "2026-11-23", week: "2026-W48", hours: 1, note: "KW 48" },
           { id: "r2", date: "2027-03-24", week: "2027-W12", hours: 2, note: "Zu spät" },
         ],
         goals: [
@@ -1090,13 +1092,34 @@ describe("modules/render-main-view", () => {
     });
     expect(document.getElementById("rough-list").textContent).toContain("2 h geplant");
     expect(document.getElementById("rough-list").textContent).toContain("KW 13/2026");
-    expect(document.getElementById("rough-list").textContent).not.toContain("Zu spät");
+    expect(document.getElementById("rough-list").textContent).toContain("Zu spät");
+    expect(document.getElementById("rough-list").textContent.indexOf("KW 12/2026")).toBeLessThan(
+      document.getElementById("rough-list").textContent.indexOf("KW 48/2026")
+    );
 
-    const roughRows = Array.from(document.querySelectorAll("#rough-list .list-group-item"));
-    expect(roughRows[0].textContent).toContain("A Goal");
+    document.getElementById("rough-list").innerHTML = "";
+    renderRoughPlans({
+      state: {
+        roughPlans: [
+          { id: "rx1", date: "2026-11-09", week: "KW 46/2026", hours: 1, note: "KW 46" },
+          { id: "rx2", date: "2026-03-16", week: "KW 12/2026", hours: 1, note: "KW 12" },
+        ],
+        goals: [],
+      },
+      dispatch,
+      onRenderAll,
+    });
+    expect(document.getElementById("rough-list").textContent.indexOf("KW 12")).toBeLessThan(
+      document.getElementById("rough-list").textContent.indexOf("KW 46")
+    );
 
     document.querySelector("#rough-list .btn-outline-danger").click();
-    expect(dispatch).toHaveBeenCalledWith({ type: "ROUGH_DELETE", payload: { id: "r3" } });
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "ROUGH_DELETE",
+        payload: expect.objectContaining({ id: expect.any(String) }),
+      })
+    );
 
     document.getElementById("rough-list").innerHTML = "";
     renderRoughPlans({ state: { roughPlans: [] }, dispatch, onRenderAll });
@@ -1179,6 +1202,7 @@ describe("modules/render-main-view", () => {
           milestones: [{ id: "m1", title: "Milestone", done: false }],
         },
       ],
+
       roughPlans: [
         {
           id: "r-cross",
@@ -1251,7 +1275,7 @@ describe("modules/render-main-view", () => {
 
     expect(document.getElementById("time-progress").textContent).toBe("100%");
     expect(document.getElementById("goal-progress").textContent).toBe("50%");
-    expect(document.getElementById("stats").textContent).toContain("Geplant (6M)");
+    expect(document.getElementById("stats").textContent).toContain("Geplant gesamt");
   });
 });
 

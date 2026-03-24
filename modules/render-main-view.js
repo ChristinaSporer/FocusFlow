@@ -1,8 +1,34 @@
 import { byId } from "./dom.js";
-import { formatCalendarWeek, formatDate, isWithinNextSixMonths, monthOf, nowIso, weekOverlapsMonth } from "./date-utils.js";
+import { formatCalendarWeek, formatDate, monthOf, nowIso, weekOverlapsMonth, weekValueFromDate } from "./date-utils.js";
 import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 import { buildRow, renderEmptyList } from "./list-render-utils.js";
 import { uid } from "./app-utils.js";
+
+function parseIsoWeek(weekValue) {
+  const match = /^(\d{4})-W(\d{1,2})$/.exec(String(weekValue || "").trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const week = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(week)) return null;
+  return { year, week };
+}
+
+function parseCalendarWeekLabel(weekValue) {
+  const match = /^KW\s*(\d{1,2})\/(\d{4})$/i.exec(String(weekValue || "").trim());
+  if (!match) return null;
+  const week = Number(match[1]);
+  const year = Number(match[2]);
+  if (!Number.isInteger(year) || !Number.isInteger(week)) return null;
+  return { year, week };
+}
+
+function getWeekPartsFromPlan(plan) {
+  return (
+    parseIsoWeek(plan?.week) ||
+    parseCalendarWeekLabel(plan?.week) ||
+    parseIsoWeek(weekValueFromDate(plan?.date))
+  );
+}
 
 function toMinutes(hours) {
   return Math.round(Number(hours) * 60);
@@ -42,6 +68,26 @@ function roughPlansByGoalComparator(state, left, right) {
 
   const weekOrder = (left.week || "").localeCompare(right.week || "");
   if (weekOrder !== 0) return weekOrder;
+
+  return (left.date || "").localeCompare(right.date || "");
+}
+
+function roughPlansByWeekComparator(left, right) {
+  const leftWeek = getWeekPartsFromPlan(left);
+  const rightWeek = getWeekPartsFromPlan(right);
+
+  if (leftWeek && rightWeek) {
+    if (leftWeek.year !== rightWeek.year) {
+      return leftWeek.year - rightWeek.year;
+    }
+    if (leftWeek.week !== rightWeek.week) {
+      return leftWeek.week - rightWeek.week;
+    }
+  } else if (leftWeek && !rightWeek) {
+    return -1;
+  } else if (!leftWeek && rightWeek) {
+    return 1;
+  }
 
   return (left.date || "").localeCompare(right.date || "");
 }
@@ -380,9 +426,7 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
   const list = byId("rough-list");
   list.innerHTML = "";
 
-  const data = [...state.roughPlans]
-    .sort((a, b) => roughPlansByGoalComparator(state, a, b))
-    .filter((plan) => isWithinNextSixMonths(plan.date));
+  const data = [...state.roughPlans].sort(roughPlansByWeekComparator);
 
   data.forEach((plan) => {
     const goal = plan.goalId ? state.goals.find((g) => g.id === plan.goalId) : null;
@@ -414,7 +458,7 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
   });
 
   if (!data.length) {
-    renderEmptyList(list, "Keine Grobplanung in den nächsten 6 Monaten");
+    renderEmptyList(list, "Keine Grobplanung vorhanden");
   }
 }
 
@@ -902,17 +946,9 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll }) {
 }
 
 export function renderStats({ state, currentMonth }) {
-  const plannedSixMonthsMin =
-    sum(
-      state.roughPlans
-        .filter((item) => isWithinNextSixMonths(item.date))
-        .map((item) => toMinutes(item.hours))
-    ) +
-    sum(
-      state.detailPlans
-        .filter((item) => isWithinNextSixMonths(item.date))
-        .map((item) => Number(item.minutes))
-    );
+  const plannedTotalMin =
+    sum(state.roughPlans.map((item) => toMinutes(item.hours))) +
+    sum(state.detailPlans.map((item) => Number(item.minutes)));
 
   const trackedMin = sum(state.trackedSessions.map((item) => Number(item.minutes)));
 
@@ -934,8 +970,8 @@ export function renderStats({ state, currentMonth }) {
     <div class="col">
       <div class="card border-0 bg-body-tertiary h-100">
         <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Geplant (6M)</small>
-          <b class="fs-5">${plannedSixMonthsMin} Min</b>
+          <small class="d-block text-body-secondary">Geplant gesamt</small>
+          <b class="fs-5">${plannedTotalMin} Min</b>
         </div>
       </div>
     </div>
@@ -966,9 +1002,9 @@ export function renderStats({ state, currentMonth }) {
   `;
 
   const timePercent =
-    plannedSixMonthsMin === 0
+    plannedTotalMin === 0
       ? 0
-      : Math.min(100, Math.round((trackedMin / plannedSixMonthsMin) * 100));
+      : Math.min(100, Math.round((trackedMin / plannedTotalMin) * 100));
   const goalPercent = totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
 
   const timeProgress = byId("time-progress");
