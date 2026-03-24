@@ -55,14 +55,14 @@ export function createIcsManager({ getState, dispatch }) {
         events
       );
 
-      const firstDate = events[0]?.date || null;
+      const firstDate = events[0].date;
       const status = `${mapped.length} Termin(e) aus ${file.name} importiert.`;
       setStatus(status);
 
       return {
         ok: true,
         status,
-        calendarMonth: firstDate ? monthOf(firstDate) : null,
+        calendarMonth: monthOf(firstDate),
       };
     } catch {
       const status = "Import fehlgeschlagen. Bitte gültige .ics-Datei prüfen.";

@@ -12,23 +12,42 @@ function loadDomWithoutScript() {
 describe("App UI integration (jsdom)", () => {
   let appModule;
 
-  beforeEach(async () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-03T10:00:00.000Z"));
-
+  async function bootApp({ notification, storedState } = {}) {
     localStorage.clear();
+    if (storedState) {
+      localStorage.setItem("focusflow-v1", JSON.stringify(storedState));
+    }
+
     loadDomWithoutScript();
 
     window.alert = vi.fn();
     window.confirm = vi.fn(() => true);
-    window.Notification = {
-      permission: "denied",
-      requestPermission: vi.fn(async () => "denied"),
-    };
+
+    if (notification === null) {
+      Reflect.deleteProperty(window, "Notification");
+    } else if (notification) {
+      const notificationCtor = vi.fn();
+      notificationCtor.permission = notification.permission ?? "default";
+      notificationCtor.requestPermission =
+        notification.requestPermission ?? vi.fn(async () => notificationCtor.permission);
+      window.Notification = notificationCtor;
+    } else {
+      window.Notification = {
+        permission: "denied",
+        requestPermission: vi.fn(async () => "denied"),
+      };
+    }
 
     vi.resetModules();
-    appModule = await import("../../app.js");
-    appModule.bootstrap();
+    const module = await import("../../app.js");
+    module.bootstrap();
+    return module;
+  }
+
+  beforeEach(async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-03T10:00:00.000Z"));
+    appModule = await bootApp();
   });
 
   afterEach(() => {
@@ -167,5 +186,104 @@ describe("App UI integration (jsdom)", () => {
     expect(document.querySelector(".lz-calendar-event.lz-source-detail")?.textContent).toContain(
       "Architektur"
     );
+  });
+
+  it("loads demo data and uses fallback notification text when Notification API is missing", () => {
+    Reflect.deleteProperty(window, "Notification");
+
+    document.getElementById("load-demo").click();
+
+    expect(document.getElementById("goal-list").textContent).toContain("Modul Software Engineering abschließen");
+    expect(document.getElementById("notification-status").textContent).toBe(
+      "Dieser Browser unterstützt keine Benachrichtigungen."
+    );
+  });
+
+  it("normalizes invalid theme mode and sets active notification status on bootstrap", async () => {
+    appModule.shutdown();
+
+    appModule = await bootApp({
+      notification: {
+        permission: "granted",
+        requestPermission: vi.fn(async () => "granted"),
+      },
+      storedState: {
+        settings: {
+          themeMode: "invalid-theme",
+          notificationEnabled: true,
+          inactivityDays: 3,
+          activeView: "list",
+          calendarMonth: null,
+          lastReminderRun: null,
+        },
+      },
+    });
+
+    const persisted = JSON.parse(localStorage.getItem("focusflow-v1"));
+    expect(persisted.settings.themeMode).toBe("auto");
+    expect(document.getElementById("notification-status").textContent).toBe(
+      "Benachrichtigungen sind aktiv."
+    );
+  });
+
+  it("shows not-activated notification status when permission is neither granted nor denied", async () => {
+    appModule.shutdown();
+
+    appModule = await bootApp({
+      notification: {
+        permission: "default",
+        requestPermission: vi.fn(async () => "default"),
+      },
+      storedState: {
+        settings: {
+          themeMode: "auto",
+          notificationEnabled: false,
+          inactivityDays: 3,
+          activeView: "list",
+          calendarMonth: null,
+          lastReminderRun: null,
+        },
+      },
+    });
+
+    expect(document.getElementById("notification-status").textContent).toBe(
+      "Benachrichtigungen sind derzeit nicht aktiviert."
+    );
+  });
+
+  it("uses current-month fallback when month-select is missing", () => {
+    document.getElementById("month-select").value = "2026-04";
+    document.getElementById("month-select").dispatchEvent(new Event("change", { bubbles: true }));
+
+    document.getElementById("detail-date").value = "2026-04-15";
+    document.getElementById("detail-minutes").value = "45";
+    document.getElementById("detail-topic").value = "April Thema";
+    document.getElementById("detail-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    expect(document.getElementById("detail-list").textContent).toContain("April Thema");
+
+    document.getElementById("month-select").remove();
+    document.getElementById("tab-calendar").click();
+
+    expect(document.getElementById("detail-list").textContent).not.toContain("April Thema");
+    expect(document.getElementById("detail-list").textContent).toContain(
+      "Keine Detailplanung für diesen Monat"
+    );
+  });
+
+  it("does not register duplicate handlers on second bootstrap", () => {
+    appModule.bootstrap();
+
+    document.getElementById("goal-title").value = "Einmaliges Ziel";
+    document.getElementById("goal-date").value = "2026-03-20";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    expect(parsed.goals).toHaveLength(1);
+    expect(parsed.goals[0].title).toBe("Einmaliges Ziel");
   });
 });
