@@ -420,6 +420,20 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
 
 export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth, onActivity }) {
   const list = byId("detail-list");
+
+  // Keep the current collapse state when re-rendering (e.g., after checkbox changes).
+  const collapsedStateByPlanId = new Map(
+    Array.from(list.querySelectorAll("[data-detail-block-body]"))
+      .filter((node) => node.getAttribute("data-detail-block-body") !== "additional")
+      .map((node) => [
+        node.getAttribute("data-detail-block-body"),
+        node.classList.contains("d-none"),
+      ])
+  );
+  const additionalBlockWasCollapsed = Boolean(
+    list.querySelector("[data-detail-additional-body]")?.classList.contains("d-none")
+  );
+
   list.innerHTML = "";
 
   const monthlyRoughPlans = [...state.roughPlans]
@@ -431,6 +445,52 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
   const monthlyDetailPlans = [...state.detailPlans]
     .filter((item) => monthOf(item.date) === selectedMonth)
     .sort((a, b) => a.date.localeCompare(b.date));
+
+  const collapsibleBlockControls = [];
+
+  function setBlockCollapsed(toggleButton, blockBody, collapsed) {
+    blockBody.classList.toggle("d-none", collapsed);
+    toggleButton.setAttribute("aria-expanded", String(!collapsed));
+    toggleButton.setAttribute("aria-label", collapsed ? "Ausklappen" : "Einklappen");
+    toggleButton.title = collapsed ? "Ausklappen" : "Einklappen";
+    toggleButton.innerHTML = collapsed
+      ? '<i class="bi bi-chevron-down" aria-hidden="true"></i>'
+      : '<i class="bi bi-chevron-up" aria-hidden="true"></i>';
+  }
+
+  if (monthlyRoughPlans.length) {
+    const controlsRow = document.createElement("li");
+    controlsRow.className = "list-group-item";
+
+    const controlsWrap = document.createElement("div");
+    controlsWrap.className = "d-flex gap-2 justify-content-end";
+
+    const collapseAllButton = document.createElement("button");
+    collapseAllButton.type = "button";
+    collapseAllButton.className = "btn btn-outline-secondary btn-sm";
+    collapseAllButton.textContent = "Alle einklappen";
+    collapseAllButton.setAttribute("data-detail-collapse-all", "true");
+    collapseAllButton.addEventListener("click", () => {
+      collapsibleBlockControls.forEach(({ toggleButton, blockBody }) => {
+        setBlockCollapsed(toggleButton, blockBody, true);
+      });
+    });
+
+    const expandAllButton = document.createElement("button");
+    expandAllButton.type = "button";
+    expandAllButton.className = "btn btn-outline-secondary btn-sm";
+    expandAllButton.textContent = "Alle ausklappen";
+    expandAllButton.setAttribute("data-detail-expand-all", "true");
+    expandAllButton.addEventListener("click", () => {
+      collapsibleBlockControls.forEach(({ toggleButton, blockBody }) => {
+        setBlockCollapsed(toggleButton, blockBody, false);
+      });
+    });
+
+    controlsWrap.append(collapseAllButton, expandAllButton);
+    controlsRow.appendChild(controlsWrap);
+    list.appendChild(controlsRow);
+  }
 
   const todayIso = nowIso().slice(0, 10);
   const defaultMonthDate = todayIso.startsWith(selectedMonth) ? todayIso : `${selectedMonth}-01`;
@@ -672,6 +732,9 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     const block = document.createElement("li");
     block.className = "list-group-item";
 
+    const headerRow = document.createElement("div");
+    headerRow.className = "d-flex align-items-start justify-content-between gap-2";
+
     const header = document.createElement("div");
     header.className = "d-flex flex-column gap-1";
 
@@ -691,14 +754,35 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     allocation.className = "text-body-secondary";
     allocation.textContent = `Verteilt: ${allocatedMinutes} von ${plannedMinutes} Min · Offen: ${Math.max(0, plannedMinutes - allocatedMinutes)} Min`;
     header.appendChild(allocation);
-    block.appendChild(header);
+
+    const toggleButton = document.createElement("button");
+    toggleButton.type = "button";
+    toggleButton.className = "btn btn-outline-secondary btn-sm";
+    toggleButton.setAttribute("data-detail-block-toggle", plan.id);
+    toggleButton.setAttribute("aria-controls", `detail-block-body-${plan.id}`);
+
+    const blockBody = document.createElement("div");
+    blockBody.className = "mt-3";
+    blockBody.setAttribute("data-detail-block-body", plan.id);
+    blockBody.id = `detail-block-body-${plan.id}`;
+
+    setBlockCollapsed(toggleButton, blockBody, collapsedStateByPlanId.get(plan.id) || false);
+    collapsibleBlockControls.push({ toggleButton, blockBody });
+
+    toggleButton.addEventListener("click", () => {
+      const isCollapsed = !blockBody.classList.contains("d-none");
+      setBlockCollapsed(toggleButton, blockBody, isCollapsed);
+    });
+
+    headerRow.append(header, toggleButton);
+    block.appendChild(headerRow);
 
     const hint = document.createElement("p");
     hint.className = "text-body-secondary small mb-0 mt-3";
     hint.textContent = milestones.length
       ? "Zwischenziel kann ausgewählt werden oder Freitext ohne Zwischenziel."
       : "Kein Zwischenziel erforderlich: Detailplanung per Freitext möglich.";
-    block.appendChild(hint);
+    blockBody.appendChild(hint);
 
     const { form, startDetailEdit } = createDetailBlockForm({
       blockKey: plan.id,
@@ -708,7 +792,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
       roughPlanId: plan.id,
       onDone: onRenderAll,
     });
-    block.appendChild(form);
+    blockBody.appendChild(form);
 
     const entryList = document.createElement("ul");
     entryList.className = "list-group mt-3";
@@ -717,7 +801,8 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     } else {
       renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
     }
-    block.appendChild(entryList);
+    blockBody.appendChild(entryList);
+    block.appendChild(blockBody);
     list.appendChild(block);
   });
 
@@ -729,12 +814,39 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
   const additionalBlock = document.createElement("li");
   additionalBlock.className = "list-group-item";
 
+  const additionalHeaderRow = document.createElement("div");
+  additionalHeaderRow.className = "d-flex align-items-start justify-content-between gap-2";
+
+  const additionalHeader = document.createElement("div");
+  additionalHeader.className = "d-flex flex-column gap-1";
+
   const additionalTitle = document.createElement("strong");
   additionalTitle.textContent = "Weitere Detailplanung";
   const additionalHint = document.createElement("small");
   additionalHint.className = "text-body-secondary d-block mt-1";
   additionalHint.textContent = "Freitext oder optionales Zwischenziel - auch ohne Grobplanung";
-  additionalBlock.append(additionalTitle, additionalHint);
+  additionalHeader.append(additionalTitle, additionalHint);
+
+  const additionalToggleButton = document.createElement("button");
+  additionalToggleButton.type = "button";
+  additionalToggleButton.className = "btn btn-outline-secondary btn-sm";
+  additionalToggleButton.setAttribute("data-detail-additional-toggle", "true");
+  additionalToggleButton.setAttribute("aria-controls", "detail-additional-body");
+
+  const additionalBody = document.createElement("div");
+  additionalBody.className = "mt-3";
+  additionalBody.setAttribute("data-detail-additional-body", "true");
+  additionalBody.id = "detail-additional-body";
+
+  setBlockCollapsed(additionalToggleButton, additionalBody, additionalBlockWasCollapsed);
+  collapsibleBlockControls.push({ toggleButton: additionalToggleButton, blockBody: additionalBody });
+  additionalToggleButton.addEventListener("click", () => {
+    const isCollapsed = !additionalBody.classList.contains("d-none");
+    setBlockCollapsed(additionalToggleButton, additionalBody, isCollapsed);
+  });
+
+  additionalHeaderRow.append(additionalHeader, additionalToggleButton);
+  additionalBlock.appendChild(additionalHeaderRow);
 
   const additionalGoalMilestones = state.goals.flatMap((goal) =>
     (goal.milestones || []).map((milestone) => ({ ...milestone, goalId: goal.id, goal }))
@@ -748,7 +860,7 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
     roughPlanId: null,
     onDone: onRenderAll,
   });
-  additionalBlock.appendChild(additionalForm);
+  additionalBody.appendChild(additionalForm);
 
   const additionalList = document.createElement("ul");
   additionalList.className = "list-group mt-3";
@@ -757,7 +869,9 @@ export function renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth,
   } else {
     renderEmptyList(additionalList, "Noch keine weitere Detailplanung");
   }
-  additionalBlock.appendChild(additionalList);
+  additionalBody.appendChild(additionalList);
+
+  additionalBlock.appendChild(additionalBody);
 
   list.appendChild(additionalBlock);
 }

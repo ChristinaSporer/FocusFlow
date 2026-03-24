@@ -357,6 +357,139 @@ describe("App UI integration (jsdom)", () => {
     expect(blockForm.querySelector("select").textContent).toContain("Erstes Zwischenziel (erledigt)");
   });
 
+  it("toggles rough-planning detail blocks between expanded and collapsed", () => {
+    document.getElementById("goal-title").value = "Klappbar Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const toggleButton = document.querySelector('[data-detail-block-toggle]');
+    const blockBody = document.querySelector('[data-detail-block-body]');
+    expect(toggleButton).toBeTruthy();
+    expect(blockBody).toBeTruthy();
+    expect(blockBody.classList.contains("d-none")).toBe(false);
+
+    toggleButton.click();
+    expect(blockBody.classList.contains("d-none")).toBe(true);
+    expect(toggleButton.getAttribute("aria-label")).toBe("Ausklappen");
+
+    toggleButton.click();
+    expect(blockBody.classList.contains("d-none")).toBe(false);
+    expect(toggleButton.getAttribute("aria-label")).toBe("Einklappen");
+  });
+
+  it("collapses and expands all rough-planning detail blocks", () => {
+    document.getElementById("goal-title").value = "Global Toggle Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W12";
+    document.getElementById("rough-hours").value = "3";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const collapseAllButton = document.querySelector('[data-detail-collapse-all]');
+    const expandAllButton = document.querySelector('[data-detail-expand-all]');
+    const bodies = Array.from(document.querySelectorAll('[data-detail-block-body]'));
+    const additionalBody = document.querySelector('[data-detail-additional-body]');
+    expect(collapseAllButton).toBeTruthy();
+    expect(expandAllButton).toBeTruthy();
+    expect(bodies).toHaveLength(2);
+    expect(additionalBody).toBeTruthy();
+
+    collapseAllButton.click();
+    expect(bodies.every((body) => body.classList.contains("d-none"))).toBe(true);
+    expect(additionalBody.classList.contains("d-none")).toBe(true);
+
+    expandAllButton.click();
+    expect(bodies.every((body) => !body.classList.contains("d-none"))).toBe(true);
+    expect(additionalBody.classList.contains("d-none")).toBe(false);
+  });
+
+  it("keeps other rough-planning blocks collapsed after toggling a detail checkbox", () => {
+    document.getElementById("goal-title").value = "Persist Collapse Goal";
+    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const milestoneInput = document.querySelector("#goal-list input[aria-label^='Zwischenziel für']");
+    milestoneInput.value = "Persist Collapse Zwischenziel";
+    milestoneInput.closest("form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W11";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.getElementById("rough-week").value = "2026-W12";
+    document.getElementById("rough-hours").value = "2";
+    document.getElementById("rough-goal").value = Array.from(document.getElementById("rough-goal").options)[1].value;
+    document.getElementById("rough-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const firstForm = document.querySelector('[data-detail-block-form]');
+    const milestoneSelect = firstForm.querySelector("select");
+    milestoneSelect.value = Array.from(milestoneSelect.options)[1].value;
+    firstForm.querySelector('[data-detail-start]').value = "09:00";
+    firstForm.querySelector('[data-detail-end]').value = "09:30";
+    firstForm.querySelector('input[type="text"]').value = "Eintrag fuer Checkbox";
+    firstForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
+
+    let toggleButtons = Array.from(document.querySelectorAll('[data-detail-block-toggle]'));
+    let bodies = Array.from(document.querySelectorAll('[data-detail-block-body]'));
+    toggleButtons[1].click();
+    expect(bodies[1].classList.contains("d-none")).toBe(true);
+
+    const firstDetailCheckbox = document.querySelector('#detail-list [data-detail-block-body]:not(.d-none) .list-group input[type="checkbox"]');
+    firstDetailCheckbox.checked = true;
+    firstDetailCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
+
+    bodies = Array.from(document.querySelectorAll('[data-detail-block-body]'));
+    expect(bodies[1].classList.contains("d-none")).toBe(true);
+  });
+
+  it("toggles additional detail planning block between expanded and collapsed", () => {
+    const additionalToggle = document.querySelector('[data-detail-additional-toggle]');
+    const additionalBody = document.querySelector('[data-detail-additional-body]');
+
+    expect(additionalToggle).toBeTruthy();
+    expect(additionalBody).toBeTruthy();
+    expect(additionalBody.classList.contains("d-none")).toBe(false);
+
+    additionalToggle.click();
+    expect(additionalBody.classList.contains("d-none")).toBe(true);
+    expect(additionalToggle.getAttribute("aria-label")).toBe("Ausklappen");
+
+    additionalToggle.click();
+    expect(additionalBody.classList.contains("d-none")).toBe(false);
+    expect(additionalToggle.getAttribute("aria-label")).toBe("Einklappen");
+  });
+
   it("does not register duplicate handlers on second bootstrap", () => {
     appModule.bootstrap();
 
