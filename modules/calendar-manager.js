@@ -4,9 +4,8 @@ import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 
 const SOURCE_META = {
   detail: { label: "Detailplanung", className: "lz-source-detail" },
-  rough: { label: "Grobplanung", className: "lz-source-rough" },
-  tracked: { label: "Tracking", className: "lz-source-tracked" },
   import: { label: "ICS-Import", className: "lz-source-import" },
+  goal: { label: "Ziel", className: "lz-source-goal" },
 };
 
 const WEEKDAYS = ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"];
@@ -24,6 +23,16 @@ export function createCalendarManager({ getState, dispatch }) {
   function getCalendarEvents() {
     const state = getState();
 
+    const goalEvents = (state.goals || [])
+      .filter((goal) => goal.targetDate)
+      .map((goal) => ({
+        id: `goal-${goal.id}`,
+        source: "goal",
+        date: goal.targetDate,
+        title: goal.title,
+        hint: goal.completed ? "Ziel (erledigt)" : "Ziel",
+      }));
+
     const detailEvents = state.detailPlans.map((item) => {
       const { goal, milestone } = resolveDetailPlanContext(state, item);
       const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
@@ -40,22 +49,6 @@ export function createCalendarManager({ getState, dispatch }) {
       };
     });
 
-    const roughEvents = state.roughPlans.map((plan) => ({
-      id: plan.id,
-      source: "rough",
-      date: plan.date,
-      title: `${plan.hours} h geplant`,
-      hint: plan.note || "",
-    }));
-
-    const trackedEvents = state.trackedSessions.map((session) => ({
-      id: session.id,
-      source: "tracked",
-      date: formatYmd(session.start),
-      title: `${session.minutes} Min getrackt`,
-      hint: session.note || "",
-    }));
-
     const importedEvents = state.importedEvents.map((event) => ({
       id: event.id,
       source: "import",
@@ -64,8 +57,8 @@ export function createCalendarManager({ getState, dispatch }) {
       hint: event.sourceName ? `Quelle: ${event.sourceName}` : "",
     }));
 
-    return [...detailEvents, ...roughEvents, ...trackedEvents, ...importedEvents].sort((a, b) => {
-      if (a.date === b.date) return a.title.localeCompare(b.title);
+    return [...goalEvents, ...detailEvents, ...importedEvents].sort((a, b) => {
+      if (a.date === b.date) return a.title.localeCompare(b.title, "de", { sensitivity: "base" });
       return a.date.localeCompare(b.date);
     });
   }

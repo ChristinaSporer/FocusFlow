@@ -930,6 +930,15 @@ describe("modules/calendar-manager", () => {
   it("renders events, sorting, outside days and legend", () => {
     const { manager } = createManager({
       settings: { activeView: "calendar", calendarMonth: "2026-03" },
+      goals: [
+        {
+          id: "g1",
+          title: "SE Abgabe",
+          targetDate: "2026-03-24",
+          completed: false,
+          milestones: [{ id: "m1", title: "Kapitel 1", done: false }],
+        },
+      ],
       detailPlans: [
         { id: "d1", date: "2026-03-24", topic: "Design", minutes: 45, milestone: "MS1" },
         { id: "d2", date: "2026-03-24", topic: "Alpha", minutes: 30, milestone: "" },
@@ -958,11 +967,10 @@ describe("modules/calendar-manager", () => {
     expect(document.querySelectorAll(".lz-calendar-day.lz-outside").length).toBeGreaterThan(0);
 
     const allEvents = document.querySelectorAll(".lz-calendar-event");
-    expect(allEvents.length).toBeGreaterThanOrEqual(5);
+    expect(allEvents.length).toBeGreaterThanOrEqual(4);
     expect(document.querySelector(".lz-calendar-event.lz-source-detail")).toBeTruthy();
-    expect(document.querySelector(".lz-calendar-event.lz-source-rough")).toBeTruthy();
-    expect(document.querySelector(".lz-calendar-event.lz-source-tracked")).toBeTruthy();
     expect(document.querySelector(".lz-calendar-event.lz-source-import")).toBeTruthy();
+    expect(document.querySelector(".lz-calendar-event.lz-source-goal")).toBeTruthy();
 
     const detailEventsOnDate = Array.from(
       document.querySelectorAll(".lz-calendar-event.lz-source-detail")
@@ -980,12 +988,12 @@ describe("modules/calendar-manager", () => {
         day: element.parentElement.querySelector(".lz-calendar-day-number")?.textContent,
       })
     );
-    expect(
-      allEventsByDate.some((item) => item.day === "26" && item.text.includes("1 h geplant"))
-    ).toBe(true);
+    expect(allEventsByDate.some((item) => item.day === "24" && item.text === "SE Abgabe")).toBe(
+      true
+    );
 
     const legendItems = document.querySelectorAll("#calendar-legend .lz-legend-dot");
-    expect(legendItems).toHaveLength(4);
+    expect(legendItems).toHaveLength(3);
   });
 });
 

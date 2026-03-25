@@ -28,9 +28,8 @@
   --calendar-day-outside-bg: #f8fafc;
   --calendar-day-outside-text: #94a3b8;
   --source-detail: #1d4ed8;
-  --source-rough: #0f766e;
-  --source-tracked: #854d0e;
   --source-import: #7c2d12;
+  --source-goal: #be185d;
 }
 
 html[data-bs-theme="dark"] {
@@ -207,16 +206,12 @@ body {
   background: var(--source-detail);
 }
 
-.lz-source-rough {
-  background: var(--source-rough);
-}
-
-.lz-source-tracked {
-  background: var(--source-tracked);
-}
-
 .lz-source-import {
   background: var(--source-import);
+}
+
+.lz-source-goal {
+  background: var(--source-goal);
 }
 
 @media (width <= 600px) {
