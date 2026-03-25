@@ -18,6 +18,13 @@ export const defaultData = () => ({
     start: null,
     selectedDetailPlanId: null,
   },
+  pomodoro: {
+    active: false,
+    phase: "work",
+    pomodorosCompleted: 0,
+    secondsLeft: 1500,
+    phaseStartedAt: null,
+  },
 });
 
 export function loadState() {
@@ -34,6 +41,7 @@ export function loadState() {
       importedEvents: Array.isArray(parsed.importedEvents) ? parsed.importedEvents : [],
       settings: { ...defaults.settings, ...(parsed.settings || {}) },
       timer: { ...defaults.timer, ...(parsed.timer || {}) },
+      pomodoro: { ...defaults.pomodoro, ...(parsed.pomodoro || {}) },
     };
   } catch {
     return defaultData();

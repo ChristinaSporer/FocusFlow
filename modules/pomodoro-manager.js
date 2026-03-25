@@ -30,12 +30,20 @@ async function requestNotificationPermission() {
   }
 }
 
-export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
+export function createPomodoroManager({ startTimer, stopTimer, onRender, getState, dispatch }) {
   let active = false;
   let phase = "work";
   let pomodorosCompleted = 0;
   let secondsLeft = getPhaseDurationSeconds("work");
+  let phaseStartedAt = null;
   let countdownInterval = null;
+
+  function persist() {
+    dispatch({
+      type: "POMODORO_SAVE",
+      payload: { active, phase, pomodorosCompleted, secondsLeft, phaseStartedAt },
+    });
+  }
 
   function stopCountdown() {
     clearInterval(countdownInterval);
@@ -61,6 +69,8 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
       const breakPhase = nextBreakPhase();
       phase = breakPhase;
       secondsLeft = getPhaseDurationSeconds(phase);
+      phaseStartedAt = null;
+      persist();
 
       const breakLabel =
         breakPhase === "long-break" ? "Lange Pause (15 Min.)" : "Kurze Pause (5 Min.)";
@@ -71,6 +81,8 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
     } else {
       phase = "work";
       secondsLeft = getPhaseDurationSeconds("work");
+      phaseStartedAt = null;
+      persist();
       sendNotification("⏰ Pause vorbei!", "Weiter geht's – nächste Arbeitsphase kann starten.");
     }
 
@@ -79,6 +91,8 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
 
   function startCountdown() {
     stopCountdown();
+    phaseStartedAt = new Date().toISOString();
+    persist();
     countdownInterval = setInterval(() => {
       secondsLeft -= 1;
       onRender();
@@ -103,6 +117,8 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
     if (!active) return;
     active = false;
     stopCountdown();
+    phaseStartedAt = null;
+    persist();
     onRender();
   }
 
@@ -117,6 +133,8 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
       phase = "work";
     }
     secondsLeft = getPhaseDurationSeconds(phase);
+    phaseStartedAt = null;
+    persist();
     onRender();
   }
 
@@ -129,6 +147,8 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
     phase = "work";
     pomodorosCompleted = 0;
     secondsLeft = getPhaseDurationSeconds("work");
+    phaseStartedAt = null;
+    persist();
     onRender();
   }
 
@@ -142,6 +162,49 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
     };
   }
 
+  function syncFromState() {
+    const stored = getState().pomodoro;
+    if (!stored) return;
+
+    phase = stored.phase || "work";
+    pomodorosCompleted = stored.pomodorosCompleted || 0;
+
+    if (stored.active && stored.phaseStartedAt) {
+      phaseStartedAt = stored.phaseStartedAt;
+      const elapsed = Math.floor(
+        (Date.now() - new Date(phaseStartedAt).getTime()) / 1000
+      );
+      secondsLeft = Math.max(
+        0,
+        (typeof stored.secondsLeft === "number" ? stored.secondsLeft : getPhaseDurationSeconds(phase)) - elapsed
+      );
+      active = true;
+
+      if (secondsLeft > 0) {
+        stopCountdown();
+        countdownInterval = setInterval(() => {
+          secondsLeft -= 1;
+          onRender();
+          if (secondsLeft <= 0) {
+            onPhaseEnd();
+          }
+        }, 1000);
+      } else {
+        onPhaseEnd();
+        return;
+      }
+    } else {
+      active = false;
+      phaseStartedAt = null;
+      secondsLeft =
+        typeof stored.secondsLeft === "number"
+          ? stored.secondsLeft
+          : getPhaseDurationSeconds(phase);
+    }
+
+    onRender();
+  }
+
   function dispose() {
     stopCountdown();
   }
@@ -152,6 +215,7 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender }) {
     skipPhase,
     reset,
     getState: getPomodoroState,
+    syncFromState,
     dispose,
   };
 }

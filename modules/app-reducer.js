@@ -237,6 +237,11 @@ export function appReducer(currentState, action) {
       };
     case "REPLACE_STATE":
       return action.payload.state;
+    case "POMODORO_SAVE":
+      return {
+        ...currentState,
+        pomodoro: { ...currentState.pomodoro, ...action.payload },
+      };
     default:
       return currentState;
   }

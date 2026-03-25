@@ -6,7 +6,6 @@ export function buildRow(main, sub, { done = false, onDelete, actions = [] } = {
     "justify-content-between",
     "align-items-start",
     "gap-3",
-    "flex-wrap",
     done ? "list-group-item-success" : "",
   ]
     .filter(Boolean)
@@ -14,6 +13,7 @@ export function buildRow(main, sub, { done = false, onDelete, actions = [] } = {
 
   const info = document.createElement("div");
   info.className = "d-flex flex-column gap-1 flex-grow-1";
+  info.style.minWidth = "0";
   const title = document.createElement("span");
   title.textContent = main;
   const small = document.createElement("small");

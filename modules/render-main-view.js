@@ -1353,6 +1353,15 @@ export function renderPomodoro({ pomodoroState }) {
 
   startBtn.classList.toggle("d-none", active);
   pauseBtn.classList.toggle("d-none", !active);
+
+  // Auto-show panel on reload if a session was in progress
+  const toggle = byId("pomodoro-toggle");
+  const panel = byId("pomodoro-panel");
+  const hasSession = active || pomodorosCompleted > 0 || phase !== "work";
+  if (toggle && panel && hasSession && !toggle.checked) {
+    toggle.checked = true;
+    panel.classList.remove("d-none");
+  }
 }
 
 export function renderStats({ state, currentMonth }) {

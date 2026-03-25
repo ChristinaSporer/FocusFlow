@@ -204,6 +204,7 @@ function setInitialValues() {
 
   themeManager.applyTheme();
   timerManager.syncFromState();
+  pomodoroManager.syncFromState();
 
   const hasNotificationApi = "Notification" in window;
   const isEnabled = getState().settings.notificationEnabled;
@@ -291,6 +292,8 @@ const pomodoroManager = createPomodoroManager({
   startTimer: timerManager.startTimer,
   stopTimer: timerManager.stopTimer,
   onRender: () => renderPomodoro({ pomodoroState: pomodoroManager.getState() }),
+  getState,
+  dispatch,
 });
 
 const reminderManager = createReminderManager({
