@@ -573,7 +573,13 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
   const list = byId("rough-list");
   list.innerHTML = "";
 
-  const data = [...state.roughPlans].sort(roughPlansByWeekComparator);
+  const data = [...state.roughPlans]
+    .filter((plan) => {
+      if (!plan.goalId) return true;
+      const goal = state.goals.find((g) => g.id === plan.goalId);
+      return !goal?.completed;
+    })
+    .sort(roughPlansByWeekComparator);
 
   data.forEach((plan) => {
     const goal = plan.goalId ? state.goals.find((g) => g.id === plan.goalId) : null;
@@ -634,14 +640,32 @@ export function renderDetailPlans({
 
   list.innerHTML = "";
 
+  const goalsById = new Map((state.goals || []).map((goal) => [goal.id, goal]));
+  const completedMilestoneIds = new Set(
+    (state.goals || []).flatMap((goal) =>
+      (goal.milestones || []).filter((milestone) => milestone.done).map((milestone) => milestone.id)
+    )
+  );
+
+  function isHiddenByCompletion(item) {
+    if (item.goalId && goalsById.get(item.goalId)?.completed) return true;
+    if (item.milestoneId && completedMilestoneIds.has(item.milestoneId)) return true;
+    return false;
+  }
+
   const monthlyRoughPlans = [...state.roughPlans]
     .filter((plan) =>
       plan.week ? weekOverlapsMonth(plan.week, selectedMonth) : monthOf(plan.date) === selectedMonth
     )
+    .filter((plan) => {
+      if (!plan.goalId) return true;
+      return !goalsById.get(plan.goalId)?.completed;
+    })
     .sort((a, b) => roughPlansByGoalComparator(state, a, b));
 
   const monthlyDetailPlans = [...state.detailPlans]
     .filter((item) => monthOf(item.date) === selectedMonth)
+    .filter((item) => !isHiddenByCompletion(item))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   const trackedMinutesByDetailId = (state.trackedSessions || []).reduce((map, session) => {
@@ -976,7 +1000,7 @@ export function renderDetailPlans({
   monthlyRoughPlans.forEach((plan) => {
     const goal = plan.goalId ? state.goals.find((item) => item.id === plan.goalId) : null;
     const milestones = Array.isArray(goal?.milestones) ? goal.milestones : [];
-    const entries = [...state.detailPlans]
+    const entries = monthlyDetailPlans
       .filter((item) => item.roughPlanId === plan.id)
       .sort((a, b) => a.date.localeCompare(b.date));
 

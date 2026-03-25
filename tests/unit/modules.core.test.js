@@ -1204,18 +1204,19 @@ describe("modules/render-main-view", () => {
     });
 
     expect(document.getElementById("detail-list").textContent).toContain("2 h geplant für Goal");
-    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 45 von 120 Min");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 0 von 120 Min");
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
-    expect(document.getElementById("detail-list").textContent).toContain("Getrackt: 15 von 45 Min");
+    expect(document.getElementById("detail-list").textContent).toContain("Noch keine Detailplanung für diesen Grobplanungsblock");
+    expect(document.getElementById("detail-list").textContent).toContain("30 Min für Legacy");
     expect(document.querySelector('[data-detail-block-form="r1"]')).toBeTruthy();
     expect(document.querySelector('[aria-label="Detailplanung bearbeiten"]')).toBeTruthy();
-    expect(document.querySelector('[data-detail-start-tracking="d1"]')).toBeTruthy();
+    expect(document.querySelector('[data-detail-start-tracking="d1"]')).toBeNull();
 
-    document.querySelector('[data-detail-start-tracking="d1"]').click();
-    expect(onStartTrackingDetail).toHaveBeenCalledWith("d1", "M");
+    document.querySelector('[data-detail-start-tracking="d2"]').click();
+    expect(onStartTrackingDetail).toHaveBeenCalledWith("d2", "Legacy");
 
     document.querySelector("#detail-list .btn-outline-danger").click();
-    expect(dispatch).toHaveBeenCalledWith({ type: "DETAIL_DELETE", payload: { id: "d1" } });
+    expect(dispatch).toHaveBeenCalledWith({ type: "DETAIL_DELETE", payload: { id: "d2" } });
 
     document.getElementById("detail-list").innerHTML = "";
     renderDetailPlans({
@@ -1316,12 +1317,12 @@ describe("modules/render-main-view", () => {
 
     renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth: "2026-03" });
     expect(document.getElementById("detail-list").textContent).toContain("Cross Goal");
-    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 320 von 120 Min");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 120 von 120 Min");
 
     document.getElementById("detail-list").innerHTML = "";
     renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth: "2026-04" });
     expect(document.getElementById("detail-list").textContent).toContain("Cross Goal");
-    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 320 von 120 Min");
+    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 200 von 120 Min");
   });
 
   it("renders stats for zero-planned and non-zero planned branches", () => {
