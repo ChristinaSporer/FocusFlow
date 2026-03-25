@@ -3,6 +3,23 @@
   --bg: #f3f6fb;
   --text: #1f2937;
   --border: #e5e7eb;
+  --goal-item-border: #cddbf4;
+  --goal-item-shadow: rgba(37, 99, 235, 0.08);
+  --goal-item-odd-bg: #f8fbff;
+  --goal-item-even-bg: #eaf2ff;
+  --goal-item-accent: #7aa2e3;
+  --rough-item-border: #cddbf4;
+  --rough-item-odd-bg: #f8fbff;
+  --rough-item-even-bg: #eaf2ff;
+  --rough-item-accent: #7aa2e3;
+  --detail-item-border: #cddbf4;
+  --detail-item-odd-bg: #f8fbff;
+  --detail-item-even-bg: #eaf2ff;
+  --detail-item-accent: #7aa2e3;
+  --track-item-border: #cddbf4;
+  --track-item-odd-bg: #f8fbff;
+  --track-item-even-bg: #eaf2ff;
+  --track-item-accent: #7aa2e3;
   --calendar-grid-bg: #ffffff;
   --calendar-weekday-bg: #e2e8f0;
   --calendar-weekday-text: #334155;
@@ -19,6 +36,23 @@ html[data-bs-theme="dark"] {
   --bg: #0f172a;
   --text: #e2e8f0;
   --border: #334155;
+  --goal-item-border: #38506f;
+  --goal-item-shadow: rgba(15, 23, 42, 0.35);
+  --goal-item-odd-bg: #182538;
+  --goal-item-even-bg: #22324b;
+  --goal-item-accent: #8fb4ff;
+  --rough-item-border: #38506f;
+  --rough-item-odd-bg: #182538;
+  --rough-item-even-bg: #22324b;
+  --rough-item-accent: #8fb4ff;
+  --detail-item-border: #38506f;
+  --detail-item-odd-bg: #182538;
+  --detail-item-even-bg: #22324b;
+  --detail-item-accent: #8fb4ff;
+  --track-item-border: #38506f;
+  --track-item-odd-bg: #182538;
+  --track-item-even-bg: #22324b;
+  --track-item-accent: #8fb4ff;
   --calendar-grid-bg: #0b1220;
   --calendar-weekday-bg: #1f2937;
   --calendar-weekday-text: #cbd5e1;
@@ -35,6 +69,65 @@ body {
 .lz-list-panel {
   max-height: 280px;
   overflow: auto;
+}
+
+#goal-list {
+  --lz-list-item-border: var(--goal-item-border);
+  --lz-list-item-odd-bg: var(--goal-item-odd-bg);
+  --lz-list-item-even-bg: var(--goal-item-even-bg);
+  --lz-list-item-accent: var(--goal-item-accent);
+}
+
+#rough-list {
+  --lz-list-item-border: var(--rough-item-border);
+  --lz-list-item-odd-bg: var(--rough-item-odd-bg);
+  --lz-list-item-even-bg: var(--rough-item-even-bg);
+  --lz-list-item-accent: var(--rough-item-accent);
+}
+
+#detail-list {
+  --lz-list-item-border: var(--detail-item-border);
+  --lz-list-item-odd-bg: var(--detail-item-odd-bg);
+  --lz-list-item-even-bg: var(--detail-item-even-bg);
+  --lz-list-item-accent: var(--detail-item-accent);
+}
+
+#track-list {
+  --lz-list-item-border: var(--track-item-border);
+  --lz-list-item-odd-bg: var(--track-item-odd-bg);
+  --lz-list-item-even-bg: var(--track-item-even-bg);
+  --lz-list-item-accent: var(--track-item-accent);
+}
+
+#goal-list > li,
+#rough-list > li,
+#detail-list > li,
+#track-list > li {
+  border: 1px solid var(--lz-list-item-border);
+  border-left: 4px solid var(--lz-list-item-accent);
+  border-radius: 0.85rem;
+  box-shadow: 0 8px 18px -16px var(--goal-item-shadow);
+}
+
+#goal-list > li + li,
+#rough-list > li + li,
+#detail-list > li + li,
+#track-list > li + li {
+  margin-top: 0.6rem;
+}
+
+#goal-list > li:nth-child(odd),
+#rough-list > li:nth-child(odd),
+#detail-list > li:nth-child(odd),
+#track-list > li:nth-child(odd) {
+  background: var(--lz-list-item-odd-bg);
+}
+
+#goal-list > li:nth-child(even),
+#rough-list > li:nth-child(even),
+#detail-list > li:nth-child(even),
+#track-list > li:nth-child(even) {
+  background: var(--lz-list-item-even-bg);
 }
 
 #timer-display {

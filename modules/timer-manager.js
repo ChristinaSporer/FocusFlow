@@ -149,6 +149,53 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     return true;
   }
 
+  function updateTrackedSession({ id, date, minutes, note, detailPlanId }) {
+    const sessionId = String(id || "").trim();
+    const normalizedDate = String(date || "").trim();
+    const parsedMinutes = Number(minutes);
+    if (!sessionId || !normalizedDate || !Number.isFinite(parsedMinutes) || parsedMinutes <= 0) {
+      return false;
+    }
+
+    const existingSession = getState().trackedSessions.find((item) => item.id === sessionId);
+    if (!existingSession) {
+      return false;
+    }
+
+    const roundedMinutes = Math.max(1, Math.round(parsedMinutes));
+    const start = new Date(`${normalizedDate}T00:00:00`);
+    if (Number.isNaN(start.getTime())) {
+      return false;
+    }
+
+    const existingStart = new Date(existingSession.start);
+    if (Number.isNaN(existingStart.getTime())) {
+      start.setHours(12, 0, 0, 0);
+    } else {
+      start.setHours(
+        existingStart.getHours(),
+        existingStart.getMinutes(),
+        existingStart.getSeconds(),
+        existingStart.getMilliseconds()
+      );
+    }
+
+    const end = new Date(start.getTime() + roundedMinutes * 60000);
+    const session = {
+      ...existingSession,
+      start: start.toISOString(),
+      end: end.toISOString(),
+      minutes: roundedMinutes,
+      note: String(note || "").trim(),
+      detailPlanId: detailPlanId || null,
+    };
+
+    dispatch({ type: "TRACKED_UPDATE", payload: { session } });
+    onActivity();
+    onRenderAll();
+    return true;
+  }
+
   function syncFromState() {
     const state = getState();
     if (state.timer.start) {
@@ -170,6 +217,7 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     setSelectedDetailPlan,
     startTimerForDetailPlan,
     addManualSession,
+    updateTrackedSession,
     syncFromState,
     dispose,
   };

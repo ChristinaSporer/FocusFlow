@@ -1,5 +1,5 @@
 import { byId } from "./dom.js";
-import { monthOf, weekDateFromValue, weekValueFromDate } from "./date-utils.js";
+import { formatYmd, monthOf, weekDateFromValue, weekValueFromDate } from "./date-utils.js";
 import { uid } from "./app-utils.js";
 
 export function initFormHandlers({
@@ -19,6 +19,7 @@ export function initFormHandlers({
   stopTimer,
   setSelectedTimerDetailPlan,
   addManualTrackedSession,
+  updateTrackedSession,
   importIcsFile,
   exportIcsFile,
   importJsonFile,
@@ -99,7 +100,43 @@ export function initFormHandlers({
     byId("goal-title").focus();
   }
 
+  function resetTrackedForm() {
+    const editId = byId("track-edit-id");
+    const date = byId("track-manual-date");
+    const minutes = byId("track-manual-minutes");
+    const note = byId("track-note");
+    const submit = byId("track-manual-submit");
+    const cancel = byId("track-cancel-edit");
+
+    if (editId) editId.value = "";
+    if (date) date.value = formatYmd(new Date());
+    if (minutes) minutes.value = "";
+    if (note) note.value = "";
+    if (submit) submit.textContent = "Zeit nachtragen";
+    if (cancel) cancel.classList.add("d-none");
+  }
+
+  function startTrackedEdit(session) {
+    const editId = byId("track-edit-id");
+    const date = byId("track-manual-date");
+    const minutes = byId("track-manual-minutes");
+    const note = byId("track-note");
+    const detail = byId("track-detail-select");
+    const submit = byId("track-manual-submit");
+    const cancel = byId("track-cancel-edit");
+
+    if (editId) editId.value = session.id;
+    if (date) date.value = formatYmd(session.start);
+    if (minutes) minutes.value = String(session.minutes || "");
+    if (note) note.value = session.note || "";
+    if (detail) detail.value = session.detailPlanId || "";
+    if (submit) submit.textContent = "Änderungen speichern";
+    if (cancel) cancel.classList.remove("d-none");
+    if (minutes) minutes.focus();
+  }
+
   resetGoalForm();
+  resetTrackedForm();
 
   byId("goal-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -226,24 +263,32 @@ export function initFormHandlers({
   });
   byId("track-manual-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
+    const editId = byId("track-edit-id")?.value;
     const date = byId("track-manual-date")?.value;
     const minutes = Number(byId("track-manual-minutes")?.value);
     const note = byId("track-note")?.value || "";
     const detailPlanId = byId("track-detail-select")?.value || null;
 
-    const ok = addManualTrackedSession?.({
-      date,
-      minutes,
-      note,
-      detailPlanId,
-    });
+    const ok = editId
+      ? updateTrackedSession?.({
+          id: editId,
+          date,
+          minutes,
+          note,
+          detailPlanId,
+        })
+      : addManualTrackedSession?.({
+          date,
+          minutes,
+          note,
+          detailPlanId,
+        });
 
     if (!ok) return;
-    const minutesInput = byId("track-manual-minutes");
-    if (minutesInput) minutesInput.value = "";
-    const noteInput = byId("track-note");
-    if (noteInput) noteInput.value = "";
+    resetTrackedForm();
   });
+
+  byId("track-cancel-edit")?.addEventListener("click", resetTrackedForm);
 
   byId("settings-form").addEventListener("submit", (event) => {
     event.preventDefault();
@@ -321,6 +366,7 @@ export function initFormHandlers({
     dispatch({ type: "REPLACE_STATE", payload: { state: defaultData() } });
     resetGoalForm();
     resetRoughForm();
+    resetTrackedForm();
     setInitialValues();
     renderAll();
   });
@@ -328,6 +374,8 @@ export function initFormHandlers({
   return {
     resetGoalForm,
     startGoalEdit,
+    resetTrackedForm,
+    startTrackedEdit,
     populateGoalDropdown,
     startRoughEdit,
     resetRoughForm,

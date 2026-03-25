@@ -524,7 +524,9 @@ describe("modules/form-handlers", () => {
       '<button id="timer-start" type="button"></button>',
       '<button id="timer-stop" type="button"></button>',
       '<select id="track-detail-select"><option value="">Kein Detail</option><option value="d1">D1</option></select>',
+      '<input id="track-edit-id" value="">',
       '<form id="track-manual-form"><input id="track-manual-date" value="2026-03-24"><input id="track-manual-minutes" value=""><button id="track-manual-submit" type="submit">save</button></form>',
+      '<button id="track-cancel-edit" type="button" class="d-none"></button>',
       '<input id="track-note" value="">',
       '<form id="settings-form"></form>',
       '<input id="inactivity-days" value="">',
@@ -562,6 +564,7 @@ describe("modules/form-handlers", () => {
       stopTimer: vi.fn(),
       setSelectedTimerDetailPlan: vi.fn(),
       addManualTrackedSession: vi.fn(() => true),
+      updateTrackedSession: vi.fn(() => true),
       importIcsFile: vi.fn(async () => ({ ok: false })),
       exportIcsFile: vi.fn(),
       importJsonFile: vi.fn(async () => ({ ok: false })),
@@ -683,6 +686,7 @@ describe("modules/form-handlers", () => {
     document.getElementById("track-detail-select").dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("track-note").value = "Manual note";
     document.getElementById("track-manual-minutes").value = "45";
+    const submittedDate = document.getElementById("track-manual-date").value;
     document.getElementById("track-manual-form").dispatchEvent(
       new Event("submit", { bubbles: true, cancelable: true })
     );
@@ -690,13 +694,31 @@ describe("modules/form-handlers", () => {
     expect(deps.stopTimer).toHaveBeenCalledTimes(1);
     expect(deps.setSelectedTimerDetailPlan).toHaveBeenCalledWith("d1");
     expect(deps.addManualTrackedSession).toHaveBeenCalledWith({
-      date: "2026-03-24",
+      date: submittedDate,
       minutes: 45,
       note: "Manual note",
       detailPlanId: "d1",
     });
     expect(document.getElementById("track-manual-minutes").value).toBe("");
     expect(document.getElementById("track-note").value).toBe("");
+
+    document.getElementById("track-edit-id").value = "t1";
+    document.getElementById("track-manual-date").value = "2026-03-25";
+    document.getElementById("track-manual-minutes").value = "30";
+    document.getElementById("track-note").value = "Updated note";
+    document.getElementById("track-manual-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+    expect(deps.updateTrackedSession).toHaveBeenCalledWith({
+      id: "t1",
+      date: "2026-03-25",
+      minutes: 30,
+      note: "Updated note",
+      detailPlanId: "d1",
+    });
+
+    document.getElementById("track-cancel-edit").click();
+    expect(document.getElementById("track-edit-id").value).toBe("");
 
     const settingsForm = document.getElementById("settings-form");
     document.getElementById("inactivity-days").value = "0";
@@ -1192,11 +1214,6 @@ describe("modules/render-main-view", () => {
     document.querySelector('[data-detail-start-tracking="d1"]').click();
     expect(onStartTrackingDetail).toHaveBeenCalledWith("d1", "M");
 
-    const detailCheckbox = document.querySelector("#detail-list input[type='checkbox']");
-    detailCheckbox.checked = true;
-    detailCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
-    expect(dispatch).toHaveBeenCalledWith({ type: "DETAIL_SET_DONE", payload: { id: "d1", done: true } });
-
     document.querySelector("#detail-list .btn-outline-danger").click();
     expect(dispatch).toHaveBeenCalledWith({ type: "DETAIL_DELETE", payload: { id: "d1" } });
 
@@ -1210,6 +1227,8 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
     expect(document.querySelector('[data-detail-block-form="additional"]')).toBeTruthy();
 
+    const onEditTrackedSession = vi.fn();
+
     renderTrackedSessions({
       state: {
         detailPlans: [
@@ -1221,8 +1240,13 @@ describe("modules/render-main-view", () => {
       },
       dispatch,
       onRenderAll,
+      onEditTrackedSession,
     });
     expect(document.getElementById("track-list").textContent).toContain("Detail:");
+    document.querySelector("#track-list [data-tracked-edit]").click();
+    expect(onEditTrackedSession).toHaveBeenCalledWith(
+      expect.objectContaining({ id: "t1", minutes: 25, note: "X" })
+    );
     document.querySelector("#track-list .btn-outline-danger").click();
     expect(dispatch).toHaveBeenCalledWith({ type: "TRACKED_DELETE", payload: { id: "t1" } });
 
@@ -1440,6 +1464,16 @@ describe("modules/app-reducer", () => {
       payload: { session: { id: "t3", minutes: 35, note: "manual" } },
     });
     expect(state.trackedSessions.find((session) => session.id === "t3")).toBeTruthy();
+
+    state = appReducer(state, {
+      type: "TRACKED_UPDATE",
+      payload: { session: { id: "t3", minutes: 40, note: "updated" } },
+    });
+    expect(state.trackedSessions.find((session) => session.id === "t3")).toMatchObject({
+      id: "t3",
+      minutes: 40,
+      note: "updated",
+    });
 
     state = appReducer(state, { type: "TRACKED_DELETE", payload: { id: "t1" } });
     expect(state.trackedSessions.find((session) => session.id === "t1")).toBeUndefined();
@@ -1921,6 +1955,58 @@ describe("modules/timer-manager", () => {
           session: expect.objectContaining({
             minutes: 40,
             note: "Manuell",
+            detailPlanId: "d1",
+          }),
+        }),
+      })
+    );
+    expect(onActivity).toHaveBeenCalledTimes(1);
+    expect(onRenderAll).toHaveBeenCalledTimes(1);
+  });
+
+  it("updates an existing tracked session", () => {
+    const onActivity = vi.fn();
+    const onRenderAll = vi.fn();
+    const state = {
+      timer: { start: null, selectedDetailPlanId: null },
+      trackedSessions: [
+        {
+          id: "t1",
+          start: "2026-03-24T12:00:00.000Z",
+          end: "2026-03-24T12:25:00.000Z",
+          minutes: 25,
+          note: "Initial",
+          detailPlanId: null,
+        },
+      ],
+    };
+    const dispatch = vi.fn();
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity,
+      onRenderAll,
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    const ok = manager.updateTrackedSession({
+      id: "t1",
+      date: "2026-03-25",
+      minutes: 40,
+      note: "Updated",
+      detailPlanId: "d1",
+    });
+
+    expect(ok).toBe(true);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TRACKED_UPDATE",
+        payload: expect.objectContaining({
+          session: expect.objectContaining({
+            id: "t1",
+            minutes: 40,
+            note: "Updated",
             detailPlanId: "d1",
           }),
         }),

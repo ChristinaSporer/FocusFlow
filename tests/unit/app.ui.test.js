@@ -493,10 +493,6 @@ describe("App UI integration (jsdom)", () => {
     toggleButtons[1].click();
     expect(bodies[1].classList.contains("d-none")).toBe(true);
 
-    const firstDetailCheckbox = document.querySelector('#detail-list [data-detail-block-body]:not(.d-none) .list-group input[type="checkbox"]');
-    firstDetailCheckbox.checked = true;
-    firstDetailCheckbox.dispatchEvent(new Event("change", { bubbles: true }));
-
     bodies = Array.from(document.querySelectorAll('[data-detail-block-body]'));
     expect(bodies[1].classList.contains("d-none")).toBe(true);
   });
@@ -937,5 +933,37 @@ describe("App UI integration (jsdom)", () => {
     expect(manualSession.minutes).toBe(35);
     expect(document.getElementById("track-list").textContent).toContain("Manuelle Nachtragung");
     expect(document.getElementById("track-list").textContent).toContain("Detail:");
+  });
+
+  it("edits an existing tracked session via the pencil action", () => {
+    document.getElementById("track-note").value = "Erste Fassung";
+    document.getElementById("track-manual-date").value = "2026-03-24";
+    document.getElementById("track-manual-minutes").value = "25";
+    document.getElementById("track-manual-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    document.querySelector("#track-list [data-tracked-edit]")?.click();
+
+    expect(document.getElementById("track-manual-submit").textContent).toContain("speichern");
+    expect(document.getElementById("track-note").value).toBe("Erste Fassung");
+    expect(document.getElementById("track-manual-minutes").value).toBe("25");
+
+    document.getElementById("track-note").value = "Bearbeitete Session";
+    document.getElementById("track-manual-date").value = "2026-03-25";
+    document.getElementById("track-manual-minutes").value = "40";
+    document.getElementById("track-manual-form").dispatchEvent(
+      new Event("submit", { bubbles: true, cancelable: true })
+    );
+
+    const parsed = JSON.parse(localStorage.getItem("focusflow-v1"));
+    expect(parsed.trackedSessions).toHaveLength(1);
+    expect(parsed.trackedSessions[0]).toMatchObject({
+      minutes: 40,
+      note: "Bearbeitete Session",
+    });
+    expect(parsed.trackedSessions[0].start.startsWith("2026-03-25")).toBe(true);
+    expect(document.getElementById("track-list").textContent).toContain("Bearbeitete Session");
+    expect(document.getElementById("track-edit-id").value).toBe("");
   });
 });

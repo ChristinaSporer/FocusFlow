@@ -31,6 +31,10 @@ let roughFormController = {
   startRoughEdit() {},
   resetRoughForm() {},
 };
+let trackedFormController = {
+  resetTrackedForm() {},
+  startTrackedEdit() {},
+};
 
 function getState() {
   return state;
@@ -65,7 +69,7 @@ function renderAll() {
     onStartTrackingDetail: timerManager.startTimerForDetailPlan,
   });
   renderTimerDetailPlanSelect({ state: getState() });
-  renderTrackedSessions(renderContext);
+  renderTrackedSessions({ ...renderContext, onEditTrackedSession: trackedFormController.startTrackedEdit });
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
   reminderManager.runReminders();
@@ -85,6 +89,7 @@ function loadDemoData() {
   });
   goalFormController.resetGoalForm?.();
   roughFormController.resetRoughForm?.();
+  trackedFormController.resetTrackedForm?.();
   setInitialValues();
 }
 
@@ -158,6 +163,7 @@ function initHandlers() {
     stopTimer: timerManager.stopTimer,
     setSelectedTimerDetailPlan: timerManager.setSelectedDetailPlan,
     addManualTrackedSession: timerManager.addManualSession,
+    updateTrackedSession: timerManager.updateTrackedSession,
     importIcsFile: icsManager.importFromFile,
     exportIcsFile: icsManager.exportToFile,
     importJsonFile: jsonManager.importFromFile,
@@ -173,6 +179,11 @@ function initHandlers() {
     populateGoalDropdown: handlersResult.populateGoalDropdown,
     startRoughEdit: handlersResult.startRoughEdit,
     resetRoughForm: handlersResult.resetRoughForm,
+  };
+
+  trackedFormController = {
+    resetTrackedForm: handlersResult.resetTrackedForm,
+    startTrackedEdit: handlersResult.startTrackedEdit,
   };
 
   handlersInitialized = true;

@@ -606,16 +606,6 @@ export function renderDetailPlans({
 
   function createDetailEntryRow(item, { onEdit } = {}) {
     const { goal, milestone } = resolveDetailPlanContext(state, item);
-    const flag = document.createElement("input");
-    flag.type = "checkbox";
-    flag.checked = item.done;
-    flag.title = "Zwischenziel erreicht";
-    flag.addEventListener("change", () => {
-      dispatch({ type: "DETAIL_SET_DONE", payload: { id: item.id, done: flag.checked } });
-      onActivity?.();
-      onRenderAll();
-    });
-
     const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
     const details = [formatDate(item.date)];
     if (item.startTime && item.endTime) details.push(`${item.startTime}-${item.endTime}`);
@@ -651,7 +641,7 @@ export function renderDetailPlans({
         onActivity?.();
         onRenderAll();
       },
-      actions: [flag, trackingButton, editButton],
+      actions: [trackingButton, editButton],
     });
 
     const info = row.querySelector(".flex-grow-1");
@@ -1021,7 +1011,7 @@ export function renderDetailPlans({
   list.appendChild(additionalBlock);
 }
 
-export function renderTrackedSessions({ state, dispatch, onRenderAll }) {
+export function renderTrackedSessions({ state, dispatch, onRenderAll, onEditTrackedSession }) {
   const list = byId("track-list");
   list.innerHTML = "";
 
@@ -1034,10 +1024,21 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll }) {
       ? `Detail: ${buildDetailPlanSelectionLabel(state, linkedDetailPlan)}`
       : "";
 
+    const editButton = document.createElement("button");
+    editButton.className = "btn btn-outline-secondary btn-sm";
+    editButton.type = "button";
+    editButton.setAttribute("aria-label", "Bearbeiten");
+    editButton.setAttribute("data-tracked-edit", session.id);
+    editButton.innerHTML = '<i class="bi bi-pencil"></i>';
+    editButton.addEventListener("click", () => {
+      onEditTrackedSession?.(session);
+    });
+
     const row = buildRow(
       `${session.minutes} Min fokussierte Lernzeit`,
       [formatDate(session.start), session.note, linkedDetailText].filter(Boolean).join(" · "),
       {
+        actions: [editButton],
         onDelete: () => {
           dispatch({ type: "TRACKED_DELETE", payload: { id: session.id } });
           onRenderAll();

@@ -145,6 +145,13 @@ export function appReducer(currentState, action) {
         ...currentState,
         trackedSessions: [...currentState.trackedSessions, action.payload.session],
       };
+    case "TRACKED_UPDATE":
+      return {
+        ...currentState,
+        trackedSessions: currentState.trackedSessions.map((item) =>
+          item.id === action.payload.session.id ? { ...item, ...action.payload.session } : item
+        ),
+      };
     case "TIMER_START":
       return {
         ...currentState,
