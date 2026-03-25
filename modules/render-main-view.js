@@ -1364,7 +1364,7 @@ export function renderPomodoro({ pomodoroState }) {
   }
 }
 
-export function renderStats({ state, currentMonth }) {
+export function renderStats({ state }) {
   const plannedTotalMin =
     sum(state.roughPlans.map((item) => toMinutes(item.hours))) +
     sum(state.detailPlans.map((item) => Number(item.minutes)));
@@ -1374,51 +1374,18 @@ export function renderStats({ state, currentMonth }) {
   const totalGoals = state.goals.length;
   const completedGoals = state.goals.filter((g) => g.completed).length;
 
-  const monthlyPlanned = sum(
-    state.detailPlans
-      .filter((item) => monthOf(item.date) === currentMonth)
-      .map((item) => Number(item.minutes))
-  );
-  const monthlyTracked = sum(
-    state.trackedSessions
-      .filter((item) => monthOf(item.start) === currentMonth)
-      .map((item) => Number(item.minutes))
-  );
+  // const monthlyPlanned = sum(
+  //   state.detailPlans
+  //     .filter((item) => monthOf(item.date) === currentMonth)
+  //     .map((item) => Number(item.minutes))
+  // );
+  // const monthlyTracked = sum(
+  //   state.trackedSessions
+  //     .filter((item) => monthOf(item.start) === currentMonth)
+  //     .map((item) => Number(item.minutes))
+  // );
 
-  byId("stats").innerHTML = `
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Geplant gesamt</small>
-          <b class="fs-5">${plannedTotalMin} Min</b>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Getrackt gesamt</small>
-          <b class="fs-5">${trackedMin} Min</b>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Aktueller Monat geplant</small>
-          <b class="fs-5">${monthlyPlanned} Min</b>
-        </div>
-      </div>
-    </div>
-    <div class="col">
-      <div class="card border-0 bg-body-tertiary h-100">
-        <div class="card-body py-3">
-          <small class="d-block text-body-secondary">Aktueller Monat getrackt</small>
-          <b class="fs-5">${monthlyTracked} Min</b>
-        </div>
-      </div>
-    </div>
-  `;
+  byId("stats").innerHTML = "";
 
   const timePercent =
     plannedTotalMin === 0 ? 0 : Math.min(100, Math.round((trackedMin / plannedTotalMin) * 100));
@@ -1477,18 +1444,17 @@ export function renderStats({ state, currentMonth }) {
         return left.type === "detail" ? -1 : 1;
       }
       return left.title.localeCompare(right.title, "de", { sensitivity: "base" });
-    })
-    .slice(0, 5);
+    });
 
   upcomingContainer.innerHTML = "";
 
   const label = document.createElement("label");
   label.className = "form-label text-body-secondary small mb-1";
-  label.textContent = "Nächste 5 (Detailplanung & Ziele)";
+  label.textContent = "Alle nächsten (Detailplanung & Ziele)";
   upcomingContainer.appendChild(label);
 
   const list = document.createElement("ul");
-  list.className = "list-group";
+  list.className = "list-group lz-next-items-scroll";
 
   if (!nextItems.length) {
     renderEmptyList(list, "Keine anstehenden Einträge.");

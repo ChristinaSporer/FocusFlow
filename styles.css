@@ -1,3 +1,8 @@
+#overview-next-items .lz-next-items-scroll {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
 :root {
   color-scheme: light dark;
 

@@ -7,19 +7,29 @@ export function buildDemoState({ themeMode }) {
   const month = `${year}-${String(today.getMonth() + 1).padStart(2, "0")}`;
   const goalOneId = uid();
   const goalTwoId = uid();
+  const goalThreeId = uid();
+  const goalFourId = uid();
   const milestoneOneId = uid();
   const milestoneTwoId = uid();
   const milestoneThreeId = uid();
   const milestoneFourId = uid();
+  const milestoneFiveId = uid();
+  const milestoneSixId = uid();
   const roughPlanOneId = uid();
   const roughPlanTwoId = uid();
+  const roughPlanThreeId = uid();
+  const roughPlanFourId = uid();
 
   const in5 = new Date(today);
   in5.setDate(today.getDate() + 5);
   const in10 = new Date(today);
   in10.setDate(today.getDate() + 10);
+  const in15 = new Date(today);
+  in15.setDate(today.getDate() + 15);
   const in20 = new Date(today);
   in20.setDate(today.getDate() + 20);
+  const in25 = new Date(today);
+  in25.setDate(today.getDate() + 25);
 
   return {
     goals: [
@@ -47,6 +57,27 @@ export function buildDemoState({ themeMode }) {
         completed: true,
         completedAt: nowIso(),
       },
+      {
+        id: goalThreeId,
+        title: "Projektarbeit Data Science",
+        targetDate: in25.toISOString().slice(0, 10),
+        description: "Daten aufbereiten, Modell trainieren, Bericht schreiben.",
+        milestones: [
+          { id: milestoneFiveId, title: "Datensatz bereinigen", done: false },
+          { id: milestoneSixId, title: "Modell validieren", done: false },
+        ],
+        completed: false,
+        completedAt: null,
+      },
+      {
+        id: goalFourId,
+        title: "Englisch Zertifikat B2",
+        targetDate: in15.toISOString().slice(0, 10),
+        description: "Vokabeln lernen, Hörverstehen üben, Probetest machen.",
+        milestones: [],
+        completed: false,
+        completedAt: null,
+      },
     ],
     roughPlans: [
       {
@@ -64,6 +95,22 @@ export function buildDemoState({ themeMode }) {
         hours: 4,
         note: "Altklausuren",
         goalId: goalTwoId,
+      },
+      {
+        id: roughPlanThreeId,
+        date: in15.toISOString().slice(0, 10),
+        week: weekValueFromDate(in15),
+        hours: 2,
+        note: "Datenaufbereitung",
+        goalId: goalThreeId,
+      },
+      {
+        id: roughPlanFourId,
+        date: in25.toISOString().slice(0, 10),
+        week: weekValueFromDate(in25),
+        hours: 5,
+        note: "Englisch Hörverstehen",
+        goalId: goalFourId,
       },
     ],
     detailPlans: [
@@ -89,6 +136,28 @@ export function buildDemoState({ themeMode }) {
         roughPlanId: roughPlanTwoId,
         done: true,
       },
+      {
+        id: uid(),
+        date: in15.toISOString().slice(0, 10),
+        minutes: 60,
+        topic: "Daten bereinigen",
+        milestone: "Datensatz bereinigen",
+        milestoneId: milestoneFiveId,
+        goalId: goalThreeId,
+        roughPlanId: roughPlanThreeId,
+        done: false,
+      },
+      {
+        id: uid(),
+        date: in25.toISOString().slice(0, 10),
+        minutes: 75,
+        topic: "Listening Comprehension",
+        milestone: "Probetest Hörverstehen",
+        milestoneId: null,
+        goalId: goalFourId,
+        roughPlanId: roughPlanFourId,
+        done: false,
+      },
     ],
     trackedSessions: [
       {
@@ -104,6 +173,20 @@ export function buildDemoState({ themeMode }) {
         end: new Date(Date.now() + 60 * 60000).toISOString(),
         minutes: 60,
         note: "Abend-Review",
+      },
+      {
+        id: uid(),
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 30 * 60000).toISOString(),
+        minutes: 30,
+        note: "Vokabeltraining",
+      },
+      {
+        id: uid(),
+        start: new Date().toISOString(),
+        end: new Date(Date.now() + 90 * 60000).toISOString(),
+        minutes: 90,
+        note: "Projektarbeit Data Science",
       },
     ],
     settings: {

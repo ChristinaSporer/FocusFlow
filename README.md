@@ -5,13 +5,13 @@ Alle Daten werden im Browser über `localStorage` gespeichert.
 
 ## Enthaltene Funktionen
 
-- Lernziele für 6 Monate erfassen und als erreicht markieren
-- Grobplanung von Lernzeiten für 6 Monate
-- Detailplanung von Lernzeiten und Zwischenzielen für 1 Monat
-- Stoppuhr für ungestörte Lernzeit (Tracking)
-- Übersicht zur Zielerreichung und Zeitnutzung
-- Erinnerungen für bald fällige Ziele/Planungen + Hinweis bei Inaktivität
-- Demo-Daten per Button laden
+- Lernziele (Hauptziele) erfassen, als erreicht markieren
+- Meilensteine/Detailplanung zu Zielen anlegen
+- Kalenderansicht für Ziele, Detailplanung und ICS-Importe
+- Übersicht aller kommenden Ziele und Detailplanungspunkte (scrollbar)
+- Pomodoro-Technik mit Timer und Benachrichtigungen
+- Stoppuhr für Lernzeit-Tracking 
+- Umfangreiche Demo-Daten per Button laden
 
 ## Lokaler Start
 
@@ -72,8 +72,7 @@ Diese Datei kann per Doppelklick gestartet werden und:
 
 ## Hinweise
 
-- Browser-Benachrichtigungen müssen einmal erlaubt werden.
-- Erinnerungen laufen nur, solange die Seite geöffnet ist (kein Backend/kein Service Worker).
+- Browser-Benachrichtigungen für Pomodoro müssen einmal erlaubt werden.
 - Für einen echten Produktivbetrieb wären Benutzerkonten, serverseitige Persistenz und Synchronisation sinnvoll.
 
 ## Komponentendiagramm
@@ -129,6 +128,14 @@ flowchart LR
     +importedEvents: ImportedEvent[]
     +settings: Settings
     +timer: TimerState
+    +pomodoro: PomodoroState
+  }
+  class PomodoroState {
+    +active: boolean
+    +phase: string
+    +pomodorosCompleted: number
+    +secondsLeft: number
+    +phaseStartedAt: string|null
   }
 
   class Goal {
