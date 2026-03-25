@@ -435,20 +435,20 @@ describe("App UI integration (jsdom)", () => {
       new Event("submit", { bubbles: true, cancelable: true })
     );
 
-    const collapseAllButton = document.querySelector('[data-detail-collapse-all]');
-    const expandAllButton = document.querySelector('[data-detail-expand-all]');
+    const collapseAllButton = document.getElementById("detail-collapse-all");
     const bodies = Array.from(document.querySelectorAll('[data-detail-block-body]'));
     const additionalBody = document.querySelector('[data-detail-additional-body]');
     expect(collapseAllButton).toBeTruthy();
-    expect(expandAllButton).toBeTruthy();
     expect(bodies).toHaveLength(2);
     expect(additionalBody).toBeTruthy();
 
+    // all expanded by default → clicking collapses all
     collapseAllButton.click();
     expect(bodies.every((body) => body.classList.contains("d-none"))).toBe(true);
     expect(additionalBody.classList.contains("d-none")).toBe(true);
 
-    expandAllButton.click();
+    // all collapsed → clicking expands all
+    collapseAllButton.click();
     expect(bodies.every((body) => !body.classList.contains("d-none"))).toBe(true);
     expect(additionalBody.classList.contains("d-none")).toBe(false);
   });

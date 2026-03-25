@@ -119,6 +119,19 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       .map((node) => [node.getAttribute("data-goal-body"), node.classList.contains("d-none")])
   );
 
+  const goalItems = [];
+
+  function updateCollapseAllButton() {
+    const collapseAllBtn = byId("goal-collapse-all");
+    if (!collapseAllBtn) return;
+    const anyExpanded = goalItems.some(({ milestoneSection }) => !milestoneSection.classList.contains("d-none"));
+    collapseAllBtn.innerHTML = anyExpanded
+      ? '<i class="bi bi-arrows-collapse" aria-hidden="true"></i>'
+      : '<i class="bi bi-arrows-expand" aria-hidden="true"></i>';
+    collapseAllBtn.setAttribute("aria-label", anyExpanded ? "Alle einklappen" : "Alle ausklappen");
+    collapseAllBtn.title = anyExpanded ? "Alle einklappen" : "Alle ausklappen";
+  }
+
   function setGoalCollapsed(toggleButton, goalBody, collapsed) {
     goalBody.classList.toggle("d-none", collapsed);
     toggleButton.setAttribute("aria-expanded", String(!collapsed));
@@ -452,9 +465,11 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     milestoneSection.appendChild(addMilestoneForm);
 
     setGoalCollapsed(toggleButton, milestoneSection, collapsedGoalState.get(goal.id) || false);
+    goalItems.push({ toggleButton, milestoneSection });
     toggleButton.addEventListener("click", () => {
       const isCollapsed = !milestoneSection.classList.contains("d-none");
       setGoalCollapsed(toggleButton, milestoneSection, isCollapsed);
+      updateCollapseAllButton();
     });
 
     info.appendChild(milestoneSection);
@@ -464,6 +479,20 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
     list.appendChild(goalRow);
   });
+
+  const collapseAllBtn = byId("goal-collapse-all");
+  if (collapseAllBtn) {
+    const newBtn = collapseAllBtn.cloneNode(true);
+    collapseAllBtn.replaceWith(newBtn);
+    updateCollapseAllButton();
+    newBtn.addEventListener("click", () => {
+      const anyExpanded = goalItems.some(({ milestoneSection }) => !milestoneSection.classList.contains("d-none"));
+      goalItems.forEach(({ toggleButton, milestoneSection }) => {
+        setGoalCollapsed(toggleButton, milestoneSection, anyExpanded);
+      });
+      updateCollapseAllButton();
+    });
+  }
 
   if (!list.children.length) {
     renderEmptyList(list, "Keine Ziele vorhanden");
@@ -567,38 +596,31 @@ export function renderDetailPlans({
       : '<i class="bi bi-chevron-up" aria-hidden="true"></i>';
   }
 
+  function updateDetailCollapseAllButton() {
+    const btn = byId("detail-collapse-all");
+    if (!btn) return;
+    const anyExpanded = collapsibleBlockControls.some(({ blockBody }) => !blockBody.classList.contains("d-none"));
+    btn.innerHTML = anyExpanded
+      ? '<i class="bi bi-arrows-collapse" aria-hidden="true"></i>'
+      : '<i class="bi bi-arrows-expand" aria-hidden="true"></i>';
+    btn.setAttribute("aria-label", anyExpanded ? "Alle einklappen" : "Alle ausklappen");
+    btn.title = anyExpanded ? "Alle einklappen" : "Alle ausklappen";
+  }
+
   if (monthlyRoughPlans.length) {
-    const controlsRow = document.createElement("li");
-    controlsRow.className = "list-group-item";
-
-    const controlsWrap = document.createElement("div");
-    controlsWrap.className = "d-flex gap-2 justify-content-end";
-
-    const collapseAllButton = document.createElement("button");
-    collapseAllButton.type = "button";
-    collapseAllButton.className = "btn btn-outline-secondary btn-sm";
-    collapseAllButton.textContent = "Alle einklappen";
-    collapseAllButton.setAttribute("data-detail-collapse-all", "true");
-    collapseAllButton.addEventListener("click", () => {
-      collapsibleBlockControls.forEach(({ toggleButton, blockBody }) => {
-        setBlockCollapsed(toggleButton, blockBody, true);
+    const btn = byId("detail-collapse-all");
+    if (btn) {
+      const newBtn = btn.cloneNode(true);
+      btn.replaceWith(newBtn);
+      updateDetailCollapseAllButton();
+      newBtn.addEventListener("click", () => {
+        const anyExpanded = collapsibleBlockControls.some(({ blockBody }) => !blockBody.classList.contains("d-none"));
+        collapsibleBlockControls.forEach(({ toggleButton, blockBody }) => {
+          setBlockCollapsed(toggleButton, blockBody, anyExpanded);
+        });
+        updateDetailCollapseAllButton();
       });
-    });
-
-    const expandAllButton = document.createElement("button");
-    expandAllButton.type = "button";
-    expandAllButton.className = "btn btn-outline-secondary btn-sm";
-    expandAllButton.textContent = "Alle ausklappen";
-    expandAllButton.setAttribute("data-detail-expand-all", "true");
-    expandAllButton.addEventListener("click", () => {
-      collapsibleBlockControls.forEach(({ toggleButton, blockBody }) => {
-        setBlockCollapsed(toggleButton, blockBody, false);
-      });
-    });
-
-    controlsWrap.append(collapseAllButton, expandAllButton);
-    controlsRow.appendChild(controlsWrap);
-    list.appendChild(controlsRow);
+    }
   }
 
   const todayIso = nowIso().slice(0, 10);
@@ -669,13 +691,14 @@ export function renderDetailPlans({
   function createDetailBlockForm({
     blockKey,
     defaultDate,
+    toggleButton,
     goal,
     milestones,
     roughPlanId,
     onDone,
   }) {
     const form = document.createElement("form");
-    form.className = "row g-2 mt-3";
+    form.className = "row g-2 d-none mt-3";
     form.setAttribute("data-detail-block-form", blockKey);
 
     const editIdInput = document.createElement("input");
@@ -759,6 +782,24 @@ export function renderDetailPlans({
     cancelButton.setAttribute("data-detail-cancel", blockKey);
     cancelCol.appendChild(cancelButton);
 
+    function setFormVisible(visible) {
+      form.classList.toggle("d-none", !visible);
+      if (toggleButton) {
+        toggleButton.innerHTML = visible
+          ? '<i class="bi bi-dash-circle" aria-hidden="true"></i>'
+          : '<i class="bi bi-plus-circle" aria-hidden="true"></i>';
+        toggleButton.setAttribute("aria-label", visible ? "Planung ausblenden" : "Lernzeit planen");
+        toggleButton.title = visible ? "Planung ausblenden" : "Lernzeit planen";
+        toggleButton.setAttribute("aria-expanded", String(visible));
+      }
+    }
+
+    function toggleFormVisibility() {
+      const showForm = form.classList.contains("d-none");
+      setFormVisible(showForm);
+      return showForm;
+    }
+
     function resetBlockForm() {
       editIdInput.value = "";
       dateInput.value = defaultDate;
@@ -771,6 +812,7 @@ export function renderDetailPlans({
     }
 
     function startDetailEdit(item) {
+      setFormVisible(true);
       editIdInput.value = item.id;
       dateInput.value = item.date;
       milestoneSelect.value = item.milestoneId || "";
@@ -791,7 +833,10 @@ export function renderDetailPlans({
       dateInput.focus();
     }
 
-    cancelButton.addEventListener("click", resetBlockForm);
+    cancelButton.addEventListener("click", () => {
+      resetBlockForm();
+      setFormVisible(false);
+    });
 
     form.append(dateCol, startCol, endCol, milestoneCol, topicCol, buttonCol, cancelCol);
     form.addEventListener("submit", (event) => {
@@ -848,12 +893,16 @@ export function renderDetailPlans({
 
       onActivity?.();
       resetBlockForm();
+      setFormVisible(false);
       onDone?.();
     });
+
+    setFormVisible(false);
 
     return {
       form,
       startDetailEdit,
+      toggleFormVisibility,
     };
   }
 
@@ -907,25 +956,44 @@ export function renderDetailPlans({
     toggleButton.addEventListener("click", () => {
       const isCollapsed = !blockBody.classList.contains("d-none");
       setBlockCollapsed(toggleButton, blockBody, isCollapsed);
+      updateDetailCollapseAllButton();
     });
 
-    headerRow.append(header, toggleButton);
+    const planToggleButton = document.createElement("button");
+    planToggleButton.type = "button";
+    planToggleButton.className = "btn btn-outline-primary btn-sm";
+    planToggleButton.setAttribute("data-detail-plan-toggle", plan.id);
+    planToggleButton.innerHTML = '<i class="bi bi-plus-circle" aria-hidden="true"></i>';
+    planToggleButton.setAttribute("aria-label", "Lernzeit planen");
+    planToggleButton.title = "Lernzeit planen";
+
+    const btnGroup = document.createElement("div");
+    btnGroup.className = "d-flex gap-1 flex-shrink-0";
+    btnGroup.append(planToggleButton, toggleButton);
+    headerRow.append(header, btnGroup);
     block.appendChild(headerRow);
 
-    const hint = document.createElement("p");
-    hint.className = "text-body-secondary small mb-0 mt-3";
-    hint.textContent = milestones.length
-      ? "Zwischenziel kann ausgewählt werden oder Freitext ohne Zwischenziel."
-      : "Kein Zwischenziel erforderlich: Detailplanung per Freitext möglich.";
-    blockBody.appendChild(hint);
-
-    const { form, startDetailEdit } = createDetailBlockForm({
+    const { form, startDetailEdit, toggleFormVisibility } = createDetailBlockForm({
       blockKey: plan.id,
       defaultDate: plan.date,
+      toggleButton: planToggleButton,
       goal,
       milestones,
       roughPlanId: plan.id,
       onDone: onRenderAll,
+    });
+    planToggleButton.addEventListener("click", () => {
+      const blockWasCollapsed = blockBody.classList.contains("d-none");
+      const shouldShowForm = form.classList.contains("d-none");
+
+      if (blockWasCollapsed) {
+        setBlockCollapsed(toggleButton, blockBody, false);
+        updateDetailCollapseAllButton();
+      }
+
+      if (shouldShowForm || !blockWasCollapsed) {
+        toggleFormVisibility();
+      }
     });
     blockBody.appendChild(form);
 
@@ -978,22 +1046,52 @@ export function renderDetailPlans({
   additionalToggleButton.addEventListener("click", () => {
     const isCollapsed = !additionalBody.classList.contains("d-none");
     setBlockCollapsed(additionalToggleButton, additionalBody, isCollapsed);
+    updateDetailCollapseAllButton();
   });
-
-  additionalHeaderRow.append(additionalHeader, additionalToggleButton);
-  additionalBlock.appendChild(additionalHeaderRow);
 
   const additionalGoalMilestones = state.goals.flatMap((goal) =>
     (goal.milestones || []).map((milestone) => ({ ...milestone, goalId: goal.id, goal }))
   );
 
-  const { form: additionalForm, startDetailEdit: startAdditionalEdit } = createDetailBlockForm({
+  const additionalPlanToggleButton = document.createElement("button");
+  additionalPlanToggleButton.type = "button";
+  additionalPlanToggleButton.className = "btn btn-outline-primary btn-sm";
+  additionalPlanToggleButton.setAttribute("data-detail-plan-toggle", "additional");
+  additionalPlanToggleButton.innerHTML = '<i class="bi bi-plus-circle" aria-hidden="true"></i>';
+  additionalPlanToggleButton.setAttribute("aria-label", "Lernzeit planen");
+  additionalPlanToggleButton.title = "Lernzeit planen";
+
+  const additionalBtnGroup = document.createElement("div");
+  additionalBtnGroup.className = "d-flex gap-1 flex-shrink-0";
+  additionalBtnGroup.append(additionalPlanToggleButton, additionalToggleButton);
+  additionalHeaderRow.append(additionalHeader, additionalBtnGroup);
+  additionalBlock.appendChild(additionalHeaderRow);
+
+  const {
+    form: additionalForm,
+    startDetailEdit: startAdditionalEdit,
+    toggleFormVisibility: toggleAdditionalFormVisibility,
+  } = createDetailBlockForm({
     blockKey: "additional",
     defaultDate: defaultMonthDate,
+    toggleButton: additionalPlanToggleButton,
     goal: null,
     milestones: additionalGoalMilestones,
     roughPlanId: null,
     onDone: onRenderAll,
+  });
+  additionalPlanToggleButton.addEventListener("click", () => {
+    const blockWasCollapsed = additionalBody.classList.contains("d-none");
+    const shouldShowForm = additionalForm.classList.contains("d-none");
+
+    if (blockWasCollapsed) {
+      setBlockCollapsed(additionalToggleButton, additionalBody, false);
+      updateDetailCollapseAllButton();
+    }
+
+    if (shouldShowForm || !blockWasCollapsed) {
+      toggleAdditionalFormVisibility();
+    }
   });
   additionalBody.appendChild(additionalForm);
 
