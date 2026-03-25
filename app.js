@@ -4,6 +4,7 @@ import { appReducer } from "./modules/app-reducer.js";
 import {
   renderDetailPlans,
   renderGoals,
+  renderPomodoro,
   renderRoughPlans,
   renderStats,
   renderTimerDetailPlanSelect,
@@ -14,6 +15,7 @@ import { buildDemoState } from "./modules/demo-data.js";
 import { initFormHandlers } from "./modules/form-handlers.js";
 import { createThemeManager, normalizeThemeMode } from "./modules/theme-manager.js";
 import { createTimerManager } from "./modules/timer-manager.js";
+import { createPomodoroManager } from "./modules/pomodoro-manager.js";
 import { createReminderManager } from "./modules/reminder-manager.js";
 import { createCalendarManager } from "./modules/calendar-manager.js";
 import { createIcsManager } from "./modules/ics-manager.js";
@@ -144,6 +146,7 @@ function renderAll() {
   });
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
+  renderPomodoro({ pomodoroState: pomodoroManager.getState() });
   reminderManager.runReminders();
   calendarManager.renderCalendar();
 }
@@ -236,6 +239,10 @@ function initHandlers() {
     startTimer: timerManager.startTimer,
     stopTimer: timerManager.stopTimer,
     setSelectedTimerDetailPlan: timerManager.setSelectedDetailPlan,
+    startPomodoro: pomodoroManager.start,
+    pausePomodoro: pomodoroManager.pause,
+    skipPomodoroPhase: pomodoroManager.skipPhase,
+    resetPomodoro: pomodoroManager.reset,
     addManualTrackedSession: timerManager.addManualSession,
     updateTrackedSession: timerManager.updateTrackedSession,
     importIcsFile: icsManager.importFromFile,
@@ -280,6 +287,12 @@ const timerManager = createTimerManager({
   nowIso,
 });
 
+const pomodoroManager = createPomodoroManager({
+  startTimer: timerManager.startTimer,
+  stopTimer: timerManager.stopTimer,
+  onRender: () => renderPomodoro({ pomodoroState: pomodoroManager.getState() }),
+});
+
 const reminderManager = createReminderManager({
   getState,
   dispatch,
@@ -309,6 +322,7 @@ export function shutdown() {
   detachMainCardCollapse?.();
   detachMainCardCollapse = null;
   timerManager.dispose();
+  pomodoroManager.dispose();
   reminderManager.stopLoop();
   themeManager.dispose();
 }

@@ -24,6 +24,10 @@ export function initFormHandlers({
   exportIcsFile,
   importJsonFile,
   exportJsonFile,
+  startPomodoro,
+  pausePomodoro,
+  skipPomodoroPhase,
+  resetPomodoro,
 }) {
   function resetGoalForm() {
     byId("goal-edit-id").value = "";
@@ -261,6 +265,16 @@ export function initFormHandlers({
   byId("track-detail-select")?.addEventListener("change", (event) => {
     setSelectedTimerDetailPlan?.(event.target.value || null);
   });
+
+  byId("pomodoro-toggle")?.addEventListener("change", (event) => {
+    const panel = byId("pomodoro-panel");
+    if (panel) panel.classList.toggle("d-none", !event.target.checked);
+  });
+  byId("pomodoro-start")?.addEventListener("click", () => startPomodoro?.());
+  byId("pomodoro-pause")?.addEventListener("click", () => pausePomodoro?.());
+  byId("pomodoro-skip")?.addEventListener("click", () => skipPomodoroPhase?.());
+  byId("pomodoro-reset")?.addEventListener("click", () => resetPomodoro?.());
+
   byId("track-manual-form")?.addEventListener("submit", (event) => {
     event.preventDefault();
     const editId = byId("track-edit-id")?.value;

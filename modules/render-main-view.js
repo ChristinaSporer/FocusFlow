@@ -1316,6 +1316,42 @@ export function renderTimerDetailPlanSelect({ state }) {
   select.value = detailPlans.some((item) => item.id === selectedId) ? selectedId : "";
 }
 
+export function renderPomodoro({ pomodoroState }) {
+  const display = byId("pomodoro-display");
+  const phaseLabel = byId("pomodoro-phase");
+  const dots = byId("pomodoro-dots");
+  const startBtn = byId("pomodoro-start");
+  const pauseBtn = byId("pomodoro-pause");
+
+  if (!display || !phaseLabel || !dots || !startBtn || !pauseBtn) return;
+
+  const { active, phase, pomodorosCompleted, formattedCountdown } = pomodoroState;
+
+  display.textContent = formattedCountdown;
+
+  const phaseColorClass = phase === "work" ? "text-success" : "text-primary";
+  display.className = `mb-0 fs-3 fw-bold lz-pomodoro-display ${phaseColorClass}`;
+
+  const phaseLabels = {
+    work: "Arbeitsphase",
+    "short-break": "Kurze Pause (5 Min.)",
+    "long-break": "Lange Pause (15 Min.)",
+  };
+  phaseLabel.textContent = phaseLabels[phase] ?? phase;
+
+  const dotsInCycle = pomodorosCompleted % 4;
+  dots.innerHTML = "";
+  for (let i = 0; i < 4; i++) {
+    const dot = document.createElement("span");
+    dot.textContent = i < dotsInCycle ? "🍅" : "○";
+    dot.className = "lz-pomodoro-dot";
+    dots.appendChild(dot);
+  }
+
+  startBtn.classList.toggle("d-none", active);
+  pauseBtn.classList.toggle("d-none", !active);
+}
+
 export function renderStats({ state, currentMonth }) {
   const plannedTotalMin =
     sum(state.roughPlans.map((item) => toMinutes(item.hours))) +
