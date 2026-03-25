@@ -1434,4 +1434,82 @@ export function renderStats({ state, currentMonth }) {
   goalProgress.style.width = `${goalPercent}%`;
   goalProgress.setAttribute("aria-valuenow", String(goalPercent));
   goalProgress.textContent = `${goalPercent}%`;
+
+  const upcomingContainer = byId("overview-next-items");
+  if (!upcomingContainer) return;
+
+  const today = nowIso().slice(0, 10);
+
+  const upcomingGoalItems = (state.goals || [])
+    .filter((goal) => !goal.completed)
+    .filter((goal) => goal.targetDate && goal.targetDate >= today)
+    .map((goal) => ({
+      type: "goal",
+      date: goal.targetDate,
+      title: goal.title,
+      subtitle: `Fällig: ${formatDate(goal.targetDate)}`,
+    }));
+
+  const upcomingDetailItems = (state.detailPlans || [])
+    .filter((item) => item.date && item.date >= today)
+    .filter((item) => !isDetailPlanHiddenByCompletion(state, item))
+    .map((item) => {
+      const timeRange =
+        item.startTime && item.endTime
+          ? `${item.startTime}-${item.endTime}`
+          : item.startTime || item.endTime || "";
+
+      return {
+        type: "detail",
+        date: item.date,
+        title: getDetailPlanFocusTitle(state, item),
+        subtitle: [formatDate(item.date), timeRange, `${Number(item.minutes || 0)} Min`]
+          .filter(Boolean)
+          .join(" · "),
+      };
+    });
+
+  const nextItems = [...upcomingDetailItems, ...upcomingGoalItems]
+    .sort((left, right) => {
+      const byDate = left.date.localeCompare(right.date);
+      if (byDate !== 0) return byDate;
+      if (left.type !== right.type) {
+        return left.type === "detail" ? -1 : 1;
+      }
+      return left.title.localeCompare(right.title, "de", { sensitivity: "base" });
+    })
+    .slice(0, 5);
+
+  upcomingContainer.innerHTML = "";
+
+  const label = document.createElement("label");
+  label.className = "form-label text-body-secondary small mb-1";
+  label.textContent = "Nächste 5 (Detailplanung & Ziele)";
+  upcomingContainer.appendChild(label);
+
+  const list = document.createElement("ul");
+  list.className = "list-group";
+
+  if (!nextItems.length) {
+    renderEmptyList(list, "Keine anstehenden Einträge.");
+    upcomingContainer.appendChild(list);
+    return;
+  }
+
+  nextItems.forEach((item) => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex flex-column gap-1";
+
+    const title = document.createElement("span");
+    title.textContent = `${item.type === "detail" ? "Detail" : "Ziel"}: ${item.title}`;
+
+    const subtitle = document.createElement("small");
+    subtitle.className = "text-body-secondary";
+    subtitle.textContent = item.subtitle;
+
+    li.append(title, subtitle);
+    list.appendChild(li);
+  });
+
+  upcomingContainer.appendChild(list);
 }

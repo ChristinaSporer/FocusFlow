@@ -24,7 +24,6 @@ import {
   persistState,
 } from "../../modules/state-store.js";
 import { buildDemoState } from "../../modules/demo-data.js";
-import { createReminderManager } from "../../modules/reminder-manager.js";
 import {
   renderDetailPlans,
   renderGoals,
@@ -539,9 +538,6 @@ describe("modules/form-handlers", () => {
       '<form id="track-manual-form"><input id="track-manual-date" value="2026-03-24"><input id="track-manual-minutes" value=""><button id="track-manual-submit" type="submit">save</button></form>',
       '<button id="track-cancel-edit" type="button" class="d-none"></button>',
       '<input id="track-note" value="">',
-      '<form id="settings-form"></form>',
-      '<input id="inactivity-days" value="">',
-      '<button id="enable-notifications" type="button"></button>',
       '<button id="load-demo" type="button"></button>',
       '<input type="radio" name="theme-mode" id="theme-mode-auto" value="auto">',
       '<input type="radio" name="theme-mode" id="theme-mode-light" value="light">',
@@ -567,7 +563,6 @@ describe("modules/form-handlers", () => {
       loadDemoData: vi.fn(),
       normalizeThemeMode: vi.fn((value) => value),
       applyTheme: vi.fn(),
-      activateNotifications: vi.fn(),
       getCalendarMonth: vi.fn(() => "2026-03"),
       setCalendarMonth: vi.fn(),
       renderCalendar: vi.fn(),
@@ -683,7 +678,7 @@ describe("modules/form-handlers", () => {
     });
   });
 
-  it("handles calendar, timer and settings controls", () => {
+  it("handles calendar and timer controls", () => {
     const { deps } = setupHandlers();
 
     document.getElementById("calendar-prev").click();
@@ -732,23 +727,9 @@ describe("modules/form-handlers", () => {
 
     document.getElementById("track-cancel-edit").click();
     expect(document.getElementById("track-edit-id").value).toBe("");
-
-    const settingsForm = document.getElementById("settings-form");
-    document.getElementById("inactivity-days").value = "0";
-    settingsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    expect(deps.dispatch).not.toHaveBeenCalledWith(
-      expect.objectContaining({ type: "SET_INACTIVITY_DAYS" })
-    );
-
-    document.getElementById("inactivity-days").value = "5";
-    settingsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    expect(deps.dispatch).toHaveBeenCalledWith({
-      type: "SET_INACTIVITY_DAYS",
-      payload: { days: 5 },
-    });
   });
 
-  it("handles notification, demo, theme, import/export and reset actions", async () => {
+  it("handles demo, theme, import/export and reset actions", async () => {
     const importIcsFile = vi
       .fn()
       .mockResolvedValueOnce({ ok: false })
@@ -759,9 +740,6 @@ describe("modules/form-handlers", () => {
       .mockResolvedValueOnce({ ok: true, state: { restored: true } });
     const normalizeThemeMode = vi.fn(() => "dark");
     const { deps } = setupHandlers({ importIcsFile, importJsonFile, normalizeThemeMode });
-
-    document.getElementById("enable-notifications").click();
-    expect(deps.activateNotifications).toHaveBeenCalledTimes(1);
 
     document.getElementById("load-demo").click();
     expect(deps.loadDemoData).toHaveBeenCalledTimes(1);
@@ -1023,6 +1001,7 @@ describe("modules/render-main-view", () => {
       '<div id="stats"></div>',
       '<div id="time-progress" aria-valuenow="0"></div>',
       '<div id="goal-progress" aria-valuenow="0"></div>',
+      '<div id="overview-next-items"></div>',
     ].join("");
   }
 
@@ -1422,20 +1401,102 @@ describe("modules/render-main-view", () => {
 
     expect(document.getElementById("time-progress").textContent).toBe("0%");
     expect(document.getElementById("goal-progress").textContent).toBe("0%");
+    expect(document.getElementById("overview-next-items").textContent).toContain(
+      "Keine anstehenden Einträge"
+    );
 
     renderStats({
       state: {
         roughPlans: [{ date: "2026-03-25", hours: 1 }],
-        detailPlans: [{ date: "2026-03-26", minutes: 60 }],
+        detailPlans: [
+          {
+            id: "d-1",
+            date: "2026-03-25",
+            minutes: 20,
+            topic: "Detail A",
+            goalId: "g-open",
+          },
+          {
+            id: "d-2",
+            date: "2026-03-25",
+            minutes: 40,
+            topic: "Detail B",
+            startTime: "09:00",
+            endTime: "10:00",
+            goalId: "g-open",
+          },
+          {
+            id: "d-3",
+            date: "2026-03-26",
+            minutes: 60,
+            topic: "Detail C",
+            goalId: "g-open",
+          },
+          {
+            id: "d-hidden-goal",
+            date: "2026-03-27",
+            minutes: 30,
+            topic: "Detail hidden goal",
+            goalId: "g-completed",
+          },
+          {
+            id: "d-hidden-milestone",
+            date: "2026-03-28",
+            minutes: 30,
+            topic: "Detail hidden milestone",
+            milestoneId: "m-done",
+            goalId: "g-open",
+          },
+        ],
         trackedSessions: [{ minutes: 500, start: "2026-03-24T10:00:00.000Z" }],
-        goals: [{ completed: true }, { completed: false }],
+        goals: [
+          {
+            id: "g-open",
+            title: "Offenes Ziel",
+            targetDate: "2026-03-25",
+            completed: false,
+            milestones: [{ id: "m-done", title: "Erledigt", done: true }],
+          },
+          {
+            id: "g-open-2",
+            title: "Weiteres Ziel",
+            targetDate: "2026-03-27",
+            completed: false,
+            milestones: [],
+          },
+          {
+            id: "g-completed",
+            title: "Abgeschlossenes Ziel",
+            targetDate: "2026-03-26",
+            completed: true,
+            milestones: [],
+          },
+        ],
       },
       currentMonth: "2026-03",
     });
 
     expect(document.getElementById("time-progress").textContent).toBe("100%");
-    expect(document.getElementById("goal-progress").textContent).toBe("50%");
+    expect(document.getElementById("goal-progress").textContent).toBe("33%");
     expect(document.getElementById("stats").textContent).toContain("Geplant gesamt");
+
+    const upcoming = Array.from(
+      document.querySelectorAll("#overview-next-items .list-group-item span")
+    ).map((node) => node.textContent);
+
+    const upcomingSubtitles = Array.from(
+      document.querySelectorAll("#overview-next-items .list-group-item small")
+    ).map((node) => node.textContent);
+
+    expect(upcoming).toHaveLength(5);
+    expect(upcoming[0]).toContain("Detail:");
+    expect(upcoming[1]).toContain("Detail:");
+    expect(upcoming[2]).toContain("Ziel:");
+    expect(upcoming[3]).toContain("Detail:");
+    expect(upcoming[4]).toContain("Ziel:");
+    expect(upcomingSubtitles.some((line) => line.includes("09:00-10:00"))).toBe(true);
+    expect(upcoming).not.toContain("Detail: Detail hidden goal");
+    expect(upcoming).not.toContain("Detail: Detail hidden milestone");
   });
 });
 
@@ -2105,178 +2166,3 @@ describe("modules/timer-manager", () => {
   });
 });
 
-describe("modules/reminder-manager", () => {
-  const originalNotification = globalThis.Notification;
-  const originalAlert = globalThis.alert;
-  let secureContextDescriptor;
-
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-03-24T10:00:00.000Z"));
-
-    document.body.innerHTML = [
-      '<div id="notification-status"></div>',
-      '<div id="reminder-hint"></div>',
-      '<ul id="reminder-list"></ul>',
-    ].join("");
-
-    globalThis.alert = vi.fn();
-    secureContextDescriptor = Object.getOwnPropertyDescriptor(window, "isSecureContext");
-    Object.defineProperty(window, "isSecureContext", {
-      configurable: true,
-      value: true,
-    });
-  });
-
-  afterEach(() => {
-    vi.clearAllTimers();
-    vi.useRealTimers();
-    document.body.innerHTML = "";
-
-    if (typeof originalNotification === "undefined") {
-      delete globalThis.Notification;
-    } else {
-      globalThis.Notification = originalNotification;
-    }
-
-    globalThis.alert = originalAlert;
-
-    if (secureContextDescriptor) {
-      Object.defineProperty(window, "isSecureContext", secureContextDescriptor);
-    } else {
-      delete window.isSecureContext;
-    }
-  });
-
-  function setupReminderManager(overrideState = {}) {
-    const state = {
-      roughPlans: [],
-      goals: [],
-      trackedSessions: [{ end: "2026-03-24T09:30:00.000Z" }],
-      settings: {
-        inactivityDays: 3,
-        notificationEnabled: false,
-      },
-      ...overrideState,
-    };
-
-    const dispatch = vi.fn((action) => {
-      if (action.type === "SET_NOTIFICATION_ENABLED") {
-        state.settings.notificationEnabled = action.payload.enabled;
-      }
-    });
-    const onRenderAll = vi.fn();
-
-    const manager = createReminderManager({
-      getState: () => state,
-      dispatch,
-      onRenderAll,
-    });
-
-    return { manager, state, dispatch, onRenderAll };
-  }
-
-  it("writes notification status and shows empty reminder state", () => {
-    const { manager } = setupReminderManager();
-
-    manager.setNotificationStatus("OK");
-    expect(document.getElementById("notification-status").textContent).toBe("OK");
-
-    manager.runReminders();
-    expect(document.getElementById("reminder-list").textContent).toContain(
-      "Keine aktuellen Erinnerungen"
-    );
-    expect(document.getElementById("reminder-hint").textContent).toContain("aktuell nichts offen");
-  });
-
-  it("renders upcoming reminders and emits browser notifications when granted", () => {
-    const NotificationMock = vi.fn();
-    NotificationMock.permission = "granted";
-    NotificationMock.requestPermission = vi.fn(async () => "granted");
-    globalThis.Notification = NotificationMock;
-
-    const today = "2026-03-24";
-    const { manager } = setupReminderManager({
-      roughPlans: [{ date: today, hours: 2 }],
-      goals: [{ title: "Abgabe", targetDate: today, completed: false }],
-      settings: { inactivityDays: 3, notificationEnabled: true },
-    });
-
-    manager.runReminders();
-
-    const list = document.getElementById("reminder-list");
-    expect(list.children.length).toBe(2);
-    expect(list.textContent).toContain("Geplante Lernzeit");
-    expect(list.textContent).toContain("Ziel bald fällig");
-    expect(document.getElementById("reminder-hint").textContent).toContain(
-      "Erinnerungen aktiv (2 Hinweis(e))"
-    );
-    expect(NotificationMock).toHaveBeenCalledTimes(2);
-  });
-
-  it("supports reminder loop start and stop", () => {
-    const { manager } = setupReminderManager({
-      roughPlans: [{ date: "2026-03-24", hours: 1 }],
-      settings: { inactivityDays: 3, notificationEnabled: false },
-    });
-
-    manager.startLoop();
-    vi.advanceTimersByTime(60000);
-    expect(document.getElementById("reminder-list").children.length).toBe(1);
-
-    manager.stopLoop();
-    document.getElementById("reminder-list").innerHTML = "";
-    vi.advanceTimersByTime(60000);
-    expect(document.getElementById("reminder-list").children.length).toBe(0);
-  });
-
-  it("handles notification activation error branches", async () => {
-    const { manager, dispatch, onRenderAll } = setupReminderManager();
-
-    Object.defineProperty(window, "isSecureContext", { configurable: true, value: false });
-    await manager.activateNotifications();
-    expect(globalThis.alert).toHaveBeenCalled();
-    expect(document.getElementById("notification-status").textContent).toContain(
-      "Aktivierung fehlgeschlagen"
-    );
-
-    Object.defineProperty(window, "isSecureContext", { configurable: true, value: true });
-    delete globalThis.Notification;
-    await manager.activateNotifications();
-    expect(document.getElementById("notification-status").textContent).toContain(
-      "unterstützt keine Benachrichtigungen"
-    );
-
-    const deniedPermission = vi.fn();
-    deniedPermission.permission = "denied";
-    deniedPermission.requestPermission = vi.fn(async () => "denied");
-    globalThis.Notification = deniedPermission;
-    await manager.activateNotifications();
-    expect(dispatch).toHaveBeenCalledWith({
-      type: "SET_NOTIFICATION_ENABLED",
-      payload: { enabled: false },
-    });
-
-    const grantedPermission = vi.fn();
-    grantedPermission.permission = "default";
-    grantedPermission.requestPermission = vi.fn(async () => "granted");
-    globalThis.Notification = grantedPermission;
-    await manager.activateNotifications();
-    expect(dispatch).toHaveBeenCalledWith({
-      type: "SET_NOTIFICATION_ENABLED",
-      payload: { enabled: true },
-    });
-    expect(onRenderAll).toHaveBeenCalled();
-
-    const throwingPermission = vi.fn();
-    throwingPermission.permission = "default";
-    throwingPermission.requestPermission = vi.fn(async () => {
-      throw new Error("boom");
-    });
-    globalThis.Notification = throwingPermission;
-    await manager.activateNotifications();
-    expect(document.getElementById("notification-status").textContent).toContain(
-      "konnte nicht angefragt werden"
-    );
-  });
-});

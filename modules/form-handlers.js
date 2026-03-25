@@ -11,7 +11,6 @@ export function initFormHandlers({
   loadDemoData,
   normalizeThemeMode,
   applyTheme,
-  activateNotifications,
   getCalendarMonth,
   setCalendarMonth,
   renderCalendar,
@@ -303,17 +302,6 @@ export function initFormHandlers({
   });
 
   byId("track-cancel-edit")?.addEventListener("click", resetTrackedForm);
-
-  byId("settings-form").addEventListener("submit", (event) => {
-    event.preventDefault();
-    const days = Number(byId("inactivity-days").value);
-    if (days > 0) {
-      dispatch({ type: "SET_INACTIVITY_DAYS", payload: { days } });
-      renderAll();
-    }
-  });
-
-  byId("enable-notifications").addEventListener("click", activateNotifications);
 
   byId("load-demo").addEventListener("click", () => {
     loadDemoData();

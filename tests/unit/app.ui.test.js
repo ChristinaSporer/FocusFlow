@@ -350,20 +350,15 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
   });
 
-  it("loads demo data and uses fallback notification text when Notification API is missing", () => {
-    Reflect.deleteProperty(window, "Notification");
-
+  it("loads demo data", () => {
     document.getElementById("load-demo").click();
 
     expect(document.getElementById("goal-list").textContent).toContain(
       "Modul Software Engineering abschließen"
     );
-    expect(document.getElementById("notification-status").textContent).toBe(
-      "Dieser Browser unterstützt keine Benachrichtigungen."
-    );
   });
 
-  it("normalizes invalid theme mode and sets active notification status on bootstrap", async () => {
+  it("normalizes invalid theme mode on bootstrap", async () => {
     appModule.shutdown();
 
     appModule = await bootApp({
@@ -374,45 +369,14 @@ describe("App UI integration (jsdom)", () => {
       storedState: {
         settings: {
           themeMode: "invalid-theme",
-          notificationEnabled: true,
-          inactivityDays: 3,
           activeView: "list",
           calendarMonth: null,
-          lastReminderRun: null,
         },
       },
     });
 
     const persisted = JSON.parse(localStorage.getItem("focusflow-v1"));
     expect(persisted.settings.themeMode).toBe("auto");
-    expect(document.getElementById("notification-status").textContent).toBe(
-      "Benachrichtigungen sind aktiv."
-    );
-  });
-
-  it("shows not-activated notification status when permission is neither granted nor denied", async () => {
-    appModule.shutdown();
-
-    appModule = await bootApp({
-      notification: {
-        permission: "default",
-        requestPermission: vi.fn(async () => "default"),
-      },
-      storedState: {
-        settings: {
-          themeMode: "auto",
-          notificationEnabled: false,
-          inactivityDays: 3,
-          activeView: "list",
-          calendarMonth: null,
-          lastReminderRun: null,
-        },
-      },
-    });
-
-    expect(document.getElementById("notification-status").textContent).toBe(
-      "Benachrichtigungen sind derzeit nicht aktiviert."
-    );
   });
 
   it("uses current-month fallback when month-select is missing", () => {

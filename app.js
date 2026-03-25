@@ -16,7 +16,6 @@ import { initFormHandlers } from "./modules/form-handlers.js";
 import { createThemeManager, normalizeThemeMode } from "./modules/theme-manager.js";
 import { createTimerManager } from "./modules/timer-manager.js";
 import { createPomodoroManager } from "./modules/pomodoro-manager.js";
-import { createReminderManager } from "./modules/reminder-manager.js";
 import { createCalendarManager } from "./modules/calendar-manager.js";
 import { createIcsManager } from "./modules/ics-manager.js";
 import { createJsonManager } from "./modules/json-manager.js";
@@ -147,7 +146,6 @@ function renderAll() {
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
   renderPomodoro({ pomodoroState: pomodoroManager.getState() });
-  reminderManager.runReminders();
   calendarManager.renderCalendar();
 }
 
@@ -177,7 +175,6 @@ function setInitialValues() {
     dispatch({ type: "SET_CALENDAR_MONTH", payload: { month } });
   }
 
-  byId("inactivity-days").value = getState().settings.inactivityDays;
   const manualTrackDate = byId("track-manual-date");
   if (manualTrackDate && !manualTrackDate.value) {
     manualTrackDate.value = now.toISOString().slice(0, 10);
@@ -205,20 +202,6 @@ function setInitialValues() {
   themeManager.applyTheme();
   timerManager.syncFromState();
   pomodoroManager.syncFromState();
-
-  const hasNotificationApi = "Notification" in window;
-  const isEnabled = getState().settings.notificationEnabled;
-  if (!hasNotificationApi) {
-    reminderManager.setNotificationStatus("Dieser Browser unterstützt keine Benachrichtigungen.");
-  } else if (Notification.permission === "granted" && isEnabled) {
-    reminderManager.setNotificationStatus("Benachrichtigungen sind aktiv.");
-  } else if (Notification.permission === "denied") {
-    reminderManager.setNotificationStatus(
-      "Benachrichtigungen sind blockiert. Bitte in den Browser-Seiteneinstellungen erlauben."
-    );
-  } else {
-    reminderManager.setNotificationStatus("Benachrichtigungen sind derzeit nicht aktiviert.");
-  }
 }
 
 function initHandlers() {
@@ -233,7 +216,6 @@ function initHandlers() {
     loadDemoData,
     normalizeThemeMode,
     applyTheme: themeManager.applyTheme,
-    activateNotifications: reminderManager.activateNotifications,
     getCalendarMonth: calendarManager.getCalendarMonth,
     setCalendarMonth: calendarManager.setCalendarMonth,
     renderCalendar: calendarManager.renderCalendar,
@@ -296,12 +278,6 @@ const pomodoroManager = createPomodoroManager({
   dispatch,
 });
 
-const reminderManager = createReminderManager({
-  getState,
-  dispatch,
-  onRenderAll: renderAll,
-});
-
 const icsManager = createIcsManager({
   getState,
   dispatch,
@@ -318,7 +294,6 @@ export function bootstrap() {
   detachMainCardCollapse?.();
   detachMainCardCollapse = initMainCardCollapse();
   renderAll();
-  reminderManager.startLoop();
 }
 
 export function shutdown() {
@@ -326,6 +301,5 @@ export function shutdown() {
   detachMainCardCollapse = null;
   timerManager.dispose();
   pomodoroManager.dispose();
-  reminderManager.stopLoop();
   themeManager.dispose();
 }
