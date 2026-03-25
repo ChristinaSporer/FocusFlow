@@ -15,8 +15,24 @@ Alle Daten werden im Browser über `localStorage` gespeichert.
 
 ## Lokaler Start
 
-Da es statisches HTML/CSS/JS ist, einfach `index.html` im Browser öffnen.
-Für Browser-Benachrichtigungen bitte über `localhost` starten (z. B. `npx http-server .`).
+Da es statisches HTML/CSS/JS ist, kann `index.html` direkt im Browser geöffnet werden.
+Für Browser-Benachrichtigungen bitte über `localhost` starten.
+
+1. Abhängigkeiten installieren:
+  - `npm install`
+2. Lokalen Server starten (öffnet automatisch im Standardbrowser):
+  - `npm start`
+
+Standard-URL: `http://localhost:8080/index.html`
+
+### One-Click Start (Windows)
+
+Im Projekt liegt die Datei `start-localhost.bat`.
+Diese Datei kann per Doppelklick gestartet werden und:
+
+1. wechselt automatisch in den Projektordner,
+2. führt bei Bedarf `npm install` aus,
+3. startet die Anwendung mit `npm start` auf `localhost`.
 
 ## Code-Qualität (Lint/Format)
 
