@@ -163,7 +163,7 @@ export function createCalendarManager({ getState, dispatch }) {
       const inActiveMonth = current >= monthStart && current <= monthEnd;
 
       const cell = document.createElement("div");
-      cell.className = `lz-calendar-day${inActiveMonth ? "" : " outside"}`;
+      cell.className = `lz-calendar-day${inActiveMonth ? "" : " lz-outside"}`;
 
       const dayNo = document.createElement("div");
       dayNo.className = "lz-calendar-day-number";

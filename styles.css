@@ -1,10 +1,11 @@
 :root {
   color-scheme: light dark;
+
   --bg: #f3f6fb;
   --text: #1f2937;
   --border: #e5e7eb;
   --goal-item-border: #cddbf4;
-  --goal-item-shadow: rgba(37, 99, 235, 0.08);
+  --goal-item-shadow: rgb(37 99 235 / 8%);
   --goal-item-odd-bg: #f8fbff;
   --goal-item-even-bg: #eaf2ff;
   --goal-item-accent: #7aa2e3;
@@ -20,7 +21,7 @@
   --track-item-odd-bg: #f8fbff;
   --track-item-even-bg: #eaf2ff;
   --track-item-accent: #7aa2e3;
-  --calendar-grid-bg: #ffffff;
+  --calendar-grid-bg: #fff;
   --calendar-weekday-bg: #e2e8f0;
   --calendar-weekday-text: #334155;
   --calendar-weekday-border: #cbd5e1;
@@ -37,7 +38,7 @@ html[data-bs-theme="dark"] {
   --text: #e2e8f0;
   --border: #334155;
   --goal-item-border: #38506f;
-  --goal-item-shadow: rgba(15, 23, 42, 0.35);
+  --goal-item-shadow: rgb(15 23 42 / 35%);
   --goal-item-odd-bg: #182538;
   --goal-item-even-bg: #22324b;
   --goal-item-accent: #8fb4ff;
@@ -183,7 +184,7 @@ body {
   border-right: none;
 }
 
-.lz-calendar-day.outside {
+.lz-calendar-day.lz-outside {
   background: var(--calendar-day-outside-bg);
   color: var(--calendar-day-outside-text);
 }
@@ -199,7 +200,7 @@ body {
   padding: 0.2rem 0.35rem;
   color: #fff;
   line-height: 1.3;
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .lz-source-detail {
@@ -218,7 +219,7 @@ body {
   background: var(--source-import);
 }
 
-@media (max-width: 600px) {
+@media (width <= 600px) {
   .lz-calendar-day {
     min-height: 112px;
   }
