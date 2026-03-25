@@ -107,9 +107,23 @@
     <main class="container pb-4">
       <div id="list-view" class="row row-cols-1 row-cols-xl-2 g-4 mb-4">
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="overview">
             <div class="card-body">
-              <h2 class="h4">&Uuml;bersicht</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">&Uuml;bersicht</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="overview"
+                  aria-controls="main-card-body-overview"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="overview" id="main-card-body-overview">
               <div class="row row-cols-1 row-cols-sm-2 g-3 mt-1" id="stats"></div>
               <div class="mt-3">
                 <label class="form-label text-body-secondary small mb-1"
@@ -146,14 +160,29 @@
               <p class="text-body-secondary small mt-3 mb-0" id="reminder-hint">
                 Erinnerungen aktiv nur bei ge&ouml;ffneter Seite.
               </p>
+              </div>
             </div>
           </section>
         </div>
 
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="goals">
             <div class="card-body">
-              <h2 class="h4">1) Lernziele</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">1) Lernziele</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="goals"
+                  aria-controls="main-card-body-goals"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="goals" id="main-card-body-goals">
               <form id="goal-form" class="row g-2 mt-1">
                 <input type="hidden" id="goal-edit-id" />
                 <div class="col-12 col-md">
@@ -195,14 +224,29 @@
                 <button id="goal-collapse-all" type="button" class="btn btn-outline-secondary btn-sm" aria-label="Alle ausklappen" title="Alle ausklappen"><i class="bi bi-arrows-expand" aria-hidden="true"></i></button>
               </div>
               <ul id="goal-list" class="list-group lz-list-panel mt-2"></ul>
+              </div>
             </div>
           </section>
         </div>
 
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="rough">
             <div class="card-body">
-              <h2 class="h4">2) Grobplanung Lernzeit</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">2) Grobplanung Lernzeit</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="rough"
+                  aria-controls="main-card-body-rough"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="rough" id="main-card-body-rough">
               <form id="rough-form" class="row g-2 mt-1">
                 <input type="hidden" id="rough-edit-id" />
                 <div class="col-12 col-md-4">
@@ -246,14 +290,29 @@
                 </div>
               </form>
               <ul id="rough-list" class="list-group lz-list-panel mt-2"></ul>
+              </div>
             </div>
           </section>
         </div>
 
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="detail">
             <div class="card-body">
-              <h2 class="h4">3) Detailplanung</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">3) Detailplanung</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="detail"
+                  aria-controls="main-card-body-detail"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="detail" id="main-card-body-detail">
               <div class="row g-2 align-items-center mb-3 mt-1">
                 <div class="col-auto">
                   <label class="form-label mb-0" for="month-select">Monat:</label>
@@ -269,14 +328,29 @@
                 <button id="detail-collapse-all" type="button" class="btn btn-outline-secondary btn-sm" aria-label="Alle ausklappen" title="Alle ausklappen"><i class="bi bi-arrows-expand" aria-hidden="true"></i></button>
               </div>
               <ul id="detail-list" class="list-group lz-list-panel mt-2"></ul>
+              </div>
             </div>
           </section>
         </div>
 
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="tracking">
             <div class="card-body">
-              <h2 class="h4">4) Lernzeit-Tracking (Stoppuhr)</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">4) Lernzeit-Tracking (Stoppuhr)</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="tracking"
+                  aria-controls="main-card-body-tracking"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="tracking" id="main-card-body-tracking">
               <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1">
                 <p id="timer-display" class="mb-0">00:00:00</p>
                 <div class="d-flex flex-wrap gap-2">
@@ -333,27 +407,57 @@
                 </div>
               </form>
               <ul id="track-list" class="list-group lz-list-panel mt-3"></ul>
+              </div>
             </div>
           </section>
         </div>
 
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="achieved">
             <div class="card-body">
-              <h2 class="h4">5) Erreichte Ziele</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">5) Erreichte Ziele</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="achieved"
+                  aria-controls="main-card-body-achieved"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="achieved" id="main-card-body-achieved">
               <p class="text-body-secondary small mt-1">
                 Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht
                 abgegeben etc.).
               </p>
               <ul id="achieved-list" class="list-group lz-list-panel"></ul>
+              </div>
             </div>
           </section>
         </div>
 
         <div class="col">
-          <section class="card shadow-sm h-100">
+          <section class="card shadow-sm h-100" data-main-card="settings">
             <div class="card-body">
-              <h2 class="h4">6) Erinnerung &amp; Inaktivit&auml;t</h2>
+              <div class="d-flex align-items-center justify-content-between gap-2">
+                <h2 class="h4 mb-0">6) Erinnerung &amp; Inaktivit&auml;t</h2>
+                <button
+                  type="button"
+                  class="btn btn-outline-secondary btn-sm"
+                  data-main-card-toggle="settings"
+                  aria-controls="main-card-body-settings"
+                  aria-expanded="true"
+                  aria-label="Bereich einklappen"
+                  title="Bereich einklappen"
+                >
+                  <i class="bi bi-chevron-up" aria-hidden="true"></i>
+                </button>
+              </div>
+              <div class="mt-3" data-main-card-body="settings" id="main-card-body-settings">
               <form id="settings-form" class="row g-2 mt-1">
                 <div class="col-12 col-md">
                   <input
@@ -376,6 +480,7 @@
                 Benachrichtigungen sind derzeit nicht aktiviert.
               </p>
               <ul id="reminder-list" class="list-group lz-list-panel mt-3"></ul>
+              </div>
             </div>
           </section>
         </div>

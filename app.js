@@ -35,6 +35,71 @@ let trackedFormController = {
   resetTrackedForm() {},
   startTrackedEdit() {},
 };
+let detachMainCardCollapse = null;
+
+function getMainCardDefaultCollapsed() {
+  if (typeof window.matchMedia !== "function") return false;
+  return !window.matchMedia("(min-width: 1200px)").matches;
+}
+
+function setMainCardCollapsed(toggleButton, cardBody, collapsed) {
+  cardBody.classList.toggle("d-none", collapsed);
+  toggleButton.setAttribute("aria-expanded", String(!collapsed));
+  toggleButton.setAttribute("aria-label", collapsed ? "Bereich ausklappen" : "Bereich einklappen");
+  toggleButton.title = collapsed ? "Bereich ausklappen" : "Bereich einklappen";
+  toggleButton.innerHTML = collapsed
+    ? '<i class="bi bi-chevron-down" aria-hidden="true"></i>'
+    : '<i class="bi bi-chevron-up" aria-hidden="true"></i>';
+}
+
+function initMainCardCollapse() {
+  const cardToggles = Array.from(document.querySelectorAll("[data-main-card-toggle]"));
+  const controls = cardToggles
+    .map((toggleButton) => {
+      const key = toggleButton.getAttribute("data-main-card-toggle");
+      const cardBody = document.querySelector(`[data-main-card-body="${key}"]`);
+      if (!cardBody) return null;
+      return { toggleButton, cardBody };
+    })
+    .filter(Boolean);
+
+  if (!controls.length) return () => {};
+
+  function applyDefaultCollapsedState() {
+    const collapsed = getMainCardDefaultCollapsed();
+    controls.forEach(({ toggleButton, cardBody }) => {
+      setMainCardCollapsed(toggleButton, cardBody, collapsed);
+    });
+  }
+
+  controls.forEach(({ toggleButton, cardBody }) => {
+    toggleButton.addEventListener("click", () => {
+      const shouldCollapse = !cardBody.classList.contains("d-none");
+      setMainCardCollapsed(toggleButton, cardBody, shouldCollapse);
+    });
+  });
+
+  applyDefaultCollapsedState();
+
+  if (typeof window.matchMedia !== "function") return () => {};
+
+  const mediaQuery = window.matchMedia("(min-width: 1200px)");
+  const handleBreakpointChange = () => {
+    applyDefaultCollapsedState();
+  };
+
+  if (typeof mediaQuery.addEventListener === "function") {
+    mediaQuery.addEventListener("change", handleBreakpointChange);
+    return () => mediaQuery.removeEventListener("change", handleBreakpointChange);
+  }
+
+  if (typeof mediaQuery.addListener === "function") {
+    mediaQuery.addListener(handleBreakpointChange);
+    return () => mediaQuery.removeListener(handleBreakpointChange);
+  }
+
+  return () => {};
+}
 
 function getState() {
   return state;
@@ -225,11 +290,15 @@ export function bootstrap() {
   themeManager.initSystemTheme();
   setInitialValues();
   initHandlers();
+  detachMainCardCollapse?.();
+  detachMainCardCollapse = initMainCardCollapse();
   renderAll();
   reminderManager.startLoop();
 }
 
 export function shutdown() {
+  detachMainCardCollapse?.();
+  detachMainCardCollapse = null;
   timerManager.dispose();
   reminderManager.stopLoop();
   themeManager.dispose();

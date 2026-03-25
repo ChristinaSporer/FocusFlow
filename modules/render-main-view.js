@@ -145,6 +145,29 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
   list.innerHTML = "";
   achieved.innerHTML = "";
 
+  const trackedMinutesByDetailId = (state.trackedSessions || []).reduce((map, session) => {
+    if (!session.detailPlanId) return map;
+    map.set(session.detailPlanId, (map.get(session.detailPlanId) || 0) + Number(session.minutes || 0));
+    return map;
+  }, new Map());
+
+  const plannedByGoalId = new Map();
+  const trackedByGoalId = new Map();
+  const plannedByMilestoneId = new Map();
+  const trackedByMilestoneId = new Map();
+  (state.detailPlans || []).forEach((plan) => {
+    const planned = Number(plan.minutes || 0);
+    const tracked = trackedMinutesByDetailId.get(plan.id) || 0;
+    if (plan.goalId) {
+      plannedByGoalId.set(plan.goalId, (plannedByGoalId.get(plan.goalId) || 0) + planned);
+      trackedByGoalId.set(plan.goalId, (trackedByGoalId.get(plan.goalId) || 0) + tracked);
+    }
+    if (plan.milestoneId) {
+      plannedByMilestoneId.set(plan.milestoneId, (plannedByMilestoneId.get(plan.milestoneId) || 0) + planned);
+      trackedByMilestoneId.set(plan.milestoneId, (trackedByMilestoneId.get(plan.milestoneId) || 0) + tracked);
+    }
+  });
+
   const sorted = [...state.goals].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
 
   sorted.forEach((goal) => {
@@ -289,6 +312,26 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     goalTitleRow.append(checkbox, goalTitleText);
     titleElement.replaceWith(goalTitleRow);
 
+    const goalPlanned = plannedByGoalId.get(goal.id) || 0;
+    const goalTracked = trackedByGoalId.get(goal.id) || 0;
+    if (goalPlanned > 0) {
+      const goalProgressPercent = Math.min(100, Math.round((goalTracked / goalPlanned) * 100));
+      const goalTrackedText = document.createElement("small");
+      goalTrackedText.className = "text-body-secondary";
+      goalTrackedText.textContent = `Geplant: ${goalPlanned} Min · Getrackt: ${goalTracked} Min`;
+      const goalProgressWrap = document.createElement("div");
+      goalProgressWrap.className = "progress";
+      const goalProgressBar = document.createElement("div");
+      goalProgressBar.className = "progress-bar bg-info";
+      goalProgressBar.setAttribute("role", "progressbar");
+      goalProgressBar.setAttribute("aria-valuemin", "0");
+      goalProgressBar.setAttribute("aria-valuemax", "100");
+      goalProgressBar.setAttribute("aria-valuenow", String(goalProgressPercent));
+      goalProgressBar.style.width = `${goalProgressPercent}%`;
+      goalProgressWrap.appendChild(goalProgressBar);
+      info.append(goalTrackedText, goalProgressWrap);
+    }
+
     const milestoneSection = document.createElement("div");
     milestoneSection.className = "mt-2";
     milestoneSection.setAttribute("data-goal-body", goal.id);
@@ -334,7 +377,9 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
           milestoneText.classList.add("text-decoration-line-through", "text-body-secondary");
         }
 
-        label.append(milestoneCheckbox, milestoneText);
+        const milestoneContent = document.createElement("span");
+        milestoneContent.className = "d-flex flex-column gap-1 flex-grow-1";
+        milestoneContent.appendChild(milestoneText);
 
         const editMilestoneButton = document.createElement("button");
         editMilestoneButton.type = "button";
@@ -418,6 +463,28 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
         inlineEditForm.append(inlineEditInput, saveMilestoneButton, cancelMilestoneButton);
 
+        const msPlanned = plannedByMilestoneId.get(milestone.id) || 0;
+        const msTracked = trackedByMilestoneId.get(milestone.id) || 0;
+        if (msPlanned > 0) {
+          const msProgressPercent = Math.min(100, Math.round((msTracked / msPlanned) * 100));
+          const msTrackedText = document.createElement("small");
+          msTrackedText.className = "text-body-secondary";
+          msTrackedText.textContent = `Geplant: ${msPlanned} Min · Getrackt: ${msTracked} Min`;
+          const msProgressWrap = document.createElement("div");
+          msProgressWrap.className = "progress";
+          msProgressWrap.style.height = "6px";
+          const msProgressBar = document.createElement("div");
+          msProgressBar.className = "progress-bar bg-info";
+          msProgressBar.setAttribute("role", "progressbar");
+          msProgressBar.setAttribute("aria-valuemin", "0");
+          msProgressBar.setAttribute("aria-valuemax", "100");
+          msProgressBar.setAttribute("aria-valuenow", String(msProgressPercent));
+          msProgressBar.style.width = `${msProgressPercent}%`;
+          msProgressWrap.appendChild(msProgressBar);
+          milestoneContent.append(msTrackedText, msProgressWrap);
+        }
+
+        label.append(milestoneCheckbox, milestoneContent);
         milestoneRow.append(label, inlineEditForm, editMilestoneButton, deleteMilestoneButton);
         milestoneList.appendChild(milestoneRow);
       });

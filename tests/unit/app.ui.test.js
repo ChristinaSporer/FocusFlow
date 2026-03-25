@@ -9,10 +9,56 @@ function loadDomWithoutScript() {
   document.body.innerHTML = bodyContent.replace(/<script[\s\S]*?<\/script>/gi, "");
 }
 
+function createMainCardBreakpointMock(initialDesktop) {
+  const listeners = new Set();
+  const mediaQuery = {
+    matches: Boolean(initialDesktop),
+    media: "(min-width: 1200px)",
+    onchange: null,
+    addEventListener(eventName, listener) {
+      if (eventName === "change") listeners.add(listener);
+    },
+    removeEventListener(eventName, listener) {
+      if (eventName === "change") listeners.delete(listener);
+    },
+    addListener(listener) {
+      listeners.add(listener);
+    },
+    removeListener(listener) {
+      listeners.delete(listener);
+    },
+  };
+
+  const matchMedia = vi.fn((query) => {
+    if (query === mediaQuery.media) return mediaQuery;
+    return {
+      matches: false,
+      media: query,
+      onchange: null,
+      addEventListener() {},
+      removeEventListener() {},
+      addListener() {},
+      removeListener() {},
+    };
+  });
+
+  function update(nextDesktop) {
+    mediaQuery.matches = Boolean(nextDesktop);
+    const event = { matches: mediaQuery.matches, media: mediaQuery.media };
+    listeners.forEach((listener) => listener(event));
+    if (typeof mediaQuery.onchange === "function") {
+      mediaQuery.onchange(event);
+    }
+  }
+
+  return { matchMedia, update };
+}
+
 describe("App UI integration (jsdom)", () => {
   let appModule;
+  let breakpointController;
 
-  async function bootApp({ notification, storedState } = {}) {
+  async function bootApp({ notification, storedState, viewport = "desktop" } = {}) {
     localStorage.clear();
     if (storedState) {
       localStorage.setItem("focusflow-v1", JSON.stringify(storedState));
@@ -37,6 +83,9 @@ describe("App UI integration (jsdom)", () => {
         requestPermission: vi.fn(async () => "denied"),
       };
     }
+
+    breakpointController = createMainCardBreakpointMock(viewport !== "mobile");
+    window.matchMedia = breakpointController.matchMedia;
 
     vi.resetModules();
     const module = await import("../../app.js");
@@ -167,6 +216,41 @@ describe("App UI integration (jsdom)", () => {
     toggleButton.click();
     expect(goalBody.classList.contains("d-none")).toBe(false);
     expect(toggleButton.getAttribute("aria-label")).toBe("Einklappen");
+  });
+
+  it("renders all main cards expanded by default on desktop viewport", () => {
+    const cardBodies = Array.from(document.querySelectorAll("[data-main-card-body]"));
+    expect(cardBodies.length).toBeGreaterThan(0);
+    expect(cardBodies.every((cardBody) => !cardBody.classList.contains("d-none"))).toBe(true);
+  });
+
+  it("renders all main cards collapsed by default on mobile viewport", async () => {
+    appModule.shutdown();
+
+    appModule = await bootApp({ viewport: "mobile" });
+
+    const cardBodies = Array.from(document.querySelectorAll("[data-main-card-body]"));
+    expect(cardBodies.length).toBeGreaterThan(0);
+    expect(cardBodies.every((cardBody) => cardBody.classList.contains("d-none"))).toBe(true);
+  });
+
+  it("reapplies responsive defaults on breakpoint changes", () => {
+    const goalCardToggle = document.querySelector('[data-main-card-toggle="goals"]');
+    const goalCardBody = document.querySelector('[data-main-card-body="goals"]');
+    expect(goalCardToggle).toBeTruthy();
+    expect(goalCardBody).toBeTruthy();
+    expect(goalCardBody.classList.contains("d-none")).toBe(false);
+
+    goalCardToggle.click();
+    expect(goalCardBody.classList.contains("d-none")).toBe(true);
+
+    breakpointController.update(false);
+    const cardBodiesAfterMobile = Array.from(document.querySelectorAll("[data-main-card-body]"));
+    expect(cardBodiesAfterMobile.every((cardBody) => cardBody.classList.contains("d-none"))).toBe(true);
+
+    breakpointController.update(true);
+    const cardBodiesAfterDesktop = Array.from(document.querySelectorAll("[data-main-card-body]"));
+    expect(cardBodiesAfterDesktop.every((cardBody) => !cardBody.classList.contains("d-none"))).toBe(true);
   });
 
   it("edits and deletes a milestone for a goal", () => {
