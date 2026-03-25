@@ -977,7 +977,7 @@ describe("modules/calendar-manager", () => {
 
     const dayCells = document.querySelectorAll(".lz-calendar-day");
     expect(dayCells).toHaveLength(42);
-    expect(document.querySelectorAll(".lz-calendar-day.outside").length).toBeGreaterThan(0);
+    expect(document.querySelectorAll(".lz-calendar-day.lz-outside").length).toBeGreaterThan(0);
 
     const allEvents = document.querySelectorAll(".lz-calendar-event");
     expect(allEvents.length).toBeGreaterThanOrEqual(5);

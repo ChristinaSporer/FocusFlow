@@ -16,10 +16,12 @@ test("user can add a goal", async ({ page }) => {
 test("user can switch to calendar and see created appointment", async ({ page }) => {
   await page.goto("/");
 
-  await page.locator("#detail-date").fill("2026-03-15");
-  await page.locator("#detail-minutes").fill("60");
-  await page.locator("#detail-topic").fill("Kalendertest");
-  await page.locator("#detail-form button").click();
+  await page.locator('[data-detail-plan-toggle="additional"]').click();
+  await page.locator('[data-detail-date="additional"]').fill("2026-03-15");
+  await page.locator('[data-detail-start="additional"]').fill("09:00");
+  await page.locator('[data-detail-end="additional"]').fill("10:00");
+  await page.locator('[data-detail-topic="additional"]').fill("Kalendertest");
+  await page.locator('[data-detail-block-form="additional"] button[type="submit"]').click();
 
   await page.locator("#tab-calendar").click();
 
