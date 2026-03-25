@@ -117,6 +117,18 @@ function roughPlansByWeekComparator(left, right) {
   return (left.date || "").localeCompare(right.date || "");
 }
 
+function isDetailPlanHiddenByCompletion(state, item) {
+  const goalsById = new Map((state.goals || []).map((goal) => [goal.id, goal]));
+  const completedMilestoneIds = new Set(
+    (state.goals || []).flatMap((goal) =>
+      (goal.milestones || []).filter((milestone) => milestone.done).map((milestone) => milestone.id)
+    )
+  );
+  if (item.goalId && goalsById.get(item.goalId)?.completed) return true;
+  if (item.milestoneId && completedMilestoneIds.has(item.milestoneId)) return true;
+  return false;
+}
+
 export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGoal }) {
   const list = byId("goal-list");
   const achieved = byId("achieved-list");
@@ -659,17 +671,6 @@ export function renderDetailPlans({
   list.innerHTML = "";
 
   const goalsById = new Map((state.goals || []).map((goal) => [goal.id, goal]));
-  const completedMilestoneIds = new Set(
-    (state.goals || []).flatMap((goal) =>
-      (goal.milestones || []).filter((milestone) => milestone.done).map((milestone) => milestone.id)
-    )
-  );
-
-  function isHiddenByCompletion(item) {
-    if (item.goalId && goalsById.get(item.goalId)?.completed) return true;
-    if (item.milestoneId && completedMilestoneIds.has(item.milestoneId)) return true;
-    return false;
-  }
 
   const monthlyRoughPlans = [...state.roughPlans]
     .filter((plan) =>
@@ -683,7 +684,7 @@ export function renderDetailPlans({
 
   const monthlyDetailPlans = [...state.detailPlans]
     .filter((item) => monthOf(item.date) === selectedMonth)
-    .filter((item) => !isHiddenByCompletion(item))
+    .filter((item) => !isDetailPlanHiddenByCompletion(state, item))
     .sort((a, b) => a.date.localeCompare(b.date));
 
   const trackedMinutesByDetailId = (state.trackedSessions || []).reduce((map, session) => {
@@ -1287,7 +1288,7 @@ export function renderTimerDetailPlanSelect({ state }) {
   if (!select) return;
 
   const selectedId = state.timer?.selectedDetailPlanId || "";
-  const detailPlans = [...state.detailPlans].sort((left, right) => {
+  const detailPlans = [...state.detailPlans].filter((item) => !isDetailPlanHiddenByCompletion(state, item)).sort((left, right) => {
     const byDate = left.date.localeCompare(right.date);
     if (byDate !== 0) return byDate;
     return getDetailPlanFocusTitle(state, left).localeCompare(
