@@ -18,11 +18,18 @@ export function buildRow(main, sub, { done = false, onDelete, actions = [] } = {
   title.textContent = main;
   const small = document.createElement("small");
   small.className = "text-body-secondary";
-  small.textContent = sub;
+  if (Array.isArray(sub)) {
+    sub.filter(Boolean).forEach((line, i) => {
+      if (i > 0) small.appendChild(document.createElement("br"));
+      small.appendChild(document.createTextNode(line));
+    });
+  } else {
+    small.textContent = sub;
+  }
   info.append(title, small);
 
   const rowActions = document.createElement("div");
-  rowActions.className = "d-flex align-items-center gap-2 ms-auto";
+  rowActions.className = "d-flex align-items-start gap-2 flex-shrink-0 align-self-start ms-auto";
 
   actions.forEach((action) => {
     if (action.tagName === "INPUT" && action.type === "checkbox") {

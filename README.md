@@ -59,6 +59,8 @@ Diese Datei kann per Doppelklick gestartet werden und:
    - `npm run test:e2e`
 4. Alles zusammen:
    - `npm run test:all`
+5. Coverage Test:
+   - `npm run test:coverage`
 
 ## GitHub Pages Deployment
 

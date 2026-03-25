@@ -1264,9 +1264,11 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll, onEditTrac
       onEditTrackedSession?.(session);
     });
 
+    const metaLine = [formatDate(session.start), linkedDetailText].filter(Boolean).join(" · ");
+
     const row = buildRow(
       `${session.minutes} Min fokussierte Lernzeit`,
-      [formatDate(session.start), session.note, linkedDetailText].filter(Boolean).join(" · "),
+      [metaLine, session.note].filter(Boolean),
       {
         actions: [editButton],
         onDelete: () => {
