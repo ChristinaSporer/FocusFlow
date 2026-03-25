@@ -19,9 +19,12 @@ Da es statisches HTML/CSS/JS ist, kann `index.html` direkt im Browser geöffnet 
 Für Browser-Benachrichtigungen bitte über `localhost` starten.
 
 1. Abhängigkeiten installieren:
-  - `npm install`
+
+- `npm install`
+
 2. Lokalen Server starten (öffnet automatisch im Standardbrowser):
-  - `npm start`
+
+- `npm start`
 
 Standard-URL: `http://localhost:8080/index.html`
 
@@ -91,9 +94,9 @@ flowchart LR
   APP --> NTF
   APP <--> ICS
   APP --> FILE
-  ```
+```
 
-  ## Sequenzdiagramm: Ziel anlegen
+## Sequenzdiagramm: Ziel anlegen
 
 ```mermaid
   sequenceDiagram
@@ -112,7 +115,7 @@ flowchart LR
   UI-->>Nutzer: aktualisierte Ziel-Liste
 ```
 
-  ## Klassendiagramm: Datenmodell
+## Klassendiagramm: Datenmodell
 
 ```mermaid
   classDiagram
@@ -188,5 +191,4 @@ flowchart LR
   AppState --> ImportedEvent
   AppState --> Settings
   AppState --> TimerState
-  ```
-  
+```

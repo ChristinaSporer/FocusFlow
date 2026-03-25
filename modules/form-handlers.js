@@ -86,7 +86,7 @@ export function initFormHandlers({
     if (note) note.value = plan.note || "";
     if (goal) goal.value = plan.goalId || "";
     if (submit) submit.textContent = "Änderungen speichern";
-    if (cancel) cancel.classList.remove("d-none");  
+    if (cancel) cancel.classList.remove("d-none");
     if (week) week.focus();
   }
 

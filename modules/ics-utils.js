@@ -43,7 +43,12 @@ export function parseIcsEvents(icsText) {
 
   const events = blocks
     .map((block) => block.split("END:VEVENT")[0])
-    .map((rawBlock) => rawBlock.split("\n").map((line) => line.trim()).filter(Boolean))
+    .map((rawBlock) =>
+      rawBlock
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+    )
     .map((lines) => {
       const startRaw = getIcsProp(lines, "DTSTART");
       const date = parseIcsDate(startRaw);

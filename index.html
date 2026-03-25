@@ -20,7 +20,7 @@
       <div class="row gy-3 justify-content-between align-items-lg-center">
         <div class="col-12 col-lg-auto">
           <div class="d-flex align-items-center gap-3 mb-3">
-            <img src="assets/logo.png" alt="FocusFlow Logo" style="height: 50px;" />
+            <img src="assets/logo.png" alt="FocusFlow Logo" style="height: 50px" />
           </div>
           <h1 class="mb-0">Lernzeitplaner</h1>
           <p class="mb-0 mt-2 text-body-secondary">
@@ -96,8 +96,12 @@
               </div>
             </div>
             <div class="d-flex flex-wrap justify-content-lg-end gap-2">
-              <button id="load-demo" class="btn btn-secondary" type="button">Demo-Daten laden</button>
-              <button id="reset-data" class="btn btn-danger" type="button">Alles l&ouml;schen</button>
+              <button id="load-demo" class="btn btn-secondary" type="button">
+                Demo-Daten laden
+              </button>
+              <button id="reset-data" class="btn btn-danger" type="button">
+                Alles l&ouml;schen
+              </button>
             </div>
           </div>
         </div>
@@ -124,42 +128,42 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="overview" id="main-card-body-overview">
-              <div class="row row-cols-1 row-cols-sm-2 g-3 mt-1" id="stats"></div>
-              <div class="mt-3">
-                <label class="form-label text-body-secondary small mb-1"
-                  >Geplante vs. getrackte Lernzeit (gesamt)</label
-                >
-                <div class="progress">
-                  <div
-                    id="time-progress"
-                    class="progress-bar"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow="0"
-                    style="width: 0%"
-                  ></div>
+                <div class="row row-cols-1 row-cols-sm-2 g-3 mt-1" id="stats"></div>
+                <div class="mt-3">
+                  <label class="form-label text-body-secondary small mb-1"
+                    >Geplante vs. getrackte Lernzeit (gesamt)</label
+                  >
+                  <div class="progress">
+                    <div
+                      id="time-progress"
+                      class="progress-bar"
+                      role="progressbar"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow="0"
+                      style="width: 0%"
+                    ></div>
+                  </div>
                 </div>
-              </div>
-              <div class="mt-3">
-                <label class="form-label text-body-secondary small mb-1"
-                  >Zielerreichung (abgeschlossene Ziele)</label
-                >
-                <div class="progress">
-                  <div
-                    id="goal-progress"
-                    class="progress-bar bg-success"
-                    role="progressbar"
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    aria-valuenow="0"
-                    style="width: 0%"
-                  ></div>
+                <div class="mt-3">
+                  <label class="form-label text-body-secondary small mb-1"
+                    >Zielerreichung (abgeschlossene Ziele)</label
+                  >
+                  <div class="progress">
+                    <div
+                      id="goal-progress"
+                      class="progress-bar bg-success"
+                      role="progressbar"
+                      aria-valuemin="0"
+                      aria-valuemax="100"
+                      aria-valuenow="0"
+                      style="width: 0%"
+                    ></div>
+                  </div>
                 </div>
-              </div>
-              <p class="text-body-secondary small mt-3 mb-0" id="reminder-hint">
-                Erinnerungen aktiv nur bei ge&ouml;ffneter Seite.
-              </p>
+                <p class="text-body-secondary small mt-3 mb-0" id="reminder-hint">
+                  Erinnerungen aktiv nur bei ge&ouml;ffneter Seite.
+                </p>
               </div>
             </div>
           </section>
@@ -183,47 +187,55 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="goals" id="main-card-body-goals">
-              <form id="goal-form" class="row g-2 mt-1">
-                <input type="hidden" id="goal-edit-id" />
-                <div class="col-12 col-md">
-                  <input
-                    type="text"
-                    id="goal-title"
-                    class="form-control"
-                    placeholder="z. B. Modul SE abschlie&szlig;en"
-                    required
-                  />
-                </div>
-                <div class="col-12 col-md-4">
-                  <input type="date" id="goal-date" class="form-control" required />
-                </div>
-                <div class="col-12">
-                  <textarea
-                    id="goal-description"
-                    class="form-control"
-                    rows="3"
-                    placeholder="Beschreibung oder naeherer Kontext (optional)"
-                  ></textarea>
-                </div>
-                <div class="col-12 col-md-auto d-grid">
-                  <button id="goal-submit" class="btn btn-primary" type="submit">
-                    Hinzuf&uuml;gen
-                  </button>
-                </div>
-                <div class="col-12 col-md-auto d-grid">
+                <form id="goal-form" class="row g-2 mt-1">
+                  <input type="hidden" id="goal-edit-id" />
+                  <div class="col-12 col-md">
+                    <input
+                      type="text"
+                      id="goal-title"
+                      class="form-control"
+                      placeholder="z. B. Modul SE abschlie&szlig;en"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <input type="date" id="goal-date" class="form-control" required />
+                  </div>
+                  <div class="col-12">
+                    <textarea
+                      id="goal-description"
+                      class="form-control"
+                      rows="3"
+                      placeholder="Beschreibung oder naeherer Kontext (optional)"
+                    ></textarea>
+                  </div>
+                  <div class="col-12 col-md-auto d-grid">
+                    <button id="goal-submit" class="btn btn-primary" type="submit">
+                      Hinzuf&uuml;gen
+                    </button>
+                  </div>
+                  <div class="col-12 col-md-auto d-grid">
+                    <button
+                      id="goal-cancel-edit"
+                      class="btn btn-outline-secondary d-none"
+                      type="button"
+                    >
+                      Bearbeitung abbrechen
+                    </button>
+                  </div>
+                </form>
+                <div class="d-flex justify-content-end mt-2">
                   <button
-                    id="goal-cancel-edit"
-                    class="btn btn-outline-secondary d-none"
+                    id="goal-collapse-all"
                     type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    aria-label="Alle ausklappen"
+                    title="Alle ausklappen"
                   >
-                    Bearbeitung abbrechen
+                    <i class="bi bi-arrows-expand" aria-hidden="true"></i>
                   </button>
                 </div>
-              </form>
-              <div class="d-flex justify-content-end mt-2">
-                <button id="goal-collapse-all" type="button" class="btn btn-outline-secondary btn-sm" aria-label="Alle ausklappen" title="Alle ausklappen"><i class="bi bi-arrows-expand" aria-hidden="true"></i></button>
-              </div>
-              <ul id="goal-list" class="list-group lz-list-panel mt-2"></ul>
+                <ul id="goal-list" class="list-group lz-list-panel mt-2"></ul>
               </div>
             </div>
           </section>
@@ -247,49 +259,49 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="rough" id="main-card-body-rough">
-              <form id="rough-form" class="row g-2 mt-1">
-                <input type="hidden" id="rough-edit-id" />
-                <div class="col-12 col-md-4">
-                  <input type="week" id="rough-week" class="form-control" required />
-                </div>
-                <div class="col-12 col-md-3">
-                  <input
-                    type="number"
-                    id="rough-hours"
-                    class="form-control"
-                    min="0.5"
-                    step="0.5"
-                    placeholder="Stunden"
-                    required
-                  />
-                </div>
-                <div class="col-12 col-md">
-                  <select id="rough-goal" class="form-control">
-                    <option value="">Kein Ziel zugeordnet</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <textarea
-                    id="rough-note"
-                    class="form-control"
-                    placeholder="Beschreibung (optional)"
-                    rows="1"
-                  ></textarea>
-                </div>
-                <div class="col-12 col-md-auto d-grid">
-                  <button id="rough-submit" class="btn btn-primary" type="submit">Planen</button>
-                </div>
-                <div class="col-12 col-md-auto d-grid">
-                  <button
-                    id="rough-cancel-edit"
-                    class="btn btn-outline-secondary d-none"
-                    type="button"
-                  >
-                    Bearbeitung abbrechen
-                  </button>
-                </div>
-              </form>
-              <ul id="rough-list" class="list-group lz-list-panel mt-2"></ul>
+                <form id="rough-form" class="row g-2 mt-1">
+                  <input type="hidden" id="rough-edit-id" />
+                  <div class="col-12 col-md-4">
+                    <input type="week" id="rough-week" class="form-control" required />
+                  </div>
+                  <div class="col-12 col-md-3">
+                    <input
+                      type="number"
+                      id="rough-hours"
+                      class="form-control"
+                      min="0.5"
+                      step="0.5"
+                      placeholder="Stunden"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md">
+                    <select id="rough-goal" class="form-control">
+                      <option value="">Kein Ziel zugeordnet</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <textarea
+                      id="rough-note"
+                      class="form-control"
+                      placeholder="Beschreibung (optional)"
+                      rows="1"
+                    ></textarea>
+                  </div>
+                  <div class="col-12 col-md-auto d-grid">
+                    <button id="rough-submit" class="btn btn-primary" type="submit">Planen</button>
+                  </div>
+                  <div class="col-12 col-md-auto d-grid">
+                    <button
+                      id="rough-cancel-edit"
+                      class="btn btn-outline-secondary d-none"
+                      type="button"
+                    >
+                      Bearbeitung abbrechen
+                    </button>
+                  </div>
+                </form>
+                <ul id="rough-list" class="list-group lz-list-panel mt-2"></ul>
               </div>
             </div>
           </section>
@@ -313,21 +325,29 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="detail" id="main-card-body-detail">
-              <div class="row g-2 align-items-center mb-3 mt-1">
-                <div class="col-auto">
-                  <label class="form-label mb-0" for="month-select">Monat:</label>
+                <div class="row g-2 align-items-center mb-3 mt-1">
+                  <div class="col-auto">
+                    <label class="form-label mb-0" for="month-select">Monat:</label>
+                  </div>
+                  <div class="col-12 col-sm-auto">
+                    <input type="month" id="month-select" class="form-control" />
+                  </div>
                 </div>
-                <div class="col-12 col-sm-auto">
-                  <input type="month" id="month-select" class="form-control" />
+                <p class="text-body-secondary mt-1 mb-3">
+                  Die Detailplanung baut auf den Grobplanungsblöcken des gewählten Monats auf.
+                </p>
+                <div class="d-flex justify-content-end mt-2">
+                  <button
+                    id="detail-collapse-all"
+                    type="button"
+                    class="btn btn-outline-secondary btn-sm"
+                    aria-label="Alle ausklappen"
+                    title="Alle ausklappen"
+                  >
+                    <i class="bi bi-arrows-expand" aria-hidden="true"></i>
+                  </button>
                 </div>
-              </div>
-              <p class="text-body-secondary mt-1 mb-3">
-                Die Detailplanung baut auf den Grobplanungsblöcken des gewählten Monats auf.
-              </p>
-              <div class="d-flex justify-content-end mt-2">
-                <button id="detail-collapse-all" type="button" class="btn btn-outline-secondary btn-sm" aria-label="Alle ausklappen" title="Alle ausklappen"><i class="bi bi-arrows-expand" aria-hidden="true"></i></button>
-              </div>
-              <ul id="detail-list" class="list-group lz-list-panel mt-2"></ul>
+                <ul id="detail-list" class="list-group lz-list-panel mt-2"></ul>
               </div>
             </div>
           </section>
@@ -351,62 +371,66 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="tracking" id="main-card-body-tracking">
-              <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1">
-                <p id="timer-display" class="mb-0">00:00:00</p>
-                <div class="d-flex flex-wrap gap-2">
-                  <button id="timer-start" class="btn btn-primary" type="button">Start</button>
-                  <button id="timer-stop" class="btn btn-secondary" type="button">
-                    Stopp &amp; Speichern
-                  </button>
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1">
+                  <p id="timer-display" class="mb-0">00:00:00</p>
+                  <div class="d-flex flex-wrap gap-2">
+                    <button id="timer-start" class="btn btn-primary" type="button">Start</button>
+                    <button id="timer-stop" class="btn btn-secondary" type="button">
+                      Stopp &amp; Speichern
+                    </button>
+                  </div>
                 </div>
-              </div>
-              <form id="track-note-form" class="row g-2 mt-3">
-                <div class="col-12">
-                  <select id="track-detail-select" class="form-control" aria-label="Detailplanungspunkt">
-                    <option value="">Kein Detailplanungspunkt</option>
-                  </select>
-                </div>
-                <div class="col-12">
-                  <input
-                    type="text"
-                    id="track-note"
-                    class="form-control"
-                    placeholder="Notiz (optional)"
-                  />
-                </div>
-              </form>
-              <form id="track-manual-form" class="row g-2 mt-2">
-                <input type="hidden" id="track-edit-id" />
-                <div class="col-12 col-md-5">
-                  <input type="date" id="track-manual-date" class="form-control" required />
-                </div>
-                <div class="col-12 col-md-4">
-                  <input
-                    type="number"
-                    id="track-manual-minutes"
-                    class="form-control"
-                    min="1"
-                    step="1"
-                    placeholder="Minuten"
-                    required
-                  />
-                </div>
-                <div class="col-12 col-md-3 d-grid">
-                  <button id="track-manual-submit" class="btn btn-outline-primary" type="submit">
-                    Zeit nachtragen
-                  </button>
-                </div>
-                <div class="col-12 d-grid">
-                  <button
-                    id="track-cancel-edit"
-                    class="btn btn-outline-secondary d-none"
-                    type="button"
-                  >
-                    Bearbeitung abbrechen
-                  </button>
-                </div>
-              </form>
-              <ul id="track-list" class="list-group lz-list-panel mt-3"></ul>
+                <form id="track-note-form" class="row g-2 mt-3">
+                  <div class="col-12">
+                    <select
+                      id="track-detail-select"
+                      class="form-control"
+                      aria-label="Detailplanungspunkt"
+                    >
+                      <option value="">Kein Detailplanungspunkt</option>
+                    </select>
+                  </div>
+                  <div class="col-12">
+                    <input
+                      type="text"
+                      id="track-note"
+                      class="form-control"
+                      placeholder="Notiz (optional)"
+                    />
+                  </div>
+                </form>
+                <form id="track-manual-form" class="row g-2 mt-2">
+                  <input type="hidden" id="track-edit-id" />
+                  <div class="col-12 col-md-5">
+                    <input type="date" id="track-manual-date" class="form-control" required />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <input
+                      type="number"
+                      id="track-manual-minutes"
+                      class="form-control"
+                      min="1"
+                      step="1"
+                      placeholder="Minuten"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-3 d-grid">
+                    <button id="track-manual-submit" class="btn btn-outline-primary" type="submit">
+                      Zeit nachtragen
+                    </button>
+                  </div>
+                  <div class="col-12 d-grid">
+                    <button
+                      id="track-cancel-edit"
+                      class="btn btn-outline-secondary d-none"
+                      type="button"
+                    >
+                      Bearbeitung abbrechen
+                    </button>
+                  </div>
+                </form>
+                <ul id="track-list" class="list-group lz-list-panel mt-3"></ul>
               </div>
             </div>
           </section>
@@ -430,11 +454,11 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="achieved" id="main-card-body-achieved">
-              <p class="text-body-secondary small mt-1">
-                Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht
-                abgegeben etc.).
-              </p>
-              <ul id="achieved-list" class="list-group lz-list-panel"></ul>
+                <p class="text-body-secondary small mt-1">
+                  Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht
+                  abgegeben etc.).
+                </p>
+                <ul id="achieved-list" class="list-group lz-list-panel"></ul>
               </div>
             </div>
           </section>
@@ -458,28 +482,28 @@
                 </button>
               </div>
               <div class="mt-3" data-main-card-body="settings" id="main-card-body-settings">
-              <form id="settings-form" class="row g-2 mt-1">
-                <div class="col-12 col-md">
-                  <input
-                    type="number"
-                    id="inactivity-days"
-                    class="form-control"
-                    min="1"
-                    max="30"
-                    placeholder="Inaktivit&auml;t in Tagen"
-                  />
-                </div>
-                <div class="col-12 col-md-auto d-grid">
-                  <button class="btn btn-primary" type="submit">Einstellung speichern</button>
-                </div>
-              </form>
-              <button id="enable-notifications" class="btn btn-secondary mt-2" type="button">
-                Browser-Benachrichtigungen aktivieren
-              </button>
-              <p id="notification-status" class="text-body-secondary small mt-2 mb-0">
-                Benachrichtigungen sind derzeit nicht aktiviert.
-              </p>
-              <ul id="reminder-list" class="list-group lz-list-panel mt-3"></ul>
+                <form id="settings-form" class="row g-2 mt-1">
+                  <div class="col-12 col-md">
+                    <input
+                      type="number"
+                      id="inactivity-days"
+                      class="form-control"
+                      min="1"
+                      max="30"
+                      placeholder="Inaktivit&auml;t in Tagen"
+                    />
+                  </div>
+                  <div class="col-12 col-md-auto d-grid">
+                    <button class="btn btn-primary" type="submit">Einstellung speichern</button>
+                  </div>
+                </form>
+                <button id="enable-notifications" class="btn btn-secondary mt-2" type="button">
+                  Browser-Benachrichtigungen aktivieren
+                </button>
+                <p id="notification-status" class="text-body-secondary small mt-2 mb-0">
+                  Benachrichtigungen sind derzeit nicht aktiviert.
+                </p>
+                <ul id="reminder-list" class="list-group lz-list-panel mt-3"></ul>
               </div>
             </div>
           </section>
@@ -501,9 +525,7 @@
                 Monat zur&uuml;ck
               </button>
               <strong id="calendar-month-label">-</strong>
-              <button id="calendar-next" class="btn btn-secondary" type="button">
-                Monat vor
-              </button>
+              <button id="calendar-next" class="btn btn-secondary" type="button">Monat vor</button>
             </div>
 
             <div id="calendar-legend" class="d-flex flex-wrap gap-3 mb-3"></div>

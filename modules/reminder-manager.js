@@ -24,7 +24,8 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
         return date >= dayStart && date <= nextDayStart;
       })
       .map(
-        (item) => `Geplante Lernzeit in den nächsten 24h: ${item.hours}h am ${formatDate(item.date)}`
+        (item) =>
+          `Geplante Lernzeit in den nächsten 24h: ${item.hours}h am ${formatDate(item.date)}`
       );
 
     const upcomingGoals = state.goals
@@ -69,7 +70,8 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
     const hint = byId("reminder-hint");
 
     if (!window.isSecureContext) {
-      hint.textContent = "Benachrichtigungen benötigen eine sichere Umgebung (https oder localhost).";
+      hint.textContent =
+        "Benachrichtigungen benötigen eine sichere Umgebung (https oder localhost).";
       setNotificationStatus("Aktivierung fehlgeschlagen: nur über https oder localhost möglich.");
       alert("Benachrichtigungen funktionieren nur über https oder localhost.");
       return;
@@ -123,7 +125,8 @@ export function createReminderManager({ getState, dispatch, onRenderAll }) {
     if (inactivity) reminders.push(inactivity);
 
     if (!reminders.length) {
-      list.innerHTML = "<li><div class='item-main'><span>Keine aktuellen Erinnerungen</span></div></li>";
+      list.innerHTML =
+        "<li><div class='item-main'><span>Keine aktuellen Erinnerungen</span></div></li>";
       byId("reminder-hint").textContent = "Erinnerungen geprüft: aktuell nichts offen.";
       return;
     }

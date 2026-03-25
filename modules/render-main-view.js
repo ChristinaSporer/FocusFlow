@@ -1,5 +1,12 @@
 import { byId } from "./dom.js";
-import { formatCalendarWeek, formatDate, monthOf, nowIso, weekOverlapsMonth, weekValueFromDate } from "./date-utils.js";
+import {
+  formatCalendarWeek,
+  formatDate,
+  monthOf,
+  nowIso,
+  weekOverlapsMonth,
+  weekValueFromDate,
+} from "./date-utils.js";
 import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 import { buildRow, renderEmptyList } from "./list-render-utils.js";
 import { uid } from "./app-utils.js";
@@ -115,8 +122,10 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
   const achieved = byId("achieved-list");
 
   const collapsedGoalState = new Map(
-    Array.from(list.querySelectorAll("[data-goal-body]"))
-      .map((node) => [node.getAttribute("data-goal-body"), node.classList.contains("d-none")])
+    Array.from(list.querySelectorAll("[data-goal-body]")).map((node) => [
+      node.getAttribute("data-goal-body"),
+      node.classList.contains("d-none"),
+    ])
   );
 
   const goalItems = [];
@@ -124,7 +133,9 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
   function updateCollapseAllButton() {
     const collapseAllBtn = byId("goal-collapse-all");
     if (!collapseAllBtn) return;
-    const anyExpanded = goalItems.some(({ milestoneSection }) => !milestoneSection.classList.contains("d-none"));
+    const anyExpanded = goalItems.some(
+      ({ milestoneSection }) => !milestoneSection.classList.contains("d-none")
+    );
     collapseAllBtn.innerHTML = anyExpanded
       ? '<i class="bi bi-arrows-collapse" aria-hidden="true"></i>'
       : '<i class="bi bi-arrows-expand" aria-hidden="true"></i>';
@@ -147,7 +158,10 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
   const trackedMinutesByDetailId = (state.trackedSessions || []).reduce((map, session) => {
     if (!session.detailPlanId) return map;
-    map.set(session.detailPlanId, (map.get(session.detailPlanId) || 0) + Number(session.minutes || 0));
+    map.set(
+      session.detailPlanId,
+      (map.get(session.detailPlanId) || 0) + Number(session.minutes || 0)
+    );
     return map;
   }, new Map());
 
@@ -163,8 +177,14 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       trackedByGoalId.set(plan.goalId, (trackedByGoalId.get(plan.goalId) || 0) + tracked);
     }
     if (plan.milestoneId) {
-      plannedByMilestoneId.set(plan.milestoneId, (plannedByMilestoneId.get(plan.milestoneId) || 0) + planned);
-      trackedByMilestoneId.set(plan.milestoneId, (trackedByMilestoneId.get(plan.milestoneId) || 0) + tracked);
+      plannedByMilestoneId.set(
+        plan.milestoneId,
+        (plannedByMilestoneId.get(plan.milestoneId) || 0) + planned
+      );
+      trackedByMilestoneId.set(
+        plan.milestoneId,
+        (trackedByMilestoneId.get(plan.milestoneId) || 0) + tracked
+      );
     }
   });
 
@@ -553,7 +573,9 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     collapseAllBtn.replaceWith(newBtn);
     updateCollapseAllButton();
     newBtn.addEventListener("click", () => {
-      const anyExpanded = goalItems.some(({ milestoneSection }) => !milestoneSection.classList.contains("d-none"));
+      const anyExpanded = goalItems.some(
+        ({ milestoneSection }) => !milestoneSection.classList.contains("d-none")
+      );
       goalItems.forEach(({ toggleButton, milestoneSection }) => {
         setGoalCollapsed(toggleButton, milestoneSection, anyExpanded);
       });
@@ -596,17 +618,13 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
     editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
     editBtn.addEventListener("click", () => onEditRoughPlan?.(plan));
 
-    const row = buildRow(
-      primaryText,
-      secondaryText,
-      {
-        actions: [editBtn],
-        onDelete: () => {
-          dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
-          onRenderAll();
-        },
-      }
-    );
+    const row = buildRow(primaryText, secondaryText, {
+      actions: [editBtn],
+      onDelete: () => {
+        dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
+        onRenderAll();
+      },
+    });
     list.appendChild(row);
   });
 
@@ -690,7 +708,9 @@ export function renderDetailPlans({
   function updateDetailCollapseAllButton() {
     const btn = byId("detail-collapse-all");
     if (!btn) return;
-    const anyExpanded = collapsibleBlockControls.some(({ blockBody }) => !blockBody.classList.contains("d-none"));
+    const anyExpanded = collapsibleBlockControls.some(
+      ({ blockBody }) => !blockBody.classList.contains("d-none")
+    );
     btn.innerHTML = anyExpanded
       ? '<i class="bi bi-arrows-collapse" aria-hidden="true"></i>'
       : '<i class="bi bi-arrows-expand" aria-hidden="true"></i>';
@@ -705,7 +725,9 @@ export function renderDetailPlans({
       btn.replaceWith(newBtn);
       updateDetailCollapseAllButton();
       newBtn.addEventListener("click", () => {
-        const anyExpanded = collapsibleBlockControls.some(({ blockBody }) => !blockBody.classList.contains("d-none"));
+        const anyExpanded = collapsibleBlockControls.some(
+          ({ blockBody }) => !blockBody.classList.contains("d-none")
+        );
         collapsibleBlockControls.forEach(({ toggleButton, blockBody }) => {
           setBlockCollapsed(toggleButton, blockBody, anyExpanded);
         });
@@ -727,7 +749,8 @@ export function renderDetailPlans({
 
     const trackedMinutes = trackedMinutesByDetailId.get(item.id) || 0;
     const plannedMinutes = Number(item.minutes || 0);
-    const progressPercent = plannedMinutes > 0 ? Math.min(100, Math.round((trackedMinutes / plannedMinutes) * 100)) : 0;
+    const progressPercent =
+      plannedMinutes > 0 ? Math.min(100, Math.round((trackedMinutes / plannedMinutes) * 100)) : 0;
 
     const editButton = document.createElement("button");
     editButton.className = "btn btn-outline-secondary btn-sm";
@@ -909,7 +932,11 @@ export function renderDetailPlans({
       milestoneSelect.value = item.milestoneId || "";
       const startMinutes = parseTimeToMinutes(item.startTime || "");
       const endMinutes = parseTimeToMinutes(item.endTime || "");
-      if (Number.isFinite(startMinutes) && Number.isFinite(endMinutes) && endMinutes > startMinutes) {
+      if (
+        Number.isFinite(startMinutes) &&
+        Number.isFinite(endMinutes) &&
+        endMinutes > startMinutes
+      ) {
         startInput.value = item.startTime;
         endInput.value = item.endTime;
       } else {
@@ -1014,11 +1041,17 @@ export function renderDetailPlans({
     header.className = "d-flex flex-column gap-1";
 
     const title = document.createElement("strong");
-    title.textContent = goal ? `${plan.hours} h geplant für ${goal.title}` : `${plan.hours} h geplant`;
+    title.textContent = goal
+      ? `${plan.hours} h geplant für ${goal.title}`
+      : `${plan.hours} h geplant`;
 
     const subtitle = document.createElement("small");
     subtitle.className = "text-body-secondary";
-    subtitle.textContent = [formatCalendarWeek(plan.week || plan.date), plan.note || "", goal ? "Zwischenziele auswählbar" : "Kein Hauptziel zugeordnet"]
+    subtitle.textContent = [
+      formatCalendarWeek(plan.week || plan.date),
+      plan.note || "",
+      goal ? "Zwischenziele auswählbar" : "Kein Hauptziel zugeordnet",
+    ]
       .filter(Boolean)
       .join(" · ");
     header.append(title, subtitle);
@@ -1091,7 +1124,9 @@ export function renderDetailPlans({
     const entryList = document.createElement("ul");
     entryList.className = "list-group mt-3";
     if (entries.length) {
-      entries.forEach((item) => entryList.appendChild(createDetailEntryRow(item, { onEdit: startDetailEdit })));
+      entries.forEach((item) =>
+        entryList.appendChild(createDetailEntryRow(item, { onEdit: startDetailEdit }))
+      );
     } else {
       renderEmptyList(entryList, "Noch keine Detailplanung für diesen Grobplanungsblock");
     }
@@ -1133,7 +1168,10 @@ export function renderDetailPlans({
   additionalBody.id = "detail-additional-body";
 
   setBlockCollapsed(additionalToggleButton, additionalBody, additionalBlockWasCollapsed);
-  collapsibleBlockControls.push({ toggleButton: additionalToggleButton, blockBody: additionalBody });
+  collapsibleBlockControls.push({
+    toggleButton: additionalToggleButton,
+    blockBody: additionalBody,
+  });
   additionalToggleButton.addEventListener("click", () => {
     const isCollapsed = !additionalBody.classList.contains("d-none");
     setBlockCollapsed(additionalToggleButton, additionalBody, isCollapsed);
@@ -1189,7 +1227,9 @@ export function renderDetailPlans({
   const additionalList = document.createElement("ul");
   additionalList.className = "list-group mt-3";
   if (additionalEntries.length) {
-    additionalEntries.forEach((item) => additionalList.appendChild(createDetailEntryRow(item, { onEdit: startAdditionalEdit })));
+    additionalEntries.forEach((item) =>
+      additionalList.appendChild(createDetailEntryRow(item, { onEdit: startAdditionalEdit }))
+    );
   } else {
     renderEmptyList(additionalList, "Noch keine weitere Detailplanung");
   }
@@ -1250,9 +1290,13 @@ export function renderTimerDetailPlanSelect({ state }) {
   const detailPlans = [...state.detailPlans].sort((left, right) => {
     const byDate = left.date.localeCompare(right.date);
     if (byDate !== 0) return byDate;
-    return getDetailPlanFocusTitle(state, left).localeCompare(getDetailPlanFocusTitle(state, right), "de", {
-      sensitivity: "base",
-    });
+    return getDetailPlanFocusTitle(state, left).localeCompare(
+      getDetailPlanFocusTitle(state, right),
+      "de",
+      {
+        sensitivity: "base",
+      }
+    );
   });
 
   select.innerHTML = "";
@@ -1329,9 +1373,7 @@ export function renderStats({ state, currentMonth }) {
   `;
 
   const timePercent =
-    plannedTotalMin === 0
-      ? 0
-      : Math.min(100, Math.round((trackedMin / plannedTotalMin) * 100));
+    plannedTotalMin === 0 ? 0 : Math.min(100, Math.round((trackedMin / plannedTotalMin) * 100));
   const goalPercent = totalGoals === 0 ? 0 : Math.round((completedGoals / totalGoals) * 100);
 
   const timeProgress = byId("time-progress");

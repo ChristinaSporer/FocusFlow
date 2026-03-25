@@ -41,11 +41,13 @@ function collectValidArray(rawItems, key) {
     return {
       valid: [],
       dropped: 0,
-      warning: `Feld \"${key}\" hat kein Array-Format und wurde ignoriert.`,
+      warning: `Feld "${key}" hat kein Array-Format und wurde ignoriert.`,
     };
   }
 
-  const valid = rawItems.filter((item) => item && typeof item === "object" && typeof item.id === "string");
+  const valid = rawItems.filter(
+    (item) => item && typeof item === "object" && typeof item.id === "string"
+  );
   return {
     valid,
     dropped: rawItems.length - valid.length,
@@ -63,7 +65,10 @@ function normalizeSettings(importedSettings, fallbackSettings, warnings) {
     nextSettings.inactivityDays = importedSettings.inactivityDays;
   }
 
-  if (typeof importedSettings.lastReminderRun === "string" || importedSettings.lastReminderRun === null) {
+  if (
+    typeof importedSettings.lastReminderRun === "string" ||
+    importedSettings.lastReminderRun === null
+  ) {
     nextSettings.lastReminderRun = importedSettings.lastReminderRun;
   }
 
@@ -79,7 +84,10 @@ function normalizeSettings(importedSettings, fallbackSettings, warnings) {
     }
   }
 
-  if (typeof importedSettings.calendarMonth === "string" || importedSettings.calendarMonth === null) {
+  if (
+    typeof importedSettings.calendarMonth === "string" ||
+    importedSettings.calendarMonth === null
+  ) {
     nextSettings.calendarMonth = importedSettings.calendarMonth;
   }
 
@@ -121,7 +129,9 @@ function buildMergedState(currentState, importedState) {
       warnings.push(collection.warning);
     }
     if (collection.dropped > 0) {
-      warnings.push(`${collection.dropped} Eintrag(e) aus \"${key}\" wurden wegen fehlender ID verworfen.`);
+      warnings.push(
+        `${collection.dropped} Eintrag(e) aus "${key}" wurden wegen fehlender ID verworfen.`
+      );
     }
 
     merged[key] = mergeById(merged[key], collection.valid);

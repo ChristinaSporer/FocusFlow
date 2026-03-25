@@ -80,7 +80,8 @@ export function createIcsManager({ getState, dispatch }) {
       const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
       const descriptionParts = [`${item.minutes} Minuten`];
       if (goal?.title) descriptionParts.push(`Hauptziel: ${goal.title}`);
-      if (item.topic && item.topic !== focusTitle) descriptionParts.push(`Lerninhalt: ${item.topic}`);
+      if (item.topic && item.topic !== focusTitle)
+        descriptionParts.push(`Lerninhalt: ${item.topic}`);
 
       return {
         uid: item.id || uid(),

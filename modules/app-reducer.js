@@ -138,7 +138,9 @@ export function appReducer(currentState, action) {
     case "TRACKED_DELETE":
       return {
         ...currentState,
-        trackedSessions: currentState.trackedSessions.filter((item) => item.id !== action.payload.id),
+        trackedSessions: currentState.trackedSessions.filter(
+          (item) => item.id !== action.payload.id
+        ),
       };
     case "TRACKED_ADD":
       return {
@@ -158,10 +160,12 @@ export function appReducer(currentState, action) {
         timer: {
           ...currentState.timer,
           start: action.payload.start,
-          selectedDetailPlanId:
-            Object.prototype.hasOwnProperty.call(action.payload, "selectedDetailPlanId")
-              ? action.payload.selectedDetailPlanId
-              : currentState.timer?.selectedDetailPlanId || null,
+          selectedDetailPlanId: Object.prototype.hasOwnProperty.call(
+            action.payload,
+            "selectedDetailPlanId"
+          )
+            ? action.payload.selectedDetailPlanId
+            : currentState.timer?.selectedDetailPlanId || null,
         },
       };
     case "TIMER_SET_SELECTED_DETAIL_PLAN":
@@ -225,7 +229,9 @@ export function appReducer(currentState, action) {
       return {
         ...currentState,
         importedEvents: [
-          ...currentState.importedEvents.filter((item) => item.sourceKey !== action.payload.sourceKey),
+          ...currentState.importedEvents.filter(
+            (item) => item.sourceKey !== action.payload.sourceKey
+          ),
           ...action.payload.events,
         ],
       };

@@ -1,0 +1,164 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+    - banner [ref=e2]:
+        - generic [ref=e3]:
+            - generic [ref=e4]:
+                - img "FocusFlow Logo" [ref=e6]
+                - heading "Lernzeitplaner" [level=1] [ref=e7]
+                - paragraph [ref=e8]: Planung, Tracking und Zielerreichung für berufsbegleitendes Studium
+            - generic [ref=e10]:
+                - tablist "Ansicht" [ref=e11]:
+                    - tab "Listenansicht" [selected] [ref=e12] [cursor=pointer]
+                    - tab "Kalender" [ref=e13] [cursor=pointer]
+                    - tab "Backup" [ref=e14] [cursor=pointer]
+                - generic [ref=e15]:
+                    - generic [ref=e16]: Darstellung
+                    - group "Darstellung" [ref=e17]:
+                        - radio "Auto (System)" [checked]
+                        - generic [ref=e18] [cursor=pointer]: Auto (System)
+                        - radio "Hell"
+                        - generic [ref=e19] [cursor=pointer]: Hell
+                        - radio "Dunkel"
+                        - generic [ref=e20] [cursor=pointer]: Dunkel
+                - generic [ref=e21]:
+                    - button "Demo-Daten laden" [ref=e22] [cursor=pointer]
+                    - button "Alles löschen" [ref=e23] [cursor=pointer]
+    - main [ref=e24]:
+        - generic [ref=e25]:
+            - generic [ref=e28]:
+                - generic [ref=e29]:
+                    - heading "Übersicht" [level=2] [ref=e30]
+                    - button "Bereich einklappen" [expanded] [ref=e31] [cursor=pointer]:
+                        - generic [ref=e32]: 
+                - generic [ref=e33]:
+                    - generic [ref=e34]:
+                        - generic [ref=e37]:
+                            - generic [ref=e38]: Geplant gesamt
+                            - text: 0 Min
+                        - generic [ref=e41]:
+                            - generic [ref=e42]: Getrackt gesamt
+                            - text: 0 Min
+                        - generic [ref=e45]:
+                            - generic [ref=e46]: Aktueller Monat geplant
+                            - text: 0 Min
+                        - generic [ref=e49]:
+                            - generic [ref=e50]: Aktueller Monat getrackt
+                            - text: 0 Min
+                    - generic [ref=e51]:
+                        - generic [ref=e52]: Geplante vs. getrackte Lernzeit (gesamt)
+                        - generic [ref=e53]:
+                            - progressbar: 0%
+                    - generic [ref=e54]:
+                        - generic [ref=e55]: Zielerreichung (abgeschlossene Ziele)
+                        - generic [ref=e56]:
+                            - progressbar: 0%
+                    - paragraph [ref=e57]: Erinnerungen aktiv (1 Hinweis(e)).
+            - generic [ref=e60]:
+                - generic [ref=e61]:
+                    - heading "1) Lernziele" [level=2] [ref=e62]
+                    - button "Bereich einklappen" [expanded] [ref=e63] [cursor=pointer]:
+                        - generic [ref=e64]: 
+                - generic [ref=e65]:
+                    - generic [ref=e66]:
+                        - textbox "z. B. Modul SE abschließen" [ref=e68]
+                        - textbox [ref=e70]
+                        - textbox "Beschreibung oder naeherer Kontext (optional)" [ref=e72]
+                        - button "Hinzufügen" [ref=e74] [cursor=pointer]
+                    - button "Alle ausklappen" [ref=e77] [cursor=pointer]:
+                        - generic [ref=e78]: 
+                    - list [ref=e79]:
+                        - listitem [ref=e80]: Keine Ziele vorhanden
+            - generic [ref=e83]:
+                - generic [ref=e84]:
+                    - heading "2) Grobplanung Lernzeit" [level=2] [ref=e85]
+                    - button "Bereich einklappen" [expanded] [ref=e86] [cursor=pointer]:
+                        - generic [ref=e87]: 
+                - generic [ref=e88]:
+                    - generic [ref=e89]:
+                        - textbox [ref=e91]
+                        - spinbutton [ref=e93]
+                        - combobox [ref=e95]:
+                            - option "Kein Ziel zugeordnet" [selected]
+                        - textbox "Beschreibung (optional)" [ref=e97]
+                        - button "Planen" [ref=e99] [cursor=pointer]
+                    - list [ref=e101]:
+                        - listitem [ref=e102]: Keine Grobplanung vorhanden
+            - generic [ref=e105]:
+                - generic [ref=e106]:
+                    - heading "3) Detailplanung" [level=2] [ref=e107]
+                    - button "Bereich einklappen" [expanded] [ref=e108] [cursor=pointer]:
+                        - generic [ref=e109]: 
+                - generic [ref=e110]:
+                    - generic [ref=e111]:
+                        - generic [ref=e113]: "Monat:"
+                        - textbox "Monat:" [ref=e115]: 2026-03
+                    - paragraph [ref=e116]: Die Detailplanung baut auf den Grobplanungsblöcken des gewählten Monats auf.
+                    - button "Alle ausklappen" [ref=e118] [cursor=pointer]:
+                        - generic [ref=e119]: 
+                    - list [ref=e120]:
+                        - listitem [ref=e121]:
+                            - generic [ref=e122]:
+                                - generic [ref=e123]:
+                                    - strong [ref=e124]: Weitere Detailplanung
+                                    - generic [ref=e125]: Freitext oder optionales Zwischenziel - auch ohne Grobplanung
+                                - generic [ref=e126]:
+                                    - button "Lernzeit planen" [ref=e127] [cursor=pointer]:
+                                        - generic [ref=e128]: 
+                                    - button "Einklappen" [expanded] [ref=e129] [cursor=pointer]:
+                                        - generic [ref=e130]: 
+                            - list [ref=e132]:
+                                - listitem [ref=e133]: Noch keine weitere Detailplanung
+            - generic [ref=e136]:
+                - generic [ref=e137]:
+                    - heading "4) Lernzeit-Tracking (Stoppuhr)" [level=2] [ref=e138]
+                    - button "Bereich einklappen" [expanded] [ref=e139] [cursor=pointer]:
+                        - generic [ref=e140]: 
+                - generic [ref=e141]:
+                    - generic [ref=e142]:
+                        - paragraph [ref=e143]: 00:00:00
+                        - generic [ref=e144]:
+                            - button "Start" [ref=e145] [cursor=pointer]
+                            - button "Stopp & Speichern" [ref=e146] [cursor=pointer]
+                    - generic [ref=e147]:
+                        - combobox "Detailplanungspunkt" [ref=e149]:
+                            - option "Kein Detailplanungspunkt" [selected]
+                        - textbox "Notiz (optional)" [ref=e151]
+                    - generic [ref=e152]:
+                        - textbox [ref=e154]: 2026-03-25
+                        - spinbutton [ref=e156]
+                        - button "Zeit nachtragen" [ref=e158] [cursor=pointer]
+                    - list [ref=e159]:
+                        - listitem [ref=e160]: Noch keine getrackte Lernzeit
+            - generic [ref=e163]:
+                - generic [ref=e164]:
+                    - heading "5) Erreichte Ziele" [level=2] [ref=e165]
+                    - button "Bereich einklappen" [expanded] [ref=e166] [cursor=pointer]:
+                        - generic [ref=e167]: 
+                - generic [ref=e168]:
+                    - paragraph [ref=e169]: Markiere Ziele als erledigt (Modul abgeschlossen, Klausur bestanden, Bericht abgegeben etc.).
+                    - list [ref=e170]:
+                        - listitem [ref=e171]: Noch keine erreichten Ziele
+            - generic [ref=e174]:
+                - generic [ref=e175]:
+                    - heading "6) Erinnerung & Inaktivität" [level=2] [ref=e176]
+                    - button "Bereich einklappen" [expanded] [ref=e177] [cursor=pointer]:
+                        - generic [ref=e178]: 
+                - generic [ref=e179]:
+                    - generic [ref=e180]:
+                        - spinbutton [ref=e182]: "3"
+                        - button "Einstellung speichern" [ref=e184] [cursor=pointer]
+                    - button "Browser-Benachrichtigungen aktivieren" [ref=e185] [cursor=pointer]
+                    - paragraph [ref=e186]: Benachrichtigungen sind blockiert. Bitte in den Browser-Seiteneinstellungen erlauben.
+                    - list [ref=e187]:
+                        - listitem [ref=e188]:
+                            - generic [ref=e189]: Noch keine Lernzeit erfasst. Starte deine erste Session.
+    - contentinfo [ref=e190]:
+        - generic [ref=e191]:
+            - link "Impressum" [ref=e192] [cursor=pointer]:
+                - /url: impressum.html
+            - text: "|"
+            - link "Datenschutzerklärung" [ref=e193] [cursor=pointer]:
+                - /url: datenschutz.html
+```

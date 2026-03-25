@@ -5,6 +5,7 @@ module.exports = [
   {
     ignores: [
       "node_modules/**",
+      "coverage/**",
       "eslint.config.js",
       "vitest.config.js",
       "playwright.config.js",

@@ -122,7 +122,11 @@ function renderAll() {
   calendarManager.renderViewState();
 
   roughFormController.populateGoalDropdown?.(getState());
-  renderGoals({ ...renderContext, onActivity: touchActivity, onEditGoal: goalFormController.startGoalEdit });
+  renderGoals({
+    ...renderContext,
+    onActivity: touchActivity,
+    onEditGoal: goalFormController.startGoalEdit,
+  });
   renderRoughPlans({
     ...renderContext,
     onEditRoughPlan: roughFormController.startRoughEdit,
@@ -134,7 +138,10 @@ function renderAll() {
     onStartTrackingDetail: timerManager.startTimerForDetailPlan,
   });
   renderTimerDetailPlanSelect({ state: getState() });
-  renderTrackedSessions({ ...renderContext, onEditTrackedSession: trackedFormController.startTrackedEdit });
+  renderTrackedSessions({
+    ...renderContext,
+    onEditTrackedSession: trackedFormController.startTrackedEdit,
+  });
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
   reminderManager.runReminders();
@@ -185,7 +192,9 @@ function setInitialValues() {
     themeModeSelect.value = themeModeValue;
   }
 
-  const themeModeRadio = document.querySelector(`input[name="theme-mode"][value="${themeModeValue}"]`);
+  const themeModeRadio = document.querySelector(
+    `input[name="theme-mode"][value="${themeModeValue}"]`
+  );
   if (themeModeRadio) {
     themeModeRadio.checked = true;
   }

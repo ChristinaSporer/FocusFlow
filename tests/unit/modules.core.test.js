@@ -217,7 +217,9 @@ describe("modules/ics-manager", () => {
       status: "1 Termin(e) aus Plan.ics importiert.",
       calendarMonth: "2026-03",
     });
-    expect(document.getElementById("ics-status").textContent).toBe("1 Termin(e) aus Plan.ics importiert.");
+    expect(document.getElementById("ics-status").textContent).toBe(
+      "1 Termin(e) aus Plan.ics importiert."
+    );
     expect(dispatch).toHaveBeenCalledTimes(1);
 
     const action = dispatch.mock.calls[0][0];
@@ -269,14 +271,17 @@ describe("modules/ics-manager", () => {
   it("exports app events to ICS file and handles empty export", () => {
     const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
     const revokeUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
-    const clickSpy = vi
-      .spyOn(HTMLAnchorElement.prototype, "click")
-      .mockImplementation(() => {});
+    const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
 
     const empty = createManager();
     const emptyResult = empty.manager.exportToFile();
-    expect(emptyResult).toEqual({ ok: false, status: "Keine App-Termine für den Export vorhanden." });
-    expect(document.getElementById("ics-status").textContent).toBe("Keine App-Termine für den Export vorhanden.");
+    expect(emptyResult).toEqual({
+      ok: false,
+      status: "Keine App-Termine für den Export vorhanden.",
+    });
+    expect(document.getElementById("ics-status").textContent).toBe(
+      "Keine App-Termine für den Export vorhanden."
+    );
 
     const { manager } = createManager({
       detailPlans: [
@@ -439,7 +444,10 @@ describe("modules/json-manager", () => {
       name: "backup.json",
       text: vi.fn(async () =>
         JSON.stringify({
-          goals: [{ id: "g1", title: "Import aktualisiert" }, { id: "g2", title: "Neu" }],
+          goals: [
+            { id: "g1", title: "Import aktualisiert" },
+            { id: "g2", title: "Neu" },
+          ],
           settings: { activeView: "backup", inactivityDays: 5, themeMode: "dark" },
         })
       ),
@@ -465,7 +473,10 @@ describe("modules/json-manager", () => {
       text: vi.fn(async () => "{not-json"),
     };
     const invalid = await manager.importFromFile(invalidFile);
-    expect(invalid).toEqual({ ok: false, status: "Import fehlgeschlagen. Bitte gültige JSON-Datei prüfen." });
+    expect(invalid).toEqual({
+      ok: false,
+      status: "Import fehlgeschlagen. Bitte gültige JSON-Datei prüfen.",
+    });
     expect(document.getElementById("json-status").textContent).toBe(
       "Import fehlgeschlagen. Bitte gültige JSON-Datei prüfen."
     );
@@ -683,13 +694,15 @@ describe("modules/form-handlers", () => {
     document.getElementById("timer-start").click();
     document.getElementById("timer-stop").click();
     document.getElementById("track-detail-select").value = "d1";
-    document.getElementById("track-detail-select").dispatchEvent(new Event("change", { bubbles: true }));
+    document
+      .getElementById("track-detail-select")
+      .dispatchEvent(new Event("change", { bubbles: true }));
     document.getElementById("track-note").value = "Manual note";
     document.getElementById("track-manual-minutes").value = "45";
     const submittedDate = document.getElementById("track-manual-date").value;
-    document.getElementById("track-manual-form").dispatchEvent(
-      new Event("submit", { bubbles: true, cancelable: true })
-    );
+    document
+      .getElementById("track-manual-form")
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     expect(deps.startTimer).toHaveBeenCalledTimes(1);
     expect(deps.stopTimer).toHaveBeenCalledTimes(1);
     expect(deps.setSelectedTimerDetailPlan).toHaveBeenCalledWith("d1");
@@ -706,9 +719,9 @@ describe("modules/form-handlers", () => {
     document.getElementById("track-manual-date").value = "2026-03-25";
     document.getElementById("track-manual-minutes").value = "30";
     document.getElementById("track-note").value = "Updated note";
-    document.getElementById("track-manual-form").dispatchEvent(
-      new Event("submit", { bubbles: true, cancelable: true })
-    );
+    document
+      .getElementById("track-manual-form")
+      .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     expect(deps.updateTrackedSession).toHaveBeenCalledWith({
       id: "t1",
       date: "2026-03-25",
@@ -723,11 +736,16 @@ describe("modules/form-handlers", () => {
     const settingsForm = document.getElementById("settings-form");
     document.getElementById("inactivity-days").value = "0";
     settingsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    expect(deps.dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ type: "SET_INACTIVITY_DAYS" }));
+    expect(deps.dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({ type: "SET_INACTIVITY_DAYS" })
+    );
 
     document.getElementById("inactivity-days").value = "5";
     settingsForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
-    expect(deps.dispatch).toHaveBeenCalledWith({ type: "SET_INACTIVITY_DAYS", payload: { days: 5 } });
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_INACTIVITY_DAYS",
+      payload: { days: 5 },
+    });
   });
 
   it("handles notification, demo, theme, import/export and reset actions", async () => {
@@ -798,7 +816,10 @@ describe("modules/form-handlers", () => {
     document.getElementById("json-export").click();
     expect(deps.exportJsonFile).toHaveBeenCalledTimes(1);
 
-    const confirmSpy = vi.spyOn(globalThis, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const confirmSpy = vi
+      .spyOn(globalThis, "confirm")
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
     const dispatchCountBeforeReset = deps.dispatch.mock.calls.length;
     document.getElementById("reset-data").click();
     expect(confirmSpy).toHaveBeenCalledTimes(1);
@@ -939,13 +960,17 @@ describe("modules/calendar-manager", () => {
         { id: "r1", date: "2026-03-24", hours: 2, note: "Plan" },
         { id: "r2", date: "2026-03-26", hours: 1, note: "Later" },
       ],
-      trackedSessions: [{ id: "t1", start: "2026-03-24T08:00:00.000Z", minutes: 20, note: "Track" }],
+      trackedSessions: [
+        { id: "t1", start: "2026-03-24T08:00:00.000Z", minutes: 20, note: "Track" },
+      ],
       importedEvents: [{ id: "i1", date: "2026-03-24", summary: "Import", sourceName: "a.ics" }],
     });
 
     manager.renderCalendar();
 
-    expect(document.getElementById("calendar-month-label").textContent.toLowerCase()).toContain("märz");
+    expect(document.getElementById("calendar-month-label").textContent.toLowerCase()).toContain(
+      "märz"
+    );
 
     const weekdayCells = document.querySelectorAll(".lz-calendar-weekday");
     expect(weekdayCells).toHaveLength(7);
@@ -961,16 +986,25 @@ describe("modules/calendar-manager", () => {
     expect(document.querySelector(".lz-calendar-event.lz-source-tracked")).toBeTruthy();
     expect(document.querySelector(".lz-calendar-event.lz-source-import")).toBeTruthy();
 
-    const detailEventsOnDate = Array.from(document.querySelectorAll(".lz-calendar-event.lz-source-detail"))
-      .filter((element) => element.parentElement.querySelector(".lz-calendar-day-number")?.textContent === "24")
+    const detailEventsOnDate = Array.from(
+      document.querySelectorAll(".lz-calendar-event.lz-source-detail")
+    )
+      .filter(
+        (element) =>
+          element.parentElement.querySelector(".lz-calendar-day-number")?.textContent === "24"
+      )
       .map((element) => element.textContent);
     expect(detailEventsOnDate).toEqual(["Alpha (30 Min)", "MS1 (45 Min)"]);
 
-    const allEventsByDate = Array.from(document.querySelectorAll(".lz-calendar-event")).map((element) => ({
-      text: element.textContent,
-      day: element.parentElement.querySelector(".lz-calendar-day-number")?.textContent,
-    }));
-    expect(allEventsByDate.some((item) => item.day === "26" && item.text.includes("1 h geplant"))).toBe(true);
+    const allEventsByDate = Array.from(document.querySelectorAll(".lz-calendar-event")).map(
+      (element) => ({
+        text: element.textContent,
+        day: element.parentElement.querySelector(".lz-calendar-day-number")?.textContent,
+      })
+    );
+    expect(
+      allEventsByDate.some((item) => item.day === "26" && item.text.includes("1 h geplant"))
+    ).toBe(true);
 
     const legendItems = document.querySelectorAll("#calendar-legend .lz-legend-dot");
     expect(legendItems).toHaveLength(4);
@@ -1014,7 +1048,9 @@ describe("modules/render-main-view", () => {
     });
 
     expect(document.getElementById("goal-list").textContent).toContain("Keine Ziele vorhanden");
-    expect(document.getElementById("achieved-list").textContent).toContain("Noch keine erreichten Ziele");
+    expect(document.getElementById("achieved-list").textContent).toContain(
+      "Noch keine erreichten Ziele"
+    );
   });
 
   it("renders and interacts with goal rows including milestones and achieved goals", () => {
@@ -1022,7 +1058,10 @@ describe("modules/render-main-view", () => {
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
     const onEditGoal = vi.fn();
-    const confirmSpy = vi.spyOn(globalThis, "confirm").mockReturnValueOnce(false).mockReturnValueOnce(true);
+    const confirmSpy = vi
+      .spyOn(globalThis, "confirm")
+      .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true);
 
     renderGoals({
       state: {
@@ -1056,14 +1095,24 @@ describe("modules/render-main-view", () => {
       onEditGoal,
     });
 
-    document.querySelector('[data-goal-toggle="g1"]').dispatchEvent(new Event("change", { bubbles: true }));
+    document
+      .querySelector('[data-goal-toggle="g1"]')
+      .dispatchEvent(new Event("change", { bubbles: true }));
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "GOAL_SET_COMPLETED", payload: expect.objectContaining({ id: "g1" }) })
+      expect.objectContaining({
+        type: "GOAL_SET_COMPLETED",
+        payload: expect.objectContaining({ id: "g1" }),
+      })
     );
 
-    document.querySelector('[data-goal-milestone-toggle="m1"]').dispatchEvent(new Event("change", { bubbles: true }));
+    document
+      .querySelector('[data-goal-milestone-toggle="m1"]')
+      .dispatchEvent(new Event("change", { bubbles: true }));
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "GOAL_TOGGLE_MILESTONE", payload: expect.objectContaining({ milestoneId: "m1" }) })
+      expect.objectContaining({
+        type: "GOAL_TOGGLE_MILESTONE",
+        payload: expect.objectContaining({ milestoneId: "m1" }),
+      })
     );
 
     expect(document.getElementById("goal-list").textContent).not.toContain("Goal 2");
@@ -1087,17 +1136,25 @@ describe("modules/render-main-view", () => {
     inlineInput.value = "MS updated";
     inlineForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "GOAL_UPDATE_MILESTONE", payload: expect.objectContaining({ title: "MS updated" }) })
+      expect.objectContaining({
+        type: "GOAL_UPDATE_MILESTONE",
+        payload: expect.objectContaining({ title: "MS updated" }),
+      })
     );
 
     document.querySelector('[data-goal-milestone-delete="m1"]').click();
     expect(confirmSpy).toHaveBeenCalledTimes(1);
     document.querySelector('[data-goal-milestone-delete="m1"]').click();
     expect(dispatch).toHaveBeenCalledWith(
-      expect.objectContaining({ type: "GOAL_DELETE_MILESTONE", payload: expect.objectContaining({ milestoneId: "m1" }) })
+      expect.objectContaining({
+        type: "GOAL_DELETE_MILESTONE",
+        payload: expect.objectContaining({ milestoneId: "m1" }),
+      })
     );
 
-    const addMilestoneForm = document.querySelector('input[aria-label="Zwischenziel für Goal 1"]').closest("form");
+    const addMilestoneForm = document
+      .querySelector('input[aria-label="Zwischenziel für Goal 1"]')
+      .closest("form");
     const addMilestoneInput = addMilestoneForm.querySelector("input");
     addMilestoneInput.value = "MS new";
     addMilestoneForm.dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
@@ -1107,7 +1164,9 @@ describe("modules/render-main-view", () => {
     expect(onEditGoal).toHaveBeenCalled();
 
     document.querySelector("#goal-list > li .ms-auto .btn-outline-danger").click();
-    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "GOAL_DELETE", payload: { id: "g1" } }));
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "GOAL_DELETE", payload: { id: "g1" } })
+    );
 
     expect(onActivity).toHaveBeenCalled();
     expect(onRenderAll).toHaveBeenCalled();
@@ -1123,7 +1182,14 @@ describe("modules/render-main-view", () => {
       state: {
         roughPlans: [
           { id: "r1", date: "2026-03-24", week: "2026-W13", hours: 2, note: "Heute", goalId: "g1" },
-          { id: "r3", date: "2026-03-26", week: "2026-W13", hours: 1, note: "Vorher", goalId: "g2" },
+          {
+            id: "r3",
+            date: "2026-03-26",
+            week: "2026-W13",
+            hours: 1,
+            note: "Vorher",
+            goalId: "g2",
+          },
           { id: "r4", date: "2026-03-23", week: "2026-W12", hours: 1, note: "KW 12" },
           { id: "r5", date: "2026-11-23", week: "2026-W48", hours: 1, note: "KW 48" },
           { id: "r2", date: "2027-03-24", week: "2027-W12", hours: 2, note: "Zu spät" },
@@ -1180,7 +1246,9 @@ describe("modules/render-main-view", () => {
             milestones: [{ id: "m1", title: "M", done: true }],
           },
         ],
-        roughPlans: [{ id: "r1", date: "2026-03-25", week: "2026-W13", hours: 2, note: "Block", goalId: "g1" }],
+        roughPlans: [
+          { id: "r1", date: "2026-03-25", week: "2026-W13", hours: 2, note: "Block", goalId: "g1" },
+        ],
         detailPlans: [
           {
             id: "d1",
@@ -1195,7 +1263,9 @@ describe("modules/render-main-view", () => {
           },
           { id: "d2", date: "2026-03-26", minutes: 30, topic: "Legacy", milestone: "", done: true },
         ],
-        trackedSessions: [{ id: "t1", detailPlanId: "d1", minutes: 15, start: "2026-03-24T10:00:00.000Z" }],
+        trackedSessions: [
+          { id: "t1", detailPlanId: "d1", minutes: 15, start: "2026-03-24T10:00:00.000Z" },
+        ],
       },
       dispatch,
       onRenderAll,
@@ -1206,7 +1276,9 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("detail-list").textContent).toContain("2 h geplant für Goal");
     expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 0 von 120 Min");
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
-    expect(document.getElementById("detail-list").textContent).toContain("Noch keine Detailplanung für diesen Grobplanungsblock");
+    expect(document.getElementById("detail-list").textContent).toContain(
+      "Noch keine Detailplanung für diesen Grobplanungsblock"
+    );
     expect(document.getElementById("detail-list").textContent).toContain("30 Min für Legacy");
     expect(document.querySelector('[data-detail-block-form="r1"]')).toBeTruthy();
     expect(document.querySelector('[aria-label="Detailplanung bearbeiten"]')).toBeTruthy();
@@ -1232,11 +1304,15 @@ describe("modules/render-main-view", () => {
 
     renderTrackedSessions({
       state: {
-        detailPlans: [
-          { id: "d1", date: "2026-03-24", topic: "A", milestone: "", minutes: 25 },
-        ],
+        detailPlans: [{ id: "d1", date: "2026-03-24", topic: "A", milestone: "", minutes: 25 }],
         trackedSessions: [
-          { id: "t1", start: "2026-03-24T10:00:00.000Z", minutes: 25, note: "X", detailPlanId: "d1" },
+          {
+            id: "t1",
+            start: "2026-03-24T10:00:00.000Z",
+            minutes: 25,
+            note: "X",
+            detailPlanId: "d1",
+          },
         ],
       },
       dispatch,
@@ -1252,14 +1328,18 @@ describe("modules/render-main-view", () => {
     expect(dispatch).toHaveBeenCalledWith({ type: "TRACKED_DELETE", payload: { id: "t1" } });
 
     document.getElementById("track-list").innerHTML = "";
-    renderTrackedSessions({ state: { trackedSessions: [], detailPlans: [] }, dispatch, onRenderAll });
-    expect(document.getElementById("track-list").textContent).toContain("Noch keine getrackte Lernzeit");
+    renderTrackedSessions({
+      state: { trackedSessions: [], detailPlans: [] },
+      dispatch,
+      onRenderAll,
+    });
+    expect(document.getElementById("track-list").textContent).toContain(
+      "Noch keine getrackte Lernzeit"
+    );
 
     renderTimerDetailPlanSelect({
       state: {
-        detailPlans: [
-          { id: "d1", date: "2026-03-24", topic: "Alpha", milestone: "", minutes: 20 },
-        ],
+        detailPlans: [{ id: "d1", date: "2026-03-24", topic: "Alpha", milestone: "", minutes: 20 }],
         goals: [],
         timer: { start: null, selectedDetailPlanId: "d1" },
       },
@@ -1317,12 +1397,16 @@ describe("modules/render-main-view", () => {
 
     renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth: "2026-03" });
     expect(document.getElementById("detail-list").textContent).toContain("Cross Goal");
-    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 120 von 120 Min");
+    expect(document.getElementById("detail-list").textContent).toContain(
+      "Verteilt: 120 von 120 Min"
+    );
 
     document.getElementById("detail-list").innerHTML = "";
     renderDetailPlans({ state, dispatch, onRenderAll, selectedMonth: "2026-04" });
     expect(document.getElementById("detail-list").textContent).toContain("Cross Goal");
-    expect(document.getElementById("detail-list").textContent).toContain("Verteilt: 200 von 120 Min");
+    expect(document.getElementById("detail-list").textContent).toContain(
+      "Verteilt: 200 von 120 Min"
+    );
   });
 
   it("renders stats for zero-planned and non-zero planned branches", () => {
@@ -1660,9 +1744,9 @@ describe("modules/demo-data", () => {
     state.trackedSessions.forEach((session) => {
       expect(session.minutes === 45 || session.minutes === 60).toBe(true);
       expect(session.start).toBe("2026-03-24T10:00:00.000Z");
-      expect(session.end === "2026-03-24T10:45:00.000Z" || session.end === "2026-03-24T11:00:00.000Z").toBe(
-        true
-      );
+      expect(
+        session.end === "2026-03-24T10:45:00.000Z" || session.end === "2026-03-24T11:00:00.000Z"
+      ).toBe(true);
       expect(typeof session.note).toBe("string");
       expect(session.id).toBeTruthy();
     });
@@ -1762,7 +1846,8 @@ describe("modules/timer-manager", () => {
     const dispatch = vi.fn((action) => {
       if (action.type === "TIMER_START") {
         state.timer.start = action.payload.start;
-        state.timer.selectedDetailPlanId = action.payload.selectedDetailPlanId ?? state.timer.selectedDetailPlanId;
+        state.timer.selectedDetailPlanId =
+          action.payload.selectedDetailPlanId ?? state.timer.selectedDetailPlanId;
       }
       if (action.type === "TIMER_STOP_AND_STORE_SESSION") {
         state.timer.start = null;
@@ -1814,7 +1899,8 @@ describe("modules/timer-manager", () => {
   });
 
   it("stops timer, stores session and clears note", () => {
-    document.body.innerHTML = '<div id="timer-display"></div><input id="track-note" value="  Deep Work  ">';
+    document.body.innerHTML =
+      '<div id="timer-display"></div><input id="track-note" value="  Deep Work  ">';
 
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
@@ -1874,7 +1960,8 @@ describe("modules/timer-manager", () => {
   });
 
   it("switches running timer when started from another detail plan", () => {
-    document.body.innerHTML = '<div id="timer-display"></div><input id="track-note" value="Deep Work">';
+    document.body.innerHTML =
+      '<div id="timer-display"></div><input id="track-note" value="Deep Work">';
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
     const state = { timer: { start: "2026-03-24T09:58:00.000Z", selectedDetailPlanId: "d1" } };
@@ -2096,7 +2183,9 @@ describe("modules/reminder-manager", () => {
     expect(document.getElementById("notification-status").textContent).toBe("OK");
 
     manager.runReminders();
-    expect(document.getElementById("reminder-list").textContent).toContain("Keine aktuellen Erinnerungen");
+    expect(document.getElementById("reminder-list").textContent).toContain(
+      "Keine aktuellen Erinnerungen"
+    );
     expect(document.getElementById("reminder-hint").textContent).toContain("aktuell nichts offen");
   });
 
@@ -2119,7 +2208,9 @@ describe("modules/reminder-manager", () => {
     expect(list.children.length).toBe(2);
     expect(list.textContent).toContain("Geplante Lernzeit");
     expect(list.textContent).toContain("Ziel bald fällig");
-    expect(document.getElementById("reminder-hint").textContent).toContain("Erinnerungen aktiv (2 Hinweis(e))");
+    expect(document.getElementById("reminder-hint").textContent).toContain(
+      "Erinnerungen aktiv (2 Hinweis(e))"
+    );
     expect(NotificationMock).toHaveBeenCalledTimes(2);
   });
 
@@ -2145,12 +2236,16 @@ describe("modules/reminder-manager", () => {
     Object.defineProperty(window, "isSecureContext", { configurable: true, value: false });
     await manager.activateNotifications();
     expect(globalThis.alert).toHaveBeenCalled();
-    expect(document.getElementById("notification-status").textContent).toContain("Aktivierung fehlgeschlagen");
+    expect(document.getElementById("notification-status").textContent).toContain(
+      "Aktivierung fehlgeschlagen"
+    );
 
     Object.defineProperty(window, "isSecureContext", { configurable: true, value: true });
     delete globalThis.Notification;
     await manager.activateNotifications();
-    expect(document.getElementById("notification-status").textContent).toContain("unterstützt keine Benachrichtigungen");
+    expect(document.getElementById("notification-status").textContent).toContain(
+      "unterstützt keine Benachrichtigungen"
+    );
 
     const deniedPermission = vi.fn();
     deniedPermission.permission = "denied";
@@ -2180,6 +2275,8 @@ describe("modules/reminder-manager", () => {
     });
     globalThis.Notification = throwingPermission;
     await manager.activateNotifications();
-    expect(document.getElementById("notification-status").textContent).toContain("konnte nicht angefragt werden");
+    expect(document.getElementById("notification-status").textContent).toContain(
+      "konnte nicht angefragt werden"
+    );
   });
 });
