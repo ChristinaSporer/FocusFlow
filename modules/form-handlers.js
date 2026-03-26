@@ -317,7 +317,8 @@ export function initFormHandlers({
   byId("pomodoro-save-next")?.addEventListener("click", () => skipPomodoroPhase?.());
   byId("pomodoro-reset")?.addEventListener("click", () => resetPomodoro?.());
   byId("pomodoro-save-cancel")?.addEventListener("click", () => {
-    if (typeof window.pomodoroManagerSaveAndReset === "function") window.pomodoroManagerSaveAndReset();
+    if (typeof window.pomodoroManagerSaveAndReset === "function")
+      window.pomodoroManagerSaveAndReset();
   });
 
   byId("track-manual-form")?.addEventListener("submit", (event) => {

@@ -172,12 +172,12 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender, getStat
 
     if (stored.active && stored.phaseStartedAt) {
       phaseStartedAt = stored.phaseStartedAt;
-      const elapsed = Math.floor(
-        (Date.now() - new Date(phaseStartedAt).getTime()) / 1000
-      );
+      const elapsed = Math.floor((Date.now() - new Date(phaseStartedAt).getTime()) / 1000);
       secondsLeft = Math.max(
         0,
-        (typeof stored.secondsLeft === "number" ? stored.secondsLeft : getPhaseDurationSeconds(phase)) - elapsed
+        (typeof stored.secondsLeft === "number"
+          ? stored.secondsLeft
+          : getPhaseDurationSeconds(phase)) - elapsed
       );
       active = true;
 

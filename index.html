@@ -371,67 +371,166 @@
               <div class="mt-3" data-main-card-body="tracking" id="main-card-body-tracking">
                 <ul class="nav nav-tabs" id="trackingTab" role="tablist">
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="stopwatch-tab" data-bs-toggle="tab" data-bs-target="#stopwatch-panel" type="button" role="tab" aria-controls="stopwatch-panel" aria-selected="true">Stoppuhr</button>
+                    <button
+                      class="nav-link active"
+                      id="stopwatch-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#stopwatch-panel"
+                      type="button"
+                      role="tab"
+                      aria-controls="stopwatch-panel"
+                      aria-selected="true"
+                    >
+                      Stoppuhr
+                    </button>
                   </li>
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="pomodoro-tab" data-bs-toggle="tab" data-bs-target="#pomodoro-panel" type="button" role="tab" aria-controls="pomodoro-panel" aria-selected="false">Pomodoro</button>
+                    <button
+                      class="nav-link"
+                      id="pomodoro-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#pomodoro-panel"
+                      type="button"
+                      role="tab"
+                      aria-controls="pomodoro-panel"
+                      aria-selected="false"
+                    >
+                      Pomodoro
+                    </button>
                   </li>
                   <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="manual-tab" data-bs-toggle="tab" data-bs-target="#manual-panel" type="button" role="tab" aria-controls="manual-panel" aria-selected="false">Zeit nachtragen</button>
+                    <button
+                      class="nav-link"
+                      id="manual-tab"
+                      data-bs-toggle="tab"
+                      data-bs-target="#manual-panel"
+                      type="button"
+                      role="tab"
+                      aria-controls="manual-panel"
+                      aria-selected="false"
+                    >
+                      Zeit nachtragen
+                    </button>
                   </li>
                 </ul>
                 <div class="tab-content pt-3" id="trackingTabContent">
-                  <div class="tab-pane fade show active" id="stopwatch-panel" role="tabpanel" aria-labelledby="stopwatch-tab">
-                    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1">
+                  <div
+                    class="tab-pane fade show active"
+                    id="stopwatch-panel"
+                    role="tabpanel"
+                    aria-labelledby="stopwatch-tab"
+                  >
+                    <div
+                      class="d-flex flex-wrap align-items-center justify-content-between gap-3 mt-1"
+                    >
                       <p id="timer-display" class="mb-0">00:00:00</p>
                       <div class="d-flex flex-wrap gap-2">
                         <button id="timer-start" class="btn btn-success btn-sm" type="button">
                           <i class="bi bi-play-fill" aria-hidden="true"></i>
                         </button>
-                        <button id="timer-pause" class="btn btn-warning btn-sm d-none" type="button">
+                        <button
+                          id="timer-pause"
+                          class="btn btn-warning btn-sm d-none"
+                          type="button"
+                        >
                           <i class="bi bi-pause-fill" aria-hidden="true"></i>
                         </button>
-                        <button id="timer-stop" class="btn btn-secondary btn-sm d-none" type="button">
+                        <button
+                          id="timer-stop"
+                          class="btn btn-secondary btn-sm d-none"
+                          type="button"
+                        >
                           <i class="bi bi-stop-fill" aria-hidden="true"></i>
                         </button>
                       </div>
                     </div>
                   </div>
-                  <div class="tab-pane fade" id="pomodoro-panel" role="tabpanel" aria-labelledby="pomodoro-tab">
+                  <div
+                    class="tab-pane fade"
+                    id="pomodoro-panel"
+                    role="tabpanel"
+                    aria-labelledby="pomodoro-tab"
+                  >
                     <div class="d-flex align-items-center gap-3 mb-1">
-                      <p id="pomodoro-display" class="mb-0 fs-3 fw-bold lz-pomodoro-display">25:00</p>
-                      <div id="pomodoro-dots" class="d-flex gap-1 fs-5" aria-label="Fortschritt"></div>
+                      <p id="pomodoro-display" class="mb-0 fs-3 fw-bold lz-pomodoro-display">
+                        25:00
+                      </p>
+                      <div
+                        id="pomodoro-dots"
+                        class="d-flex gap-1 fs-5"
+                        aria-label="Fortschritt"
+                      ></div>
                     </div>
                     <p id="pomodoro-phase" class="mb-2 text-muted small">Arbeitsphase</p>
                     <div class="d-flex flex-wrap gap-2">
                       <button id="pomodoro-start" class="btn btn-success btn-sm" type="button">
                         <i class="bi bi-play-fill" aria-hidden="true"></i> Start
                       </button>
-                      <button id="pomodoro-pause" class="btn btn-warning btn-sm d-none" type="button">
+                      <button
+                        id="pomodoro-pause"
+                        class="btn btn-warning btn-sm d-none"
+                        type="button"
+                      >
                         <i class="bi bi-pause-fill" aria-hidden="true"></i> Pausieren
                       </button>
-                      <button id="pomodoro-save-next" class="btn btn-outline-secondary btn-sm" type="button" title="Speichern und weiter">
-                        <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Speichern und weiter
+                      <button
+                        id="pomodoro-save-next"
+                        class="btn btn-outline-secondary btn-sm"
+                        type="button"
+                        title="Speichern und weiter"
+                      >
+                        <i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Speichern und
+                        weiter
                       </button>
-                      <button id="pomodoro-save-cancel" class="btn btn-primary btn-sm" type="button" title="Speichern und zurücksetzen">
+                      <button
+                        id="pomodoro-save-cancel"
+                        class="btn btn-primary btn-sm"
+                        type="button"
+                        title="Speichern und zurücksetzen"
+                      >
                         <i class="bi bi-save" aria-hidden="true"></i> Speichern &amp; Zurücksetzen
                       </button>
                     </div>
                   </div>
-                  <div class="tab-pane fade" id="manual-panel" role="tabpanel" aria-labelledby="manual-tab">
+                  <div
+                    class="tab-pane fade"
+                    id="manual-panel"
+                    role="tabpanel"
+                    aria-labelledby="manual-tab"
+                  >
                     <form id="track-manual-form" class="row g-2 mt-1">
                       <input type="hidden" id="track-edit-id" />
                       <div class="col-12 col-md-5">
                         <input type="date" id="track-manual-date" class="form-control" required />
                       </div>
                       <div class="col-12 col-md-4">
-                        <input type="number" id="track-manual-minutes" class="form-control" min="1" step="1" placeholder="Minuten" required />
+                        <input
+                          type="number"
+                          id="track-manual-minutes"
+                          class="form-control"
+                          min="1"
+                          step="1"
+                          placeholder="Minuten"
+                          required
+                        />
                       </div>
                       <div class="col-12 col-md-3 d-grid">
-                        <button id="track-manual-submit" class="btn btn-outline-primary" type="submit">Zeit nachtragen</button>
+                        <button
+                          id="track-manual-submit"
+                          class="btn btn-outline-primary"
+                          type="submit"
+                        >
+                          Zeit nachtragen
+                        </button>
                       </div>
                       <div class="col-12 d-grid">
-                        <button id="track-cancel-edit" class="btn btn-outline-secondary d-none" type="button">Bearbeitung abbrechen</button>
+                        <button
+                          id="track-cancel-edit"
+                          class="btn btn-outline-secondary d-none"
+                          type="button"
+                        >
+                          Bearbeitung abbrechen
+                        </button>
                       </div>
                     </form>
                   </div>
@@ -488,7 +587,6 @@
             </div>
           </section>
         </div>
-
       </div>
 
       <section id="calendar-view" class="mb-4 d-none">

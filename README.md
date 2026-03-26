@@ -10,7 +10,7 @@ Alle Daten werden im Browser über `localStorage` gespeichert.
 - Kalenderansicht für Ziele, Detailplanung und ICS-Importe
 - Übersicht aller kommenden Ziele und Detailplanungspunkte (scrollbar)
 - Pomodoro-Technik mit Timer und Benachrichtigungen
-- Stoppuhr für Lernzeit-Tracking 
+- Stoppuhr für Lernzeit-Tracking
 - Umfangreiche Demo-Daten per Button laden
 
 ## Lokaler Start

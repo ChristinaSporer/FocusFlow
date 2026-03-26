@@ -1290,17 +1290,19 @@ export function renderTimerDetailPlanSelect({ state }) {
   if (!select) return;
 
   const selectedId = state.timer?.selectedDetailPlanId || "";
-  const detailPlans = [...state.detailPlans].filter((item) => !isDetailPlanHiddenByCompletion(state, item)).sort((left, right) => {
-    const byDate = left.date.localeCompare(right.date);
-    if (byDate !== 0) return byDate;
-    return getDetailPlanFocusTitle(state, left).localeCompare(
-      getDetailPlanFocusTitle(state, right),
-      "de",
-      {
-        sensitivity: "base",
-      }
-    );
-  });
+  const detailPlans = [...state.detailPlans]
+    .filter((item) => !isDetailPlanHiddenByCompletion(state, item))
+    .sort((left, right) => {
+      const byDate = left.date.localeCompare(right.date);
+      if (byDate !== 0) return byDate;
+      return getDetailPlanFocusTitle(state, left).localeCompare(
+        getDetailPlanFocusTitle(state, right),
+        "de",
+        {
+          sensitivity: "base",
+        }
+      );
+    });
 
   select.innerHTML = "";
 
@@ -1328,7 +1330,8 @@ export function renderPomodoro({ pomodoroState }) {
   const saveNextBtn = byId("pomodoro-save-next");
   const saveResetBtn = byId("pomodoro-save-cancel");
 
-  if (!display || !phaseLabel || !dots || !startBtn || !pauseBtn || !saveNextBtn || !saveResetBtn) return;
+  if (!display || !phaseLabel || !dots || !startBtn || !pauseBtn || !saveNextBtn || !saveResetBtn)
+    return;
 
   const { active, phase, pomodorosCompleted, formattedCountdown } = pomodoroState;
 
@@ -1359,9 +1362,11 @@ export function renderPomodoro({ pomodoroState }) {
   // Dynamische Button-Anzeige je nach Phase
   if (phase === "work") {
     saveNextBtn.classList.remove("d-none");
-    saveNextBtn.innerHTML = '<i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Speichern &amp; weiter';
+    saveNextBtn.innerHTML =
+      '<i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Speichern &amp; weiter';
     saveResetBtn.classList.remove("d-none");
-    saveResetBtn.innerHTML = '<i class="bi bi-save" aria-hidden="true"></i> Speichern &amp; Zurücksetzen';
+    saveResetBtn.innerHTML =
+      '<i class="bi bi-save" aria-hidden="true"></i> Speichern &amp; Zurücksetzen';
   } else {
     saveNextBtn.classList.remove("d-none");
     saveNextBtn.innerHTML = '<i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Weiter';
@@ -1451,15 +1456,14 @@ export function renderStats({ state }) {
       };
     });
 
-  const nextItems = [...upcomingDetailItems, ...upcomingGoalItems]
-    .sort((left, right) => {
-      const byDate = left.date.localeCompare(right.date);
-      if (byDate !== 0) return byDate;
-      if (left.type !== right.type) {
-        return left.type === "detail" ? -1 : 1;
-      }
-      return left.title.localeCompare(right.title, "de", { sensitivity: "base" });
-    });
+  const nextItems = [...upcomingDetailItems, ...upcomingGoalItems].sort((left, right) => {
+    const byDate = left.date.localeCompare(right.date);
+    if (byDate !== 0) return byDate;
+    if (left.type !== right.type) {
+      return left.type === "detail" ? -1 : 1;
+    }
+    return left.title.localeCompare(right.title, "de", { sensitivity: "base" });
+  });
 
   upcomingContainer.innerHTML = "";
 
