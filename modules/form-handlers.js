@@ -268,43 +268,46 @@ export function initFormHandlers({
   let pausedElapsed = 0;
 
   function updateTimerButtons(running, paused) {
-    timerStartBtn.classList.toggle("d-none", running && !paused);
-    timerPauseBtn.classList.toggle("d-none", !running || paused);
-    timerStopBtn.classList.toggle("d-none", !running);
+    if (timerStartBtn) timerStartBtn.classList.toggle("d-none", running && !paused);
+    if (timerPauseBtn) timerPauseBtn.classList.toggle("d-none", !running || paused);
+    if (timerStopBtn) timerStopBtn.classList.toggle("d-none", !running);
   }
 
-  timerStartBtn.addEventListener("click", () => {
-    if (isPaused) {
-      // Resume
-      startTimer({ resume: true, pausedElapsed });
+  if (timerStartBtn) {
+    timerStartBtn.addEventListener("click", () => {
+      if (isPaused) {
+        // Resume
+        startTimer({ resume: true, pausedElapsed });
+        isPaused = false;
+        pausedAt = null;
+        pausedElapsed = 0;
+      } else {
+        startTimer();
+      }
+      updateTimerButtons(true, false);
+    });
+  }
+  if (timerPauseBtn) {
+    timerPauseBtn.addEventListener("click", () => {
+      isPaused = true;
+      pausedAt = Date.now();
+      window.__timerPausedAt = pausedAt;
+      // Optionally: store elapsed time
+      pausedElapsed = window.timerManagerGetElapsed?.() || 0;
+      // Stop the timer interval so the timer display freezes
+      if (window.timerManagerStopInterval) window.timerManagerStopInterval();
+      updateTimerButtons(true, true);
+    });
+  }
+  if (timerStopBtn) {
+    timerStopBtn.addEventListener("click", () => {
+      stopTimer();
       isPaused = false;
       pausedAt = null;
       pausedElapsed = 0;
-    } else {
-      startTimer();
-    }
-    updateTimerButtons(true, false);
-  });
-
-  timerPauseBtn.addEventListener("click", () => {
-    isPaused = true;
-    pausedAt = Date.now();
-    window.__timerPausedAt = pausedAt;
-    // Optionally: store elapsed time
-    pausedElapsed = window.timerManagerGetElapsed?.() || 0;
-    // Stop the timer interval so the timer display freezes
-    if (window.timerManagerStopInterval) window.timerManagerStopInterval();
-    updateTimerButtons(true, true);
-  });
-
-  timerStopBtn.addEventListener("click", () => {
-    stopTimer();
-    isPaused = false;
-    pausedAt = null;
-    pausedElapsed = 0;
-    updateTimerButtons(false, false);
-  });
-
+      updateTimerButtons(false, false);
+    });
+  }
   // Initial state
   updateTimerButtons(false, false);
   byId("track-detail-select")?.addEventListener("change", (event) => {
