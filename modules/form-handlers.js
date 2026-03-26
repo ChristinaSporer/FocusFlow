@@ -259,20 +259,66 @@ export function initFormHandlers({
     renderCalendar();
   });
 
-  byId("timer-start").addEventListener("click", startTimer);
-  byId("timer-stop").addEventListener("click", stopTimer);
+  const timerStartBtn = byId("timer-start");
+  const timerPauseBtn = byId("timer-pause");
+  const timerStopBtn = byId("timer-stop");
+
+  let isPaused = false;
+  let pausedAt = null;
+  let pausedElapsed = 0;
+
+  function updateTimerButtons(running, paused) {
+    timerStartBtn.classList.toggle("d-none", running && !paused);
+    timerPauseBtn.classList.toggle("d-none", !running || paused);
+    timerStopBtn.classList.toggle("d-none", !running);
+  }
+
+  timerStartBtn.addEventListener("click", () => {
+    if (isPaused) {
+      // Resume
+      startTimer({ resume: true, pausedElapsed });
+      isPaused = false;
+      pausedAt = null;
+      pausedElapsed = 0;
+    } else {
+      startTimer();
+    }
+    updateTimerButtons(true, false);
+  });
+
+  timerPauseBtn.addEventListener("click", () => {
+    isPaused = true;
+    pausedAt = Date.now();
+    window.__timerPausedAt = pausedAt;
+    // Optionally: store elapsed time
+    pausedElapsed = window.timerManagerGetElapsed?.() || 0;
+    // Stop the timer interval so the timer display freezes
+    if (window.timerManagerStopInterval) window.timerManagerStopInterval();
+    updateTimerButtons(true, true);
+  });
+
+  timerStopBtn.addEventListener("click", () => {
+    stopTimer();
+    isPaused = false;
+    pausedAt = null;
+    pausedElapsed = 0;
+    updateTimerButtons(false, false);
+  });
+
+  // Initial state
+  updateTimerButtons(false, false);
   byId("track-detail-select")?.addEventListener("change", (event) => {
     setSelectedTimerDetailPlan?.(event.target.value || null);
   });
 
-  byId("pomodoro-toggle")?.addEventListener("change", (event) => {
-    const panel = byId("pomodoro-panel");
-    if (panel) panel.classList.toggle("d-none", !event.target.checked);
-  });
+  // Pomodoro-Panel ist jetzt ein Tab, keine Umschaltung mehr nötig
   byId("pomodoro-start")?.addEventListener("click", () => startPomodoro?.());
   byId("pomodoro-pause")?.addEventListener("click", () => pausePomodoro?.());
-  byId("pomodoro-skip")?.addEventListener("click", () => skipPomodoroPhase?.());
+  byId("pomodoro-save-next")?.addEventListener("click", () => skipPomodoroPhase?.());
   byId("pomodoro-reset")?.addEventListener("click", () => resetPomodoro?.());
+  byId("pomodoro-save-cancel")?.addEventListener("click", () => {
+    if (typeof window.pomodoroManagerSaveAndReset === "function") window.pomodoroManagerSaveAndReset();
+  });
 
   byId("track-manual-form")?.addEventListener("submit", (event) => {
     event.preventDefault();

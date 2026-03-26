@@ -1325,8 +1325,10 @@ export function renderPomodoro({ pomodoroState }) {
   const dots = byId("pomodoro-dots");
   const startBtn = byId("pomodoro-start");
   const pauseBtn = byId("pomodoro-pause");
+  const saveNextBtn = byId("pomodoro-save-next");
+  const saveResetBtn = byId("pomodoro-save-cancel");
 
-  if (!display || !phaseLabel || !dots || !startBtn || !pauseBtn) return;
+  if (!display || !phaseLabel || !dots || !startBtn || !pauseBtn || !saveNextBtn || !saveResetBtn) return;
 
   const { active, phase, pomodorosCompleted, formattedCountdown } = pomodoroState;
 
@@ -1353,6 +1355,19 @@ export function renderPomodoro({ pomodoroState }) {
 
   startBtn.classList.toggle("d-none", active);
   pauseBtn.classList.toggle("d-none", !active);
+
+  // Dynamische Button-Anzeige je nach Phase
+  if (phase === "work") {
+    saveNextBtn.classList.remove("d-none");
+    saveNextBtn.innerHTML = '<i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Speichern &amp; weiter';
+    saveResetBtn.classList.remove("d-none");
+    saveResetBtn.innerHTML = '<i class="bi bi-save" aria-hidden="true"></i> Speichern &amp; Zurücksetzen';
+  } else {
+    saveNextBtn.classList.remove("d-none");
+    saveNextBtn.innerHTML = '<i class="bi bi-arrow-right-circle" aria-hidden="true"></i> Weiter';
+    saveResetBtn.classList.remove("d-none");
+    saveResetBtn.innerHTML = '<i class="bi bi-save" aria-hidden="true"></i> Zurücksetzen';
+  }
 
   // Auto-show panel on reload if a session was in progress
   const toggle = byId("pomodoro-toggle");

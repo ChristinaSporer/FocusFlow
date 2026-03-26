@@ -11,6 +11,8 @@ function toClock(ms) {
 
 export function createTimerManager({ getState, dispatch, onActivity, onRenderAll, nowIso }) {
   let timerInterval = null;
+  let pausedElapsed = 0;
+  let isPaused = false;
 
   function renderTimer() {
     const display = byId("timer-display");
@@ -22,7 +24,12 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
       return;
     }
 
-    const elapsed = Date.now() - new Date(state.timer.start).getTime();
+    let elapsed;
+    if (isPaused) {
+      elapsed = pausedElapsed;
+    } else {
+      elapsed = Date.now() - new Date(state.timer.start).getTime() + pausedElapsed;
+    }
     display.textContent = toClock(elapsed);
   }
 
@@ -36,17 +43,40 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     timerInterval = setInterval(renderTimer, 1000);
   }
 
-  function startTimer() {
+  function startTimer(options = {}) {
     const state = getState();
-    if (state.timer.start) return;
+    if (state.timer.start && !options.resume) return;
 
-    dispatch({
-      type: "TIMER_START",
-      payload: {
-        start: nowIso(),
-        selectedDetailPlanId: state.timer.selectedDetailPlanId || null,
-      },
-    });
+    if (options.resume) {
+      // Resume: Passe die Startzeit so an, dass die Pausenzeit nicht doppelt gezählt wird
+      isPaused = false;
+      if (state.timer.start) {
+        // Berechne die neue Startzeit, indem wir die Pausenzeit auf die alte Startzeit aufschlagen
+        const oldStart = new Date(state.timer.start).getTime();
+        const now = Date.now();
+        const pauseDuration = now - (window.__timerPausedAt || now);
+        // Korrigiere Startzeit um die Pausenlänge
+        const newStart = new Date(oldStart + pauseDuration);
+        dispatch({
+          type: "TIMER_START",
+          payload: {
+            start: newStart.toISOString(),
+            selectedDetailPlanId: state.timer.selectedDetailPlanId || null,
+          },
+        });
+        pausedElapsed = 0;
+      }
+    } else {
+      isPaused = false;
+      pausedElapsed = 0;
+      dispatch({
+        type: "TIMER_START",
+        payload: {
+          start: nowIso(),
+          selectedDetailPlanId: state.timer.selectedDetailPlanId || null,
+        },
+      });
+    }
     onActivity();
     renderTimer();
     ensureInterval();
@@ -62,7 +92,8 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     const note = [baseNote, autoNote].filter(Boolean).join(" | ");
     const end = new Date();
     const start = new Date(state.timer.start);
-    const minutes = Math.max(1, Math.round((end - start) / 60000));
+    let elapsedMs = isPaused ? pausedElapsed : end - start + pausedElapsed;
+    const minutes = Math.max(1, Math.round(elapsedMs / 60000));
 
     const session = {
       id: uid(),
@@ -79,9 +110,19 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
       noteField.value = "";
     }
 
+    isPaused = false;
+    pausedElapsed = 0;
     onActivity();
     stopInterval();
     onRenderAll();
+  }
+
+  // Für Pause-Button: gibt die aktuell verstrichene Zeit in ms zurück
+  function getElapsed() {
+    const state = getState();
+    if (!state.timer.start) return 0;
+    if (isPaused) return pausedElapsed;
+    return Date.now() - new Date(state.timer.start).getTime() + pausedElapsed;
   }
 
   function setSelectedDetailPlan(detailPlanId) {
@@ -210,6 +251,11 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     stopInterval();
   }
 
+  // Für Zugriff im window-Objekt (Workaround für Pause)
+  if (typeof window !== "undefined") {
+    window.timerManagerGetElapsed = getElapsed;
+    window.timerManagerStopInterval = stopInterval;
+  }
   return {
     renderTimer,
     startTimer,
@@ -220,5 +266,7 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     updateTrackedSession,
     syncFromState,
     dispose,
+    getElapsed,
+    stopInterval,
   };
 }

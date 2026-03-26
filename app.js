@@ -269,6 +269,8 @@ const timerManager = createTimerManager({
   onRenderAll: renderAll,
   nowIso,
 });
+// Für Pause/Resume Zugriff aus form-handlers.js
+window.timerManagerGetElapsed = timerManager.getElapsed;
 
 const pomodoroManager = createPomodoroManager({
   startTimer: timerManager.startTimer,
@@ -277,6 +279,8 @@ const pomodoroManager = createPomodoroManager({
   getState,
   dispatch,
 });
+// Für Buttons in form-handlers.js
+window.pomodoroManagerSaveAndReset = pomodoroManager.saveAndReset;
 
 const icsManager = createIcsManager({
   getState,

@@ -127,6 +127,7 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender, getStat
     active = false;
 
     if (phase === "work") {
+      pomodorosCompleted += 1; // Dot setzen wie bei regulärem Abschluss
       stopTimer({ autoStopNote: "Pomodoro-Phase manuell übersprungen" });
       phase = "short-break";
     } else {
@@ -209,11 +210,43 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender, getStat
     stopCountdown();
   }
 
+  function cancel() {
+    stopCountdown();
+    active = false;
+    phaseStartedAt = null;
+    // Kein Tracking-Eintrag, nur abbrechen
+    persist();
+    onRender();
+  }
+
+  function save() {
+    // Nur speichern, wenn in Arbeitsphase und Timer lief
+    if (phase === "work" && phaseStartedAt) {
+      // Optional: Berechne Minuten, falls für spätere Erweiterung benötigt
+      // const start = new Date(phaseStartedAt);
+      // const end = new Date();
+      stopTimer({ autoStopNote: "Pomodoro manuell gespeichert" });
+      stopCountdown();
+      active = false;
+      phaseStartedAt = null;
+      persist();
+      onRender();
+    }
+  }
+
+  function saveAndReset() {
+    save();
+    reset();
+  }
+
   return {
     start,
     pause,
     skipPhase,
     reset,
+    cancel,
+    save,
+    saveAndReset,
     getState: getPomodoroState,
     syncFromState,
     dispose,
