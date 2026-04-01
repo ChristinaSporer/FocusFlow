@@ -70,14 +70,22 @@ Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführ
 - **Unit Tests**: Vitest mit Coverage-Bericht
 - **E2E Tests**: Playwright-Tests
 
-**Coverage-Report herunterladen:**
+**Coverage-Report ansehen (GitHub Pages):**
 
-1. Gehe zum Repository auf GitHub
-2. Klicke auf den Tab **Actions**
-3. Wähle die neueste Workflow-Run
-4. Scrolle nach unten zum Abschnitt **Artifacts**
-5. Lade `coverage-report` herunter
-6. Extrahiere und öffne `coverage/index.html` im Browser
+Der Coverage-Report wird nach jedem erfolgreichen Run auf der `main`-Branch automatisch zu GitHub Pages deployed:
+
+1. Gehe zu deinem **GitHub Pages** (z.B. `https://ChristinaSporer.github.io/FocusFlow/`)
+2. Öffne den **Coverage-Report** unter: `/coverage/index.html`
+3. Oder direkt:
+   ```
+   https://<dein-username>.github.io/FocusFlow/coverage/index.html
+   ```
+
+**Einmalige Aktivierung (falls noch nicht geschehen):**
+- Gehe in GitHub → **Settings → Pages**
+- Source: **Deploy from a branch**
+- Branch: `gh-pages`, Folder: `/ (root)`
+- Der Workflow erstellt die `gh-pages` Branch automatisch beim ersten erfolgreichen Push auf `main`
 
 ## GitHub Pages Deployment
 
@@ -170,6 +178,7 @@ classDiagram
 ## Sequenzdiagramme
 
 ### Ziel anlegen
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -188,6 +197,7 @@ sequenceDiagram
 ```
 
 ### Zwischenziel (Milestone) anlegen
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -206,6 +216,7 @@ sequenceDiagram
 ```
 
 ### Grobplanung erstellen
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -224,6 +235,7 @@ sequenceDiagram
 ```
 
 ### Detailplanung erstellen
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -242,6 +254,7 @@ sequenceDiagram
 ```
 
 ### Stoppuhr starten und speichern
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -261,6 +274,7 @@ sequenceDiagram
 ```
 
 ### Pomodoro starten und abschließen
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -283,6 +297,7 @@ sequenceDiagram
 ```
 
 ### Zeit manuell eintragen
+
 ```mermaid
 sequenceDiagram
   actor Nutzer
@@ -527,6 +542,7 @@ flowchart LR
 ```
 
 ## Datenmodell
+
 ```mermaid
 classDiagram
   class AppState {
