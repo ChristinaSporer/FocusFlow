@@ -71,6 +71,22 @@ Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführ
 - **E2E Tests**: Playwright-Tests
 - **Test Report**: Zusammenfassung aller gelaufenen Tests mit ihren `it(...)`-Titeln
 
+**App und Coverage auf GitHub Pages:**
+
+Die eigentliche Anwendung wird im Root der GitHub-Pages-Site veröffentlicht. Der Coverage-Report liegt zusätzlich unter `/coverage/index.html`.
+
+1. App im Root:
+
+```
+https://<dein-username>.github.io/FocusFlow/
+```
+
+2. Coverage-Report:
+
+```
+https://<dein-username>.github.io/FocusFlow/coverage/index.html
+```
+
 **Coverage-Report ansehen (GitHub Pages):**
 
 Der Coverage-Report wird nach jedem erfolgreichen Run auf der Default-Branch automatisch zu GitHub Pages deployed und unter `/coverage/index.html` veröffentlicht.

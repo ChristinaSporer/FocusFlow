@@ -160,11 +160,26 @@ jobs:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download coverage artifact
         uses: actions/download-artifact@v4
         with:
           name: coverage-report
           path: site/coverage/
+
+      - name: Prepare app files for GitHub Pages
+        shell: bash
+        run: |
+          mkdir -p site
+          cp app.js site/
+          cp index.html site/
+          cp styles.css site/
+          cp datenschutz.html site/
+          cp impressum.html site/
+          cp -R assets site/assets
+          cp -R modules site/modules
+          touch site/.nojekyll
 
       - name: Upload to GitHub Pages
         uses: actions/upload-pages-artifact@v3
