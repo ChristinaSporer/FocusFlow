@@ -37,7 +37,6 @@ import { createThemeManager, normalizeThemeMode } from "../../modules/theme-mana
 import { createTimerManager } from "../../modules/timer-manager.js";
 import { createPomodoroManager } from "../../modules/pomodoro-manager.js";
 
-
 function baseState() {
   return {
     goals: [
@@ -78,70 +77,68 @@ function baseState() {
   };
 }
 
+describe("modules/theme-manager", () => {
+  const originalMatchMedia = window.matchMedia;
 
-  describe("modules/theme-manager", () => {
-    const originalMatchMedia = window.matchMedia;
-
-    afterEach(() => {
-      window.matchMedia = originalMatchMedia;
-      document.documentElement.removeAttribute("data-bs-theme");
-    });
-
-    it("normalizes mode values", () => {
-      expect(normalizeThemeMode("light")).toBe("light");
-      expect(normalizeThemeMode("x")).toBe("auto");
-    });
-
-    it("applies fallback when matchMedia is unavailable", () => {
-      window.matchMedia = undefined;
-      const manager = createThemeManager({ getThemeMode: () => "light" });
-
-      manager.initSystemTheme();
-      expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
-    });
-
-    it("uses matchMedia listeners and auto resolution", () => {
-      const addEventListener = vi.fn();
-      const removeEventListener = vi.fn();
-      const query = {
-        matches: true,
-        addEventListener,
-        removeEventListener,
-      };
-
-      window.matchMedia = vi.fn(() => query);
-      const getThemeMode = vi.fn(() => "auto");
-      const manager = createThemeManager({ getThemeMode });
-
-      manager.initSystemTheme();
-      expect(window.matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: dark)");
-      expect(addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
-      expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
-
-      manager.applyTheme("invalid");
-      expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
-
-      manager.dispose();
-      expect(removeEventListener).toHaveBeenCalledWith("change", expect.any(Function));
-    });
-
-    it("falls back to addListener/removeListener APIs", () => {
-      const addListener = vi.fn();
-      const removeListener = vi.fn();
-      const query = {
-        matches: false,
-        addListener,
-        removeListener,
-      };
-
-      window.matchMedia = vi.fn(() => query);
-      const manager = createThemeManager({ getThemeMode: () => "auto" });
-
-      manager.initSystemTheme();
-      expect(addListener).toHaveBeenCalledWith(expect.any(Function));
-
-      manager.dispose();
-      expect(removeListener).toHaveBeenCalledWith(expect.any(Function));
-    });
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+    document.documentElement.removeAttribute("data-bs-theme");
   });
 
+  it("normalizes mode values", () => {
+    expect(normalizeThemeMode("light")).toBe("light");
+    expect(normalizeThemeMode("x")).toBe("auto");
+  });
+
+  it("applies fallback when matchMedia is unavailable", () => {
+    window.matchMedia = undefined;
+    const manager = createThemeManager({ getThemeMode: () => "light" });
+
+    manager.initSystemTheme();
+    expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
+  });
+
+  it("uses matchMedia listeners and auto resolution", () => {
+    const addEventListener = vi.fn();
+    const removeEventListener = vi.fn();
+    const query = {
+      matches: true,
+      addEventListener,
+      removeEventListener,
+    };
+
+    window.matchMedia = vi.fn(() => query);
+    const getThemeMode = vi.fn(() => "auto");
+    const manager = createThemeManager({ getThemeMode });
+
+    manager.initSystemTheme();
+    expect(window.matchMedia).toHaveBeenCalledWith("(prefers-color-scheme: dark)");
+    expect(addEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+    expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
+
+    manager.applyTheme("invalid");
+    expect(document.documentElement.getAttribute("data-bs-theme")).toBe("dark");
+
+    manager.dispose();
+    expect(removeEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+  });
+
+  it("falls back to addListener/removeListener APIs", () => {
+    const addListener = vi.fn();
+    const removeListener = vi.fn();
+    const query = {
+      matches: false,
+      addListener,
+      removeListener,
+    };
+
+    window.matchMedia = vi.fn(() => query);
+    const manager = createThemeManager({ getThemeMode: () => "auto" });
+
+    manager.initSystemTheme();
+    expect(addListener).toHaveBeenCalledWith(expect.any(Function));
+
+    manager.dispose();
+    expect(removeListener).toHaveBeenCalledWith(expect.any(Function));
+  });
+});

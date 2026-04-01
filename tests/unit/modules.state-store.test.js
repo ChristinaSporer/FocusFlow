@@ -37,7 +37,6 @@ import { createThemeManager, normalizeThemeMode } from "../../modules/theme-mana
 import { createTimerManager } from "../../modules/timer-manager.js";
 import { createPomodoroManager } from "../../modules/pomodoro-manager.js";
 
-
 function baseState() {
   return {
     goals: [
@@ -78,58 +77,56 @@ function baseState() {
   };
 }
 
-
-  describe("modules/state-store", () => {
-    beforeEach(() => {
-      localStorage.clear();
-    });
-
-    it("loads defaults and handles invalid persisted JSON", () => {
-      expect(loadState()).toMatchObject(defaultData());
-
-      localStorage.setItem(STORAGE_KEY, "not-json");
-      expect(loadState()).toMatchObject(defaultData());
-    });
-
-    it("loads and normalizes persisted shape", () => {
-      localStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          goals: [{ id: "g1" }],
-          importedEvents: "bad-shape",
-          settings: { activeView: "calendar" },
-        })
-      );
-
-      const loaded = loadState();
-      expect(loaded.goals).toHaveLength(1);
-      expect(loaded.importedEvents).toEqual([]);
-      expect(loaded.settings.activeView).toBe("calendar");
-      expect(loaded.settings.themeMode).toBe("auto");
-      expect(loaded.timer.start).toBeNull();
-      expect(loaded.timer.selectedDetailPlanId).toBeNull();
-    });
-
-    it("persists state and supports store methods", () => {
-      const initial = defaultData();
-      const reducer = vi.fn((state, action) => ({ ...state, lastAction: action.type }));
-      const store = createStore(initial, reducer);
-
-      expect(store.getState()).toBe(initial);
-
-      const replaced = store.replace({ ...defaultData(), marker: "replaced" });
-      expect(replaced.marker).toBe("replaced");
-
-      const dispatched = store.dispatch({ type: "TEST_ACTION" });
-      expect(reducer).toHaveBeenCalledTimes(1);
-      expect(dispatched.lastAction).toBe("TEST_ACTION");
-
-      store.persist();
-      const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-      expect(saved.lastAction).toBe("TEST_ACTION");
-
-      persistState({ custom: true });
-      expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toEqual({ custom: true });
-    });
+describe("modules/state-store", () => {
+  beforeEach(() => {
+    localStorage.clear();
   });
 
+  it("loads defaults and handles invalid persisted JSON", () => {
+    expect(loadState()).toMatchObject(defaultData());
+
+    localStorage.setItem(STORAGE_KEY, "not-json");
+    expect(loadState()).toMatchObject(defaultData());
+  });
+
+  it("loads and normalizes persisted shape", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        goals: [{ id: "g1" }],
+        importedEvents: "bad-shape",
+        settings: { activeView: "calendar" },
+      })
+    );
+
+    const loaded = loadState();
+    expect(loaded.goals).toHaveLength(1);
+    expect(loaded.importedEvents).toEqual([]);
+    expect(loaded.settings.activeView).toBe("calendar");
+    expect(loaded.settings.themeMode).toBe("auto");
+    expect(loaded.timer.start).toBeNull();
+    expect(loaded.timer.selectedDetailPlanId).toBeNull();
+  });
+
+  it("persists state and supports store methods", () => {
+    const initial = defaultData();
+    const reducer = vi.fn((state, action) => ({ ...state, lastAction: action.type }));
+    const store = createStore(initial, reducer);
+
+    expect(store.getState()).toBe(initial);
+
+    const replaced = store.replace({ ...defaultData(), marker: "replaced" });
+    expect(replaced.marker).toBe("replaced");
+
+    const dispatched = store.dispatch({ type: "TEST_ACTION" });
+    expect(reducer).toHaveBeenCalledTimes(1);
+    expect(dispatched.lastAction).toBe("TEST_ACTION");
+
+    store.persist();
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    expect(saved.lastAction).toBe("TEST_ACTION");
+
+    persistState({ custom: true });
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toEqual({ custom: true });
+  });
+});

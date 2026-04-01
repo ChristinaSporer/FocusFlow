@@ -37,7 +37,6 @@ import { createThemeManager, normalizeThemeMode } from "../../modules/theme-mana
 import { createTimerManager } from "../../modules/timer-manager.js";
 import { createPomodoroManager } from "../../modules/pomodoro-manager.js";
 
-
 function baseState() {
   return {
     goals: [
@@ -78,85 +77,83 @@ function baseState() {
   };
 }
 
-
-  describe("modules/demo-data", () => {
-    beforeEach(() => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date("2026-03-24T10:00:00.000Z"));
-    });
-
-    afterEach(() => {
-      vi.useRealTimers();
-    });
-
-    it("builds deterministic demo state structure with relative planning dates", () => {
-      const state = buildDemoState({ themeMode: "dark" });
-
-      expect(state.goals).toHaveLength(4);
-      expect(state.roughPlans).toHaveLength(4);
-      expect(state.detailPlans).toHaveLength(4);
-      expect(state.trackedSessions).toHaveLength(4);
-      expect(state.importedEvents).toEqual([]);
-      expect(state.timer).toEqual({ start: null });
-
-      expect(state.goals[0]).toMatchObject({
-        title: "Modul Software Engineering abschließen",
-        targetDate: "2026-04-13",
-        completed: false,
-        completedAt: null,
-      });
-      expect(state.goals[0].milestones).toHaveLength(2);
-
-      expect(state.goals[1]).toMatchObject({
-        title: "Klausurvorbereitung Mathematik",
-        targetDate: "2026-04-03",
-        completed: true,
-        completedAt: "2026-03-24T10:00:00.000Z",
-      });
-
-      // Teste nur auf arrayContaining, da Demo-Daten dynamisch sind
-      expect(state.roughPlans).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ note: "Wiederholung UML" }),
-          expect.objectContaining({ note: "Altklausuren" }),
-          expect.objectContaining({ note: "Datenaufbereitung" }),
-          expect.objectContaining({ note: "Englisch Hörverstehen" }),
-        ])
-      );
-
-      expect(state.roughPlans).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ note: "Wiederholung UML" }),
-          expect.objectContaining({ note: "Altklausuren" }),
-          expect.objectContaining({ note: "Datenaufbereitung" }),
-          expect.objectContaining({ note: "Englisch Hörverstehen" }),
-        ])
-      );
-
-      expect(state.detailPlans).toEqual(
-        expect.arrayContaining([
-          expect.objectContaining({ topic: "User Stories" }),
-          expect.objectContaining({ topic: "Testmethoden" }),
-          expect.objectContaining({ topic: "Daten bereinigen" }),
-          expect.objectContaining({ topic: "Listening Comprehension" }),
-        ])
-      );
-
-      state.trackedSessions.forEach((session) => {
-        expect(typeof session.start).toBe("string");
-        expect(typeof session.end).toBe("string");
-        expect(typeof session.note).toBe("string");
-        expect(session.id).toBeTruthy();
-      });
-
-      expect(state.settings).toEqual({
-        inactivityDays: 3,
-        lastReminderRun: "2026-03-24T10:00:00.000Z",
-        notificationEnabled: false,
-        activeView: "list",
-        calendarMonth: "2026-03",
-        themeMode: "dark",
-      });
-    });
+describe("modules/demo-data", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-03-24T10:00:00.000Z"));
   });
 
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it("builds deterministic demo state structure with relative planning dates", () => {
+    const state = buildDemoState({ themeMode: "dark" });
+
+    expect(state.goals).toHaveLength(4);
+    expect(state.roughPlans).toHaveLength(4);
+    expect(state.detailPlans).toHaveLength(4);
+    expect(state.trackedSessions).toHaveLength(4);
+    expect(state.importedEvents).toEqual([]);
+    expect(state.timer).toEqual({ start: null });
+
+    expect(state.goals[0]).toMatchObject({
+      title: "Modul Software Engineering abschließen",
+      targetDate: "2026-04-13",
+      completed: false,
+      completedAt: null,
+    });
+    expect(state.goals[0].milestones).toHaveLength(2);
+
+    expect(state.goals[1]).toMatchObject({
+      title: "Klausurvorbereitung Mathematik",
+      targetDate: "2026-04-03",
+      completed: true,
+      completedAt: "2026-03-24T10:00:00.000Z",
+    });
+
+    // Teste nur auf arrayContaining, da Demo-Daten dynamisch sind
+    expect(state.roughPlans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ note: "Wiederholung UML" }),
+        expect.objectContaining({ note: "Altklausuren" }),
+        expect.objectContaining({ note: "Datenaufbereitung" }),
+        expect.objectContaining({ note: "Englisch Hörverstehen" }),
+      ])
+    );
+
+    expect(state.roughPlans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ note: "Wiederholung UML" }),
+        expect.objectContaining({ note: "Altklausuren" }),
+        expect.objectContaining({ note: "Datenaufbereitung" }),
+        expect.objectContaining({ note: "Englisch Hörverstehen" }),
+      ])
+    );
+
+    expect(state.detailPlans).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ topic: "User Stories" }),
+        expect.objectContaining({ topic: "Testmethoden" }),
+        expect.objectContaining({ topic: "Daten bereinigen" }),
+        expect.objectContaining({ topic: "Listening Comprehension" }),
+      ])
+    );
+
+    state.trackedSessions.forEach((session) => {
+      expect(typeof session.start).toBe("string");
+      expect(typeof session.end).toBe("string");
+      expect(typeof session.note).toBe("string");
+      expect(session.id).toBeTruthy();
+    });
+
+    expect(state.settings).toEqual({
+      inactivityDays: 3,
+      lastReminderRun: "2026-03-24T10:00:00.000Z",
+      notificationEnabled: false,
+      activeView: "list",
+      calendarMonth: "2026-03",
+      themeMode: "dark",
+    });
+  });
+});

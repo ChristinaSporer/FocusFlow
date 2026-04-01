@@ -14,7 +14,7 @@ test("user can create edit and delete manually tracked time", async ({ page }) =
   const trackedRow = page.locator("#track-list li").filter({ hasText: "Tracking initial" }).first();
   await expect(trackedRow).toBeVisible();
 
-  await trackedRow.locator('[data-tracked-edit]').click();
+  await trackedRow.locator("[data-tracked-edit]").click();
   await page.locator("#track-manual-minutes").fill("45");
   await page.locator("#track-note").fill("Tracking updated");
   await page.locator("#track-manual-submit").click();

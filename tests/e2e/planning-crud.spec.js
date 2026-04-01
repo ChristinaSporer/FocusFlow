@@ -51,17 +51,17 @@ test("user can create edit and delete detail planning", async ({ page }) => {
     .locator('[data-detail-plan-toggle]:not([data-detail-plan-toggle="additional"])')
     .first()
     .click();
-  await page.locator('[data-detail-date]:visible').fill("2026-04-18");
-  await page.locator('[data-detail-start]:visible').fill("08:00");
-  await page.locator('[data-detail-end]:visible').fill("09:30");
-  await page.locator('[data-detail-topic]:visible').fill(detailTopic);
+  await page.locator("[data-detail-date]:visible").fill("2026-04-18");
+  await page.locator("[data-detail-start]:visible").fill("08:00");
+  await page.locator("[data-detail-end]:visible").fill("09:30");
+  await page.locator("[data-detail-topic]:visible").fill(detailTopic);
   await page.locator('[data-detail-block-form]:visible button[type="submit"]').click();
 
   const detailRow = page.locator("#detail-list li").filter({ hasText: detailTopic }).first();
   await expect(detailRow).toBeVisible();
 
   await detailRow.getByRole("button", { name: "Detailplanung bearbeiten" }).click();
-  await page.locator('[data-detail-topic]:visible').fill(updatedTopic);
+  await page.locator("[data-detail-topic]:visible").fill(updatedTopic);
   await page.locator('[data-detail-block-form]:visible button[type="submit"]').click();
 
   await expect(page.locator("#detail-list")).toContainText(updatedTopic);
