@@ -82,6 +82,7 @@ Der Coverage-Report wird nach jedem erfolgreichen Run auf der `main`-Branch auto
    ```
 
 **Einmalige Aktivierung (falls noch nicht geschehen):**
+
 - Gehe in GitHub → **Settings → Pages**
 - Source: **Deploy from a branch**
 - Branch: `gh-pages`, Folder: `/ (root)`
