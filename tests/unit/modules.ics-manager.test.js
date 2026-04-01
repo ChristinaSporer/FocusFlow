@@ -119,7 +119,7 @@ describe("modules/ics-manager", () => {
     return { manager, dispatch };
   }
 
-  it("sets status and handles import with missing file", async () => {
+  it("setzt den Status und verarbeitet einen Import ohne Datei", async () => {
     const { manager, dispatch } = createManager();
 
     manager.setStatus("Bereit");
@@ -130,7 +130,7 @@ describe("modules/ics-manager", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it("imports valid ICS events and dispatches mapped records", async () => {
+  it("importiert gueltige ICS-Ereignisse und dispatcht gemappte Eintraege", async () => {
     const { manager, dispatch } = createManager();
     const ics = [
       "BEGIN:VCALENDAR",
@@ -175,7 +175,7 @@ describe("modules/ics-manager", () => {
     expect(action.payload.events[0].sourceHash).toBe(hashText(ics));
   });
 
-  it("handles import with no events and parser errors", async () => {
+  it("verarbeitet Importe ohne Ereignisse und mit Parserfehlern", async () => {
     const { manager, dispatch } = createManager();
 
     const emptyFile = {
@@ -205,7 +205,7 @@ describe("modules/ics-manager", () => {
     );
   });
 
-  it("exports app events to ICS file and handles empty export", () => {
+  it("exportiert App-Ereignisse in eine ICS-Datei und verarbeitet leere Exporte", () => {
     const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:export");
     const revokeUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
@@ -259,7 +259,7 @@ describe("modules/ics-manager", () => {
     expect(blobArg).toBeInstanceOf(Blob);
   });
 
-  it("exports with fallback branches for missing ids, milestone and note", async () => {
+  it("exportiert mit Fallback-Zweigen fuer fehlende IDs, Meilensteine und Notizen", async () => {
     const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:fallback");
     vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});

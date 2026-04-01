@@ -105,7 +105,7 @@ describe("modules/render-main-view", () => {
     document.body.innerHTML = "";
   });
 
-  it("renders empty goals/achieved lists", () => {
+  it("rendert leere Ziel- und Erreicht-Listen", () => {
     renderGoals({
       state: { goals: [] },
       dispatch: vi.fn(),
@@ -120,7 +120,7 @@ describe("modules/render-main-view", () => {
     );
   });
 
-  it("renders and interacts with goal rows including milestones and achieved goals", () => {
+  it("rendert Zielzeilen und interagiert mit ihnen, inklusive Meilensteinen und erreichten Zielen", () => {
     const dispatch = vi.fn();
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
@@ -240,7 +240,7 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("achieved-list").textContent).toContain("Erreicht am");
   });
 
-  it("renders rough/detail/tracked lists including block-based detail planning", () => {
+  it("rendert Grob-, Detail- und Tracking-Listen inklusive blockbasierter Detailplanung", () => {
     const dispatch = vi.fn();
     const onRenderAll = vi.fn();
     const onStartTrackingDetail = vi.fn();
@@ -435,7 +435,7 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("track-detail-select").value).toBe("d1");
   });
 
-  it("shows a rough planning week in both overlapping months", () => {
+  it("zeigt eine Grobplanungswoche in beiden ueberlappenden Monaten", () => {
     const dispatch = vi.fn();
     const onRenderAll = vi.fn();
     const state = {
@@ -497,7 +497,7 @@ describe("modules/render-main-view", () => {
     );
   });
 
-  it("renders stats for zero-planned and non-zero planned branches", () => {
+  it("rendert Statistiken fuer Zweige mit null und mit vorhandener Planung", () => {
     renderStats({
       state: {
         roughPlans: [],

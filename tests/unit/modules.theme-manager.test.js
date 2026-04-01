@@ -85,12 +85,12 @@ describe("modules/theme-manager", () => {
     document.documentElement.removeAttribute("data-bs-theme");
   });
 
-  it("normalizes mode values", () => {
+  it("normalisiert Moduswerte", () => {
     expect(normalizeThemeMode("light")).toBe("light");
     expect(normalizeThemeMode("x")).toBe("auto");
   });
 
-  it("applies fallback when matchMedia is unavailable", () => {
+  it("wendet einen Fallback an, wenn matchMedia nicht verfuegbar ist", () => {
     window.matchMedia = undefined;
     const manager = createThemeManager({ getThemeMode: () => "light" });
 
@@ -98,7 +98,7 @@ describe("modules/theme-manager", () => {
     expect(document.documentElement.getAttribute("data-bs-theme")).toBe("light");
   });
 
-  it("uses matchMedia listeners and auto resolution", () => {
+  it("verwendet matchMedia-Listener und automatische Aufloesung", () => {
     const addEventListener = vi.fn();
     const removeEventListener = vi.fn();
     const query = {
@@ -123,7 +123,7 @@ describe("modules/theme-manager", () => {
     expect(removeEventListener).toHaveBeenCalledWith("change", expect.any(Function));
   });
 
-  it("falls back to addListener/removeListener APIs", () => {
+  it("faellt auf addListener/removeListener-APIs zurueck", () => {
     const addListener = vi.fn();
     const removeListener = vi.fn();
     const query = {

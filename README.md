@@ -69,6 +69,7 @@ Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführ
 - **Lint & Format**: ESLint, Stylelint und Prettier-Check
 - **Unit Tests**: Vitest mit Coverage-Bericht
 - **E2E Tests**: Playwright-Tests
+- **Test Report**: Zusammenfassung aller gelaufenen Tests mit ihren `it(...)`-Titeln
 
 **Coverage-Report ansehen (GitHub Pages):**
 
@@ -87,6 +88,13 @@ Der Coverage-Report wird nach jedem erfolgreichen Run auf der `main`-Branch auto
 - Source: **Deploy from a branch**
 - Branch: `gh-pages`, Folder: `/ (root)`
 - Der Workflow erstellt die `gh-pages` Branch automatisch beim ersten erfolgreichen Push auf `main`
+
+**Test-Report ansehen:**
+
+1. Oeffne in GitHub den jeweiligen Workflow-Run unter **Actions**
+2. Im Bereich **Summary** wird ein Testreport mit allen gelaufenen Unit- und E2E-Tests angezeigt
+3. Zusaetzlich kann das Artefakt `ci-test-report` heruntergeladen werden
+4. Fuer E2E-Laeufe steht ausserdem das Artefakt `e2e-test-results` mit dem Playwright-HTML-Report bereit
 
 ## GitHub Pages Deployment
 

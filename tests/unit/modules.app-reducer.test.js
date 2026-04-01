@@ -78,7 +78,7 @@ function baseState() {
 }
 
 describe("modules/app-reducer", () => {
-  it("handles goal and milestone actions", () => {
+  it("verarbeitet Ziel- und Meilenstein-Aktionen", () => {
     let state = baseState();
 
     state = appReducer(state, {
@@ -127,7 +127,7 @@ describe("modules/app-reducer", () => {
     expect(state.goals.find((goal) => goal.id === "g2")).toBeUndefined();
   });
 
-  it("handles planning, timer, settings and replacement actions", () => {
+  it("verarbeitet Planungs-, Timer-, Einstellungs- und Ersetzungs-Aktionen", () => {
     let state = baseState();
 
     state = appReducer(state, {
@@ -237,7 +237,7 @@ describe("modules/app-reducer", () => {
     expect(unchanged).toBe(state);
   });
 
-  it("updates rough plans with ROUGH_UPDATE", () => {
+  it("aktualisiert Grobplanungen mit ROUGH_UPDATE", () => {
     let state = baseState();
 
     state = appReducer(state, {

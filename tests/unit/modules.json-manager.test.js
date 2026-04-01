@@ -119,7 +119,7 @@ describe("modules/json-manager", () => {
     return { manager, state };
   }
 
-  it("exports state as JSON file", async () => {
+  it("exportiert den Zustand als JSON-Datei", async () => {
     const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:json-export");
     const revokeUrlSpy = vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
     const clickSpy = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
@@ -146,7 +146,7 @@ describe("modules/json-manager", () => {
     expect(revokeUrlSpy).toHaveBeenCalledWith("blob:json-export");
   });
 
-  it("imports valid JSON and merges collections/settings", async () => {
+  it("importiert gueltiges JSON und fuehrt Sammlungen sowie Einstellungen zusammen", async () => {
     const { manager } = createManager({
       goals: [{ id: "g1", title: "Bestand" }],
       settings: { activeView: "list", inactivityDays: 3 },
@@ -174,7 +174,7 @@ describe("modules/json-manager", () => {
     expect(result.state.settings.themeMode).toBe("dark");
   });
 
-  it("handles invalid/missing import file paths", async () => {
+  it("verarbeitet ungueltige oder fehlende Import-Dateipfade", async () => {
     const { manager } = createManager();
 
     const missing = await manager.importFromFile();
@@ -194,7 +194,7 @@ describe("modules/json-manager", () => {
     );
   });
 
-  it("imports partially and reports warnings for invalid records", async () => {
+  it("importiert teilweise und meldet Warnungen fuer ungueltige Eintraege", async () => {
     const { manager } = createManager({ goals: [{ id: "g1", title: "Bestand" }] });
 
     const file = {

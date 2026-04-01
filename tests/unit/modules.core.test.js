@@ -12,7 +12,7 @@ import {
 } from "../../modules/ics-utils.js";
 
 describe("modules/ics-utils", () => {
-  it("normalizes ICS text and reads properties", () => {
+  it("normalisiert ICS-Text und liest Eigenschaften", () => {
     const raw = "BEGIN:VCALENDAR\r\nSUMMARY: A\r\n folded\r\nEND:VCALENDAR";
     const normalized = normalizeIcs(raw);
 
@@ -24,14 +24,14 @@ describe("modules/ics-utils", () => {
     expect(getIcsProp(lines, "MISSING")).toBe("");
   });
 
-  it("parses ICS dates and rejects invalid input", () => {
+  it("parst ICS-Daten und weist ungueltige Eingaben zurueck", () => {
     expect(parseIcsDate("20260312")).toBe("2026-03-12");
     expect(parseIcsDate("20260312T000000Z")).toBe("2026-03-12");
     expect(parseIcsDate("not-a-date")).toBeNull();
     expect(parseIcsDate("")).toBeNull();
   });
 
-  it("parses, deduplicates and serializes ICS events", () => {
+  it("parst, dedupliziert und serialisiert ICS-Ereignisse", () => {
     const ics = [
       "BEGIN:VCALENDAR",
       "BEGIN:VEVENT",

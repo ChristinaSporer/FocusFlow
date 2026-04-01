@@ -82,14 +82,14 @@ describe("modules/state-store", () => {
     localStorage.clear();
   });
 
-  it("loads defaults and handles invalid persisted JSON", () => {
+  it("laedt Standardwerte und verarbeitet ungueltiges gespeichertes JSON", () => {
     expect(loadState()).toMatchObject(defaultData());
 
     localStorage.setItem(STORAGE_KEY, "not-json");
     expect(loadState()).toMatchObject(defaultData());
   });
 
-  it("loads and normalizes persisted shape", () => {
+  it("laedt und normalisiert die gespeicherte Datenstruktur", () => {
     localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({
@@ -108,7 +108,7 @@ describe("modules/state-store", () => {
     expect(loaded.timer.selectedDetailPlanId).toBeNull();
   });
 
-  it("persists state and supports store methods", () => {
+  it("speichert den Zustand und unterstuetzt Store-Methoden", () => {
     const initial = defaultData();
     const reducer = vi.fn((state, action) => ({ ...state, lastAction: action.type }));
     const store = createStore(initial, reducer);

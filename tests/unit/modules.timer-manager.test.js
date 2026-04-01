@@ -117,7 +117,7 @@ describe("modules/timer-manager", () => {
     return { manager, state, dispatch };
   }
 
-  it("renders zero clock when no timer is active", () => {
+  it("rendert eine Null-Uhr, wenn kein Timer aktiv ist", () => {
     document.body.innerHTML = '<div id="timer-display"></div>';
     const { manager } = setupTimerManager();
 
@@ -125,12 +125,12 @@ describe("modules/timer-manager", () => {
     expect(document.getElementById("timer-display").textContent).toBe("00:00:00");
   });
 
-  it("ignores render call when timer display is missing", () => {
+  it("ignoriert den Render-Aufruf, wenn die Timer-Anzeige fehlt", () => {
     const { manager } = setupTimerManager();
     expect(() => manager.renderTimer()).not.toThrow();
   });
 
-  it("starts timer, updates display and blocks duplicate start", () => {
+  it("startet den Timer, aktualisiert die Anzeige und blockiert doppeltes Starten", () => {
     document.body.innerHTML = '<div id="timer-display"></div>';
     const { manager, dispatch } = setupTimerManager();
 
@@ -147,7 +147,7 @@ describe("modules/timer-manager", () => {
     expect(document.getElementById("timer-display").textContent).toBe("00:00:01");
   });
 
-  it("stops timer, stores session and clears note", () => {
+  it("stoppt den Timer, speichert die Session und leert die Notiz", () => {
     document.body.innerHTML =
       '<div id="timer-display"></div><input id="track-note" value="  Deep Work  ">';
 
@@ -183,7 +183,7 @@ describe("modules/timer-manager", () => {
     expect(onRenderAll).toHaveBeenCalledTimes(1);
   });
 
-  it("syncs interval from state and supports dispose", () => {
+  it("synchronisiert das Intervall aus dem Zustand und unterstuetzt dispose", () => {
     document.body.innerHTML = '<div id="timer-display"></div>';
     const state = { timer: { start: "2026-03-24T09:59:58.000Z", selectedDetailPlanId: null } };
 
@@ -208,7 +208,7 @@ describe("modules/timer-manager", () => {
     expect(document.getElementById("timer-display").textContent).toBe("00:00:00");
   });
 
-  it("switches running timer when started from another detail plan", () => {
+  it("wechselt den laufenden Timer, wenn er aus einem anderen Detailplan gestartet wird", () => {
     document.body.innerHTML =
       '<div id="timer-display"></div><input id="track-note" value="Deep Work">';
     const onActivity = vi.fn();
@@ -263,7 +263,7 @@ describe("modules/timer-manager", () => {
     expect(onActivity).toHaveBeenCalled();
   });
 
-  it("adds manual tracked session with detail and note", () => {
+  it("fuegt eine manuell erfasste Session mit Detail und Notiz hinzu", () => {
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
     const state = { timer: { start: null, selectedDetailPlanId: null } };
@@ -301,7 +301,7 @@ describe("modules/timer-manager", () => {
     expect(onRenderAll).toHaveBeenCalledTimes(1);
   });
 
-  it("updates an existing tracked session", () => {
+  it("aktualisiert eine bestehende getrackte Session", () => {
     const onActivity = vi.fn();
     const onRenderAll = vi.fn();
     const state = {

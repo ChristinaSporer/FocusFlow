@@ -87,7 +87,7 @@ describe("modules/demo-data", () => {
     vi.useRealTimers();
   });
 
-  it("builds deterministic demo state structure with relative planning dates", () => {
+  it("erstellt eine deterministische Demodaten-Struktur mit relativen Planungsdaten", () => {
     const state = buildDemoState({ themeMode: "dark" });
 
     expect(state.goals).toHaveLength(4);

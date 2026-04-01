@@ -54,7 +54,7 @@ function createMainCardBreakpointMock(initialDesktop) {
   return { matchMedia, update };
 }
 
-describe("App UI integration (jsdom)", () => {
+describe("App-UI-Integration (jsdom)", () => {
   let appModule;
   let breakpointController;
 
@@ -109,7 +109,7 @@ describe("App UI integration (jsdom)", () => {
     document.body.innerHTML = "";
   });
 
-  it("adds a goal and persists it in localStorage", () => {
+  it("legt ein Ziel an und speichert es in localStorage", () => {
     const title = "SE Lernziel";
     const date = "2026-03-15";
     const description = "Architektur, Tests und Review abschließen";
@@ -133,7 +133,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.querySelector("#goal-list [data-goal-toggle]")).not.toBeNull();
   });
 
-  it("edits an existing goal including title, date, and description", () => {
+  it("bearbeitet ein bestehendes Ziel inklusive Titel, Datum und Beschreibung", () => {
     document.getElementById("goal-title").value = "Altes Ziel";
     document.getElementById("goal-date").value = "2026-03-15";
     document.getElementById("goal-description").value = "Erste Version";
@@ -165,7 +165,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("goal-edit-id").value).toBe("");
   });
 
-  it("adds and completes milestones for a goal", () => {
+  it("legt Meilensteine fuer ein Ziel an und markiert sie als erledigt", () => {
     document.getElementById("goal-title").value = "Ziel mit Zwischenzielen";
     document.getElementById("goal-date").value = "2026-03-22";
     document
@@ -196,7 +196,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("toggles open goal details between expanded and collapsed", () => {
+  it("schaltet offene Zieldetails zwischen ausgeklappt und eingeklappt um", () => {
     document.getElementById("goal-title").value = "Klappbares Ziel";
     document.getElementById("goal-date").value = "2026-03-22";
     document
@@ -226,13 +226,13 @@ describe("App UI integration (jsdom)", () => {
     expect(toggleButton.getAttribute("aria-label")).toBe("Einklappen");
   });
 
-  it("renders all main cards expanded by default on desktop viewport", () => {
+  it("rendert auf Desktop standardmaessig alle Hauptkarten ausgeklappt", () => {
     const cardBodies = Array.from(document.querySelectorAll("[data-main-card-body]"));
     expect(cardBodies.length).toBeGreaterThan(0);
     expect(cardBodies.every((cardBody) => !cardBody.classList.contains("d-none"))).toBe(true);
   });
 
-  it("renders all main cards collapsed by default on mobile viewport", async () => {
+  it("rendert auf Mobile standardmaessig alle Hauptkarten eingeklappt", async () => {
     appModule.shutdown();
 
     appModule = await bootApp({ viewport: "mobile" });
@@ -242,7 +242,7 @@ describe("App UI integration (jsdom)", () => {
     expect(cardBodies.every((cardBody) => cardBody.classList.contains("d-none"))).toBe(true);
   });
 
-  it("reapplies responsive defaults on breakpoint changes", () => {
+  it("wendet responsive Standardwerte bei Breakpoint-Wechseln erneut an", () => {
     const goalCardToggle = document.querySelector('[data-main-card-toggle="goals"]');
     const goalCardBody = document.querySelector('[data-main-card-body="goals"]');
     expect(goalCardToggle).toBeTruthy();
@@ -265,7 +265,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("edits and deletes a milestone for a goal", () => {
+  it("bearbeitet und loescht einen Meilenstein eines Ziels", () => {
     document.getElementById("goal-title").value = "Ziel mit editierbarem Zwischenziel";
     document.getElementById("goal-date").value = "2026-03-22";
     document
@@ -299,7 +299,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("goal-list").textContent).toContain("Noch keine Zwischenziele");
   });
 
-  it("creates detail planning inside a monthly rough-planning block and renders it in calendar view", () => {
+  it("erstellt eine Detailplanung innerhalb eines monatlichen Grobplanungsblocks und rendert sie in der Kalenderansicht", () => {
     document.getElementById("goal-title").value = "SE Ziel";
     document.getElementById("goal-date").value = "2026-03-20";
     document
@@ -342,7 +342,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("switches to backup view tab", () => {
+  it("wechselt zum Backup-Ansichts-Tab", () => {
     document.getElementById("tab-backup").click();
 
     expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(false);
@@ -350,7 +350,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
   });
 
-  it("loads demo data", () => {
+  it("laedt Demodaten", () => {
     document.getElementById("load-demo").click();
 
     expect(document.getElementById("goal-list").textContent).toContain(
@@ -358,7 +358,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("normalizes invalid theme mode on bootstrap", async () => {
+  it("normalisiert einen ungueltigen Theme-Modus beim Bootstrap", async () => {
     appModule.shutdown();
 
     appModule = await bootApp({
@@ -379,7 +379,7 @@ describe("App UI integration (jsdom)", () => {
     expect(persisted.settings.themeMode).toBe("auto");
   });
 
-  it("uses current-month fallback when month-select is missing", () => {
+  it("verwendet den aktuellen Monat als Fallback, wenn die Monatsauswahl fehlt", () => {
     document.getElementById("month-select").value = "2026-04";
     document.getElementById("month-select").dispatchEvent(new Event("change", { bubbles: true }));
 
@@ -425,7 +425,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
   });
 
-  it("renders monthly rough-planning blocks with selectable milestones", () => {
+  it("rendert monatliche Grobplanungsbloecke mit auswaehlbaren Meilensteinen", () => {
     document.getElementById("goal-title").value = "Block Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -465,7 +465,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("toggles rough-planning detail blocks between expanded and collapsed", () => {
+  it("schaltet Detailbloecke der Grobplanung zwischen ausgeklappt und eingeklappt um", () => {
     document.getElementById("goal-title").value = "Klappbar Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -496,7 +496,7 @@ describe("App UI integration (jsdom)", () => {
     expect(toggleButton.getAttribute("aria-label")).toBe("Einklappen");
   });
 
-  it("collapses and expands all rough-planning detail blocks", () => {
+  it("klappt alle Detailbloecke der Grobplanung ein und aus", () => {
     document.getElementById("goal-title").value = "Global Toggle Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -539,7 +539,7 @@ describe("App UI integration (jsdom)", () => {
     expect(additionalBody.classList.contains("d-none")).toBe(false);
   });
 
-  it("keeps other rough-planning blocks collapsed after toggling a detail checkbox", () => {
+  it("laesst andere Grobplanungsbloecke eingeklappt, nachdem eine Detail-Checkbox umgeschaltet wurde", () => {
     document.getElementById("goal-title").value = "Persist Collapse Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -589,7 +589,7 @@ describe("App UI integration (jsdom)", () => {
     expect(bodies[1].classList.contains("d-none")).toBe(true);
   });
 
-  it("toggles additional detail planning block between expanded and collapsed", () => {
+  it("schaltet den zusaetzlichen Detailplanungsblock zwischen ausgeklappt und eingeklappt um", () => {
     const additionalToggle = document.querySelector("[data-detail-additional-toggle]");
     const additionalBody = document.querySelector("[data-detail-additional-body]");
 
@@ -606,7 +606,7 @@ describe("App UI integration (jsdom)", () => {
     expect(additionalToggle.getAttribute("aria-label")).toBe("Einklappen");
   });
 
-  it("does not register duplicate handlers on second bootstrap", () => {
+  it("registriert beim zweiten Bootstrap keine doppelten Handler", () => {
     appModule.bootstrap();
 
     document.getElementById("goal-title").value = "Einmaliges Ziel";
@@ -620,7 +620,7 @@ describe("App UI integration (jsdom)", () => {
     expect(parsed.goals[0].title).toBe("Einmaliges Ziel");
   });
 
-  it("populates goal dropdown with open goals sorted by targetDate", () => {
+  it("fuellt das Ziel-Dropdown mit offenen Zielen sortiert nach targetDate", () => {
     document.getElementById("goal-title").value = "First Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -642,7 +642,7 @@ describe("App UI integration (jsdom)", () => {
     expect(options[2].textContent).toBe("First Goal");
   });
 
-  it("adds rough plan with goal assignment and displays goal title", () => {
+  it("legt eine Grobplanung mit Zielzuordnung an und zeigt den Zieltitel an", () => {
     document.getElementById("goal-title").value = "Goal A";
     document.getElementById("goal-date").value = "2026-04-10";
     document
@@ -667,7 +667,7 @@ describe("App UI integration (jsdom)", () => {
     expect(list.textContent).toContain("KW 11/2026");
   });
 
-  it("edits rough plan including goal assignment", () => {
+  it("bearbeitet eine Grobplanung inklusive Zielzuordnung", () => {
     document.getElementById("goal-title").value = "Goal X";
     document.getElementById("goal-date").value = "2026-04-15";
     document
@@ -715,7 +715,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("rough-cancel-edit").classList.contains("d-none")).toBe(true);
   });
 
-  it("cancels rough plan edit and resets form", () => {
+  it("bricht die Bearbeitung einer Grobplanung ab und setzt das Formular zurueck", () => {
     document.getElementById("rough-week").value = "2026-W11";
     document.getElementById("rough-hours").value = "2";
     document
@@ -739,7 +739,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("rough-cancel-edit").classList.contains("d-none")).toBe(true);
   });
 
-  it("edits an existing detail entry directly in the monthly block", () => {
+  it("bearbeitet einen bestehenden Detaileintrag direkt im Monatsblock", () => {
     document.getElementById("goal-title").value = "Edit Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -791,7 +791,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("derives detail minutes from selected start and end time", () => {
+  it("leitet Detailminuten aus der ausgewaehlten Start- und Endzeit ab", () => {
     document.getElementById("goal-title").value = "Zeitformat Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -844,7 +844,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("allows detail planning with free text and optional milestone in a rough block", () => {
+  it("erlaubt Detailplanung mit Freitext und optionalem Meilenstein in einem Grobblock", () => {
     document.getElementById("goal-title").value = "Freitext Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -885,7 +885,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("always shows additional detail block and allows detail planning without rough planning", () => {
+  it("zeigt den zusaetzlichen Detailblock immer an und erlaubt Detailplanung ohne Grobplanung", () => {
     const additionalForm = document.querySelector('[data-detail-block-form="additional"]');
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
     expect(additionalForm).toBeTruthy();
@@ -906,7 +906,7 @@ describe("App UI integration (jsdom)", () => {
     );
   });
 
-  it("links tracked time to selected detail item and shows progress", () => {
+  it("verknuepft getrackte Zeit mit dem ausgewaehlten Detaileintrag und zeigt Fortschritt an", () => {
     document.getElementById("goal-title").value = "Tracking Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -954,7 +954,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("detail-list").textContent).toContain("Getrackt: 2 von 60 Min");
   });
 
-  it("auto-stops and stores current timer when switching detail item", () => {
+  it("stoppt und speichert den aktuellen Timer automatisch beim Wechsel des Detaileintrags", () => {
     document.getElementById("goal-title").value = "Switch Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -1016,7 +1016,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("track-detail-select").value).toBe(secondId);
   });
 
-  it("stores manual tracked session with selected detail plan and note", () => {
+  it("speichert eine manuell erfasste Session mit ausgewaehltem Detailplan und Notiz", () => {
     document.getElementById("goal-title").value = "Manual Goal";
     document.getElementById("goal-date").value = "2026-03-25";
     document
@@ -1073,7 +1073,7 @@ describe("App UI integration (jsdom)", () => {
     expect(document.getElementById("track-list").textContent).toContain("Detail:");
   });
 
-  it("edits an existing tracked session via the pencil action", () => {
+  it("bearbeitet eine bestehende getrackte Session ueber die Stift-Aktion", () => {
     document.getElementById("track-note").value = "Erste Fassung";
     document.getElementById("track-manual-date").value = "2026-03-24";
     document.getElementById("track-manual-minutes").value = "25";

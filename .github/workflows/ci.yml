@@ -56,6 +56,15 @@ jobs:
           path: coverage/
           retention-days: 30
 
+      - name: Upload unit test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: unit-test-results
+          path: test-results/vitest/results.json
+          if-no-files-found: warn
+          retention-days: 30
+
   # ─── 3. E2E Tests ───────────────────────────────────────────────────────────
   e2e-tests:
     name: E2E Tests
@@ -84,7 +93,61 @@ jobs:
           path: test-results/
           retention-days: 7
 
-  # ─── 4. Publish Coverage to GitHub Pages (main only) ────────────────────────
+      - name: Upload E2E test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e2e-test-results
+          path: |
+            test-results/playwright/results.json
+            test-results/playwright/html-report/
+          if-no-files-found: warn
+          retention-days: 30
+
+  # ─── 4. Combined Test Report ────────────────────────────────────────────────
+  test-report:
+    name: Test Report
+    needs: [unit-tests, e2e-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "npm"
+
+      - name: Download unit test results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: unit-test-results
+          path: artifacts/unit
+
+      - name: Download E2E test results
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: e2e-test-results
+          path: artifacts/e2e
+
+      - name: Generate combined test report
+        run: node scripts/generate-test-report.mjs --unit artifacts/unit --e2e artifacts/e2e --output test-results/ci-test-report.md
+
+      - name: Publish test report summary
+        shell: bash
+        run: cat test-results/ci-test-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload combined test report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-test-report
+          path: test-results/ci-test-report.md
+          retention-days: 30
+
+  # ─── 5. Publish Coverage to GitHub Pages (main only) ────────────────────────
   coverage-pages:
     name: Publish Coverage → GitHub Pages
     needs: unit-tests

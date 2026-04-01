@@ -131,7 +131,7 @@ describe("modules/calendar-manager", () => {
     document.body.innerHTML = "";
   });
 
-  it("gets and sets calendar month", () => {
+  it("liest und setzt den Kalendermonat", () => {
     const { manager, state, dispatch } = createManager();
 
     expect(manager.getCalendarMonth()).toBe("2026-03");
@@ -147,7 +147,7 @@ describe("modules/calendar-manager", () => {
     expect(state.settings.calendarMonth).toBe("2026-05");
   });
 
-  it("renders list/calendar/backup view state for all branches", () => {
+  it("rendert den Listen-, Kalender- und Backup-Ansichtsstatus fuer alle Zweige", () => {
     const { manager, state } = createManager();
 
     state.settings.activeView = "list";
@@ -181,7 +181,7 @@ describe("modules/calendar-manager", () => {
     expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
   });
 
-  it("returns early in renderCalendar when grid/label are missing", () => {
+  it("bricht in renderCalendar frueh ab, wenn Grid oder Label fehlen", () => {
     document.body.innerHTML = '<div id="calendar-grid"></div>';
     const { manager } = createManager();
     expect(() => manager.renderCalendar()).not.toThrow();
@@ -190,7 +190,7 @@ describe("modules/calendar-manager", () => {
     expect(() => manager.renderCalendar()).not.toThrow();
   });
 
-  it("renders events, sorting, outside days and legend", () => {
+  it("rendert Ereignisse, Sortierung, Aussentage und Legende", () => {
     const { manager } = createManager({
       settings: { activeView: "calendar", calendarMonth: "2026-03" },
       goals: [

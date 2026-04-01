@@ -160,7 +160,7 @@ describe("modules/form-handlers", () => {
     document.body.innerHTML = "";
   });
 
-  it("resets and starts goal edit via exposed API", () => {
+  it("setzt die Zielbearbeitung zurueck und startet sie ueber die exponierte API", () => {
     const { api } = setupHandlers();
 
     expect(document.getElementById("goal-submit").textContent).toBe("Hinzufügen");
@@ -185,7 +185,7 @@ describe("modules/form-handlers", () => {
     expect(document.getElementById("goal-title").value).toBe("");
   });
 
-  it("handles goal add/update and cancel edit", () => {
+  it("verarbeitet Ziel-Anlegen, Ziel-Aktualisieren und Bearbeitungsabbruch", () => {
     const { deps } = setupHandlers();
     const goalForm = document.getElementById("goal-form");
 
@@ -217,7 +217,7 @@ describe("modules/form-handlers", () => {
     expect(document.getElementById("goal-edit-id").value).toBe("");
   });
 
-  it("handles rough/detail, month and tab interactions", () => {
+  it("verarbeitet Interaktionen fuer Grobplan, Detailplan, Monat und Tabs", () => {
     const { deps } = setupHandlers();
 
     const roughForm = document.getElementById("rough-form");
@@ -251,7 +251,7 @@ describe("modules/form-handlers", () => {
     });
   });
 
-  it("handles calendar and timer controls", () => {
+  it("verarbeitet Kalender- und Timer-Steuerungen", () => {
     const { deps } = setupHandlers();
 
     document.getElementById("calendar-prev").click();
@@ -302,7 +302,7 @@ describe("modules/form-handlers", () => {
     expect(document.getElementById("track-edit-id").value).toBe("");
   });
 
-  it("handles demo, theme, import/export and reset actions", async () => {
+  it("verarbeitet Demo-, Theme-, Import-, Export- und Reset-Aktionen", async () => {
     const importIcsFile = vi
       .fn()
       .mockResolvedValueOnce({ ok: false })
