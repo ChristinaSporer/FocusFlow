@@ -17,7 +17,7 @@ test("user can switch to calendar and see created appointment", async ({ page })
   await page.goto("/");
 
   await page.locator('[data-detail-plan-toggle="additional"]').click();
-  await page.locator('[data-detail-date="additional"]').fill("2026-03-15");
+  await page.locator('[data-detail-date="additional"]').fill("2026-04-15");
   await page.locator('[data-detail-start="additional"]').fill("09:00");
   await page.locator('[data-detail-end="additional"]').fill("10:00");
   await page.locator('[data-detail-topic="additional"]').fill("Kalendertest");

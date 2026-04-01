@@ -129,7 +129,7 @@ export function createPomodoroManager({ startTimer, stopTimer, onRender, getStat
     if (phase === "work") {
       pomodorosCompleted += 1; // Dot setzen wie bei regulärem Abschluss
       stopTimer({ autoStopNote: "Pomodoro-Phase manuell übersprungen" });
-      phase = "short-break";
+      phase = nextBreakPhase();
     } else {
       phase = "work";
     }

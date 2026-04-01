@@ -62,6 +62,23 @@ Diese Datei kann per Doppelklick gestartet werden und:
 5. Coverage Test:
    - `npm run test:coverage`
 
+## Continuous Integration (CI)
+
+Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführt, die:
+
+- **Lint & Format**: ESLint, Stylelint und Prettier-Check
+- **Unit Tests**: Vitest mit Coverage-Bericht
+- **E2E Tests**: Playwright-Tests
+
+**Coverage-Report herunterladen:**
+
+1. Gehe zum Repository auf GitHub
+2. Klicke auf den Tab **Actions**
+3. Wähle die neueste Workflow-Run
+4. Scrolle nach unten zum Abschnitt **Artifacts**
+5. Lade `coverage-report` herunter
+6. Extrahiere und öffne `coverage/index.html` im Browser
+
 ## GitHub Pages Deployment
 
 1. Repository auf GitHub erstellen und Dateien pushen.
@@ -82,25 +99,79 @@ flowchart LR
   U[Nutzer]
   UI[index.html + styles.css]
   APP[app.js: Controller + Fachlogik]
+  RENDER[Render Main View]
   ST[(In-Memory State)]
+  MS[Milestones/Detailplanung]
   LS[(localStorage)]
   NTF[Notification API]
   ICS[ICS Import/Export]
+  JSON[JSON Import/Export]
   FILE[File/Blob API]
+  CAL[Calendar Manager]
+  POM[Pomodoro Manager]
+  TIM[Timer Manager]
+  THEME[Theme Manager]
+  FORM[Form Handlers]
 
   U --> UI
-  UI --> APP
+  UI --> RENDER
+  RENDER <--> APP
   APP <--> ST
+  APP <--> MS
+  MS <--> ST
   APP <--> LS
   APP --> NTF
   APP <--> ICS
+  APP <--> JSON
   APP --> FILE
+  APP --> CAL
+  APP --> POM
+  APP --> TIM
+  APP --> THEME
+  APP --> FORM
 ```
 
-## Sequenzdiagramm: Ziel anlegen
+## Klassendiagramm
 
 ```mermaid
-  sequenceDiagram
+classDiagram
+  class AppState {
+    goals[]
+    roughPlans[]
+    detailPlans[]
+    trackedSessions[]
+    importedEvents[]
+    settings
+    timer
+    pomodoro
+  }
+
+  class Goal
+  class Milestone
+  class RoughPlan
+  class DetailPlan
+  class TrackedSession
+  class ImportedEvent
+  class Settings
+  class TimerState
+  class PomodoroState
+
+  AppState --> Goal
+  Goal --> Milestone
+  AppState --> RoughPlan
+  AppState --> DetailPlan
+  AppState --> TrackedSession
+  AppState --> ImportedEvent
+  AppState --> Settings
+  AppState --> TimerState
+  AppState --> PomodoroState
+```
+
+## Sequenzdiagramme
+
+### Ziel anlegen
+```mermaid
+sequenceDiagram
   actor Nutzer
   participant Form as goal-form
   participant App as app.js Handler
@@ -114,6 +185,119 @@ flowchart LR
   App->>Store: saveState()
   App->>UI: renderAll()
   UI-->>Nutzer: aktualisierte Ziel-Liste
+```
+
+### Zwischenziel (Milestone) anlegen
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant Form as milestone-form
+  participant App as app.js Handler
+  participant State as state.goals.milestones
+  participant Store as localStorage
+  participant UI as renderAll()
+
+  Nutzer->>Form: Titel + Ziel wählen, Submit
+  Form->>App: submit event
+  App->>State: push(milestone)
+  App->>Store: saveState()
+  App->>UI: renderAll()
+  UI-->>Nutzer: aktualisierte Milestone-Liste
+```
+
+### Grobplanung erstellen
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant Form as roughplan-form
+  participant App as app.js Handler
+  participant State as state.roughPlans
+  participant Store as localStorage
+  participant UI as renderAll()
+
+  Nutzer->>Form: Datum + Stunden + Notiz, Submit
+  Form->>App: submit event
+  App->>State: push(roughPlan)
+  App->>Store: saveState()
+  App->>UI: renderAll()
+  UI-->>Nutzer: aktualisierte Grobplanung
+```
+
+### Detailplanung erstellen
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant Form as detailplan-form
+  participant App as app.js Handler
+  participant State as state.detailPlans
+  participant Store as localStorage
+  participant UI as renderAll()
+
+  Nutzer->>Form: Datum + Minuten + Thema, Submit
+  Form->>App: submit event
+  App->>State: push(detailPlan)
+  App->>Store: saveState()
+  App->>UI: renderAll()
+  UI-->>Nutzer: aktualisierte Detailplanung
+```
+
+### Stoppuhr starten und speichern
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant UI as Timer-UI
+  participant App as app.js Handler
+  participant State as state.trackedSessions
+  participant Store as localStorage
+
+  Nutzer->>UI: Start-Button drücken
+  UI->>App: startTimer event
+  App->>State: timer.start setzen
+  Nutzer->>UI: Stop-Button drücken
+  UI->>App: stopTimer event
+  App->>State: push(trackedSession)
+  App->>Store: saveState()
+  UI-->>Nutzer: neue Session gespeichert
+```
+
+### Pomodoro starten und abschließen
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant UI as Pomodoro-UI
+  participant App as app.js Handler
+  participant State as state.pomodoro
+  participant Store as localStorage
+  participant NOTIF as Notification API
+
+  Nutzer->>UI: Pomodoro starten
+  UI->>App: startPomodoro event
+  App->>State: pomodoro.active = true
+  App->>Store: saveState()
+  App->>NOTIF: Benachrichtigung bei Ende
+  Nutzer->>UI: Pomodoro beenden
+  UI->>App: stopPomodoro event
+  App->>State: pomodoro.active = false
+  App->>Store: saveState()
+  UI-->>Nutzer: Pomodoro abgeschlossen
+```
+
+### Zeit manuell eintragen
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant Form as tracked-form
+  participant App as app.js Handler
+  participant State as state.trackedSessions
+  participant Store as localStorage
+  participant UI as renderAll()
+
+  Nutzer->>Form: Start/Ende + Notiz, Submit
+  Form->>App: submit event
+  App->>State: push(trackedSession)
+  App->>Store: saveState()
+  App->>UI: renderAll()
+  UI-->>Nutzer: neue Session sichtbar
 ```
 
 ## Klassendiagramm: Datenmodell
@@ -144,6 +328,13 @@ flowchart LR
     +targetDate: string
     +completed: boolean
     +completedAt: string|null
+    +milestones: Milestone[]
+  }
+
+  class Milestone {
+    +id: string
+    +title: string
+    +done: boolean
   }
 
   class RoughPlan {
@@ -194,10 +385,301 @@ flowchart LR
   }
 
   AppState --> Goal
+  Goal --> Milestone
   AppState --> RoughPlan
   AppState --> DetailPlan
   AppState --> TrackedSession
   AppState --> ImportedEvent
   AppState --> Settings
   AppState --> TimerState
+  AppState --> PomodoroState
+```
+
+## Use-Case Diagramm
+
+```mermaid
+flowchart LR
+  Nutzer((Nutzer))
+  UC1([Ziel anlegen])
+  UC2([Meilenstein anlegen])
+  UC3([Lernzeit tracken])
+  UC4([Pomodoro nutzen])
+  UC5([Kalender anzeigen])
+  UC6([Daten importieren])
+  UC7([Daten exportieren])
+  UC8([Demo-Daten laden])
+
+  PC([Lokaler PC Dateisystem])
+  NOTIF([Browser Notification API])
+  STORAGE([localStorage])
+  FILEAPI([File/Blob API])
+
+  Nutzer --> UC1
+  Nutzer --> UC2
+  Nutzer --> UC3
+  Nutzer --> UC4
+  Nutzer --> UC5
+  Nutzer --> UC6
+  Nutzer --> UC7
+  Nutzer --> UC8
+
+  UC6 -- "Import" --> PC
+  UC7 -- "Export" --> PC
+  UC6 -- "File lesen" --> FILEAPI
+  UC7 -- "File schreiben" --> FILEAPI
+  UC4 -- "Benachrichtigung" --> NOTIF
+  UC1 -- "Speichern" --> STORAGE
+  UC2 -- "Speichern" --> STORAGE
+  UC3 -- "Speichern" --> STORAGE
+  UC4 -- "Speichern" --> STORAGE
+  UC5 -- "Speichern" --> STORAGE
+  UC8 -- "Speichern" --> STORAGE
+```
+
+## Zustandsdiagramm Pomodoro Technik
+
+```mermaid
+stateDiagram-v2
+  [*] --> Idle
+
+  Idle --> Work: Start
+  Work --> Paused: Pause
+  Paused --> Work: Fortsetzen
+  Work --> ShortBreak: Phase beendet
+  ShortBreak --> Paused: Pause
+  Paused --> ShortBreak: Fortsetzen
+  ShortBreak --> Work: Nächste Arbeitsphase
+
+  Work --> LongBreak: Nach mehreren Pomodoros
+  LongBreak --> Paused: Pause
+  Paused --> LongBreak: Fortsetzen
+  LongBreak --> Work: Nächste Arbeitsphase
+
+  Work --> Idle: Reset / Stop
+  ShortBreak --> Idle: Reset / Stop
+  LongBreak --> Idle: Reset / Stop
+  Paused --> Idle: Reset / Stop
+```
+
+## Kontextdiagramm
+
+```mermaid
+flowchart LR
+  U[Nutzer]
+  APP[FocusFlow Browser App]
+  LS[(localStorage)]
+  NOTIF[Notification API]
+  FILE[Datei Import und Export]
+  ICS[ICS Datei]
+  JSON[JSON Backup]
+
+  U --> APP
+  APP --> LS
+  APP --> NOTIF
+  APP --> FILE
+  FILE --> ICS
+  FILE --> JSON
+  ICS --> APP
+  JSON --> APP
+```
+
+## Komponentendiagramm
+
+```mermaid
+flowchart LR
+  UI[Benutzeroberflaeche]
+  APP[App Orchestrator]
+  STORE[State Store]
+  REDUCER[Reducer]
+  FORM[Form Handler]
+  RENDER[Render Module]
+
+  CAL[Calendar Manager]
+  TIMER[Timer Manager]
+  POMO[Pomodoro Manager]
+  ICS[ICS Manager]
+  JSON[JSON Manager]
+  THEME[Theme Manager]
+
+  LS[(localStorage)]
+  NOTIF[Notification API]
+  FILE[File API]
+
+  UI --> FORM
+  FORM --> APP
+  APP --> REDUCER
+  REDUCER --> STORE
+  STORE --> LS
+  STORE --> APP
+  APP --> RENDER
+  RENDER --> UI
+
+  APP --> CAL
+  APP --> TIMER
+  APP --> POMO
+  APP --> ICS
+  APP --> JSON
+  APP --> THEME
+
+  POMO --> NOTIF
+  ICS --> FILE
+  JSON --> FILE
+```
+
+## Datenmodell
+```mermaid
+classDiagram
+  class AppState {
+    goals
+    roughPlans
+    detailPlans
+    trackedSessions
+    importedEvents
+    settings
+    timer
+    pomodoro
+  }
+
+  class Goal {
+    id
+    title
+    targetDate
+    description
+    completed
+    completedAt
+  }
+
+  class Milestone {
+    id
+    title
+    done
+  }
+
+  class RoughPlan {
+    id
+    week
+    date
+    hours
+    note
+    goalId
+  }
+
+  class DetailPlan {
+    id
+    date
+    minutes
+    topic
+    milestone
+    goalId
+    milestoneId
+    roughPlanId
+    done
+  }
+
+  class TrackedSession {
+    id
+    start
+    end
+    minutes
+    note
+    detailPlanId
+  }
+
+  class ImportedEvent {
+    id
+    sourceKey
+    sourceName
+    sourceHash
+    externalUid
+    date
+    summary
+    createdAt
+  }
+
+  class Settings {
+    inactivityDays
+    lastReminderRun
+    notificationEnabled
+    activeView
+    calendarMonth
+    themeMode
+  }
+
+  class TimerState {
+    start
+    selectedDetailPlanId
+  }
+
+  class PomodoroState {
+    active
+    phase
+    pomodorosCompleted
+    secondsLeft
+    phaseStartedAt
+  }
+
+  AppState --> Goal
+  Goal --> Milestone
+  AppState --> RoughPlan
+  AppState --> DetailPlan
+  AppState --> TrackedSession
+  AppState --> ImportedEvent
+  AppState --> Settings
+  AppState --> TimerState
+  AppState --> PomodoroState
+```
+
+## Sequenzdiagramm Standard Use-Case
+
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant UI as Formular
+  participant Handler
+  participant App
+  participant Reducer
+  participant Store
+  participant LocalStorage
+  participant View
+
+  Nutzer->>UI: Eingabe und Submit
+  UI->>Handler: submit event
+  Handler->>App: dispatch action
+  App->>Reducer: state update
+  Reducer->>Store: neuer state
+  Store->>LocalStorage: speichern
+  Store->>View: render
+  View-->>Nutzer: aktualisierte Ansicht
+```
+
+## Sequenzdiagramm Import-Flow
+
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant UI as Import UI
+  participant Handler
+  participant Manager
+  participant Parser
+  participant Store
+  participant LocalStorage
+  participant View
+
+  Nutzer->>UI: Datei auswaehlen
+  Nutzer->>UI: Import starten
+  UI->>Handler: click event
+  Handler->>Manager: import file
+  Manager->>Parser: lesen und validieren
+
+  alt gueltige Datei
+    Parser-->>Manager: Daten ok
+    Manager->>Store: merge oder replace
+    Store->>LocalStorage: speichern
+    Store->>View: render
+    View-->>Nutzer: Status und neue Ansicht
+  else ungueltige Datei
+    Parser-->>Manager: Fehler
+    Manager-->>UI: Fehlermeldung
+    UI-->>Nutzer: Import fehlgeschlagen
+  end
 ```
