@@ -73,7 +73,7 @@ Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführ
 
 **Coverage-Report ansehen (GitHub Pages):**
 
-Der Coverage-Report wird nach jedem erfolgreichen Run auf der `main`-Branch automatisch zu GitHub Pages deployed:
+Der Coverage-Report wird nach jedem erfolgreichen Run auf der Default-Branch automatisch zu GitHub Pages deployed.
 
 1. Gehe zu deinem **GitHub Pages** (z.B. `https://ChristinaSporer.github.io/FocusFlow/`)
 2. Öffne den **Coverage-Report** unter: `/coverage/index.html`
@@ -85,9 +85,9 @@ Der Coverage-Report wird nach jedem erfolgreichen Run auf der `main`-Branch auto
 **Einmalige Aktivierung (falls noch nicht geschehen):**
 
 - Gehe in GitHub → **Settings → Pages**
-- Source: **Deploy from a branch**
-- Branch: `gh-pages`, Folder: `/ (root)`
-- Der Workflow erstellt die `gh-pages` Branch automatisch beim ersten erfolgreichen Push auf `main`
+- Source: **GitHub Actions**
+- Der Workflow deployed die Pages-Inhalte direkt aus GitHub Actions
+- Es ist keine `gh-pages`-Branch und keine manuelle Branch-Auswahl nötig
 
 **Test-Report ansehen:**
 
@@ -100,9 +100,9 @@ Der Coverage-Report wird nach jedem erfolgreichen Run auf der `main`-Branch auto
 
 1. Repository auf GitHub erstellen und Dateien pushen.
 2. In GitHub: `Settings > Pages` öffnen.
-3. Source: `Deploy from a branch`.
-4. Branch: `main` (oder `master`), Folder: `/ (root)`.
-5. Speichern, dann wird eine Pages-URL bereitgestellt.
+3. Source: `GitHub Actions` auswählen.
+4. Nach einem erfolgreichen Push auf die Default-Branch wird der Coverage-Report automatisch deployed.
+5. Anschließend steht die Pages-URL mit dem Coverage-Report unter `/coverage/index.html` bereit.
 
 ## Hinweise
 

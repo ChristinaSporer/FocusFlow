@@ -147,12 +147,12 @@ jobs:
           path: test-results/ci-test-report.md
           retention-days: 30
 
-  # ─── 5. Publish Coverage to GitHub Pages (main only) ────────────────────────
+  # ─── 5. Publish Coverage to GitHub Pages (default branch only) ──────────────
   coverage-pages:
     name: Publish Coverage → GitHub Pages
     needs: unit-tests
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref_name == github.event.repository.default_branch && github.event_name == 'push'
     permissions:
       pages: write
       id-token: write
