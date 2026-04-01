@@ -47,5 +47,16 @@ module.exports = [
       "new-cap": ["error", { newIsCap: true, capIsNew: false }],
     },
   },
+  {
+    files: ["scripts/**/*.mjs"],
+    languageOptions: {
+      sourceType: "module",
+      ecmaVersion: "latest",
+      globals: {
+        console: "readonly",
+        process: "readonly",
+      },
+    },
+  },
   eslintConfigPrettier,
 ];

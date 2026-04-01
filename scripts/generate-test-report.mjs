@@ -98,10 +98,7 @@ function formatStatusCounts(tests) {
 
 function formatTable(tests) {
   if (!tests.length) return "_Keine Ergebnisse gefunden._\n";
-  const lines = [
-    "| Status | Test | Datei | Dauer |",
-    "| --- | --- | --- | ---: |",
-  ];
+  const lines = ["| Status | Test | Datei | Dauer |", "| --- | --- | --- | ---: |"];
   for (const test of tests) {
     lines.push(
       `| ${test.status} | ${test.title.replace(/\|/g, "\\|")} | ${String(test.file).replace(/\|/g, "\\|")} | ${test.durationMs} ms |`
@@ -112,7 +109,9 @@ function formatTable(tests) {
 
 const args = parseArgs(process.argv.slice(2));
 const vitestFile = findFile(args.unit, (filePath) => filePath.endsWith(`${path.sep}results.json`));
-const playwrightFile = findFile(args.e2e, (filePath) => filePath.endsWith(`${path.sep}results.json`));
+const playwrightFile = findFile(args.e2e, (filePath) =>
+  filePath.endsWith(`${path.sep}results.json`)
+);
 
 const vitestTests = collectVitestTests(readJson(vitestFile));
 const playwrightTests = collectPlaywrightTests(readJson(playwrightFile));
@@ -124,12 +123,16 @@ const report = [
   `Erstellt am: ${new Date().toISOString()}`,
   "",
   `Gesamtzahl erfasster Tests: ${allTests.length}`,
-  allTests.length ? `Statusverteilung: ${formatStatusCounts(allTests)}` : "Statusverteilung: keine Daten",
+  allTests.length
+    ? `Statusverteilung: ${formatStatusCounts(allTests)}`
+    : "Statusverteilung: keine Daten",
   "",
   "## Unit-Tests (Vitest)",
   "",
   `Erfasste Tests: ${vitestTests.length}`,
-  vitestTests.length ? `Statusverteilung: ${formatStatusCounts(vitestTests)}` : "Statusverteilung: keine Daten",
+  vitestTests.length
+    ? `Statusverteilung: ${formatStatusCounts(vitestTests)}`
+    : "Statusverteilung: keine Daten",
   "",
   formatTable(vitestTests),
   "## E2E-Tests (Playwright)",
