@@ -73,7 +73,7 @@ Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführ
 
 **Coverage-Report ansehen (GitHub Pages):**
 
-Der Coverage-Report wird nach jedem erfolgreichen Run auf der Default-Branch automatisch zu GitHub Pages deployed.
+Der Coverage-Report wird nach jedem erfolgreichen Run auf der Default-Branch automatisch zu GitHub Pages deployed und unter `/coverage/index.html` veröffentlicht.
 
 1. Gehe zu deinem **GitHub Pages** (z.B. `https://ChristinaSporer.github.io/FocusFlow/`)
 2. Öffne den **Coverage-Report** unter: `/coverage/index.html`
