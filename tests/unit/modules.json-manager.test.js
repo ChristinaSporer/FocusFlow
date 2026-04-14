@@ -231,4 +231,78 @@ describe("modules/json-manager", () => {
     expect(result.state.settings.activeView).toBe("list");
     expect(result.status).toContain("teilweise erfolgreich");
   });
+
+  it("klemmt notificationLeadMinutes auf 90 wenn der Wert groesser ist", async () => {
+    const { manager } = createManager();
+
+    const file = {
+      name: "settings.json",
+      text: vi.fn(async () =>
+        JSON.stringify({
+          settings: { notificationLeadMinutes: 200 },
+        })
+      ),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(true);
+    expect(result.state.settings.notificationLeadMinutes).toBe(90);
+  });
+
+  it("gibt ok:false zurueck wenn importiertes JSON ein Array statt Objekt ist", async () => {
+    const { manager } = createManager();
+
+    const file = {
+      name: "array.json",
+      text: vi.fn(async () => JSON.stringify([{ id: "g1" }])),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(false);
+    expect(result.status).toContain("ungültig");
+  });
+
+  it("behaelt standardLearningTimes aus dem Import wenn angegeben", async () => {
+    const { manager } = createManager();
+
+    const customLearningTimes = {
+      mon: { startTime: "07:00", endTime: "09:00" },
+      tue: { startTime: "07:00", endTime: "09:00" },
+      wed: { startTime: "", endTime: "" },
+      thu: { startTime: "", endTime: "" },
+      fri: { startTime: "", endTime: "" },
+      sat: { startTime: "", endTime: "" },
+      sun: { startTime: "", endTime: "" },
+    };
+
+    const file = {
+      name: "full.json",
+      text: vi.fn(async () =>
+        JSON.stringify({
+          settings: { standardLearningTimes: customLearningTimes },
+        })
+      ),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(true);
+    expect(result.state.settings.standardLearningTimes).toEqual(customLearningTimes);
+  });
+
+  it("behaelt timer.start aus dem Import wenn es ein String ist", async () => {
+    const { manager } = createManager();
+
+    const file = {
+      name: "timer.json",
+      text: vi.fn(async () =>
+        JSON.stringify({
+          timer: { start: "2026-03-24T09:00:00.000Z" },
+        })
+      ),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(true);
+    expect(result.state.timer.start).toBe("2026-03-24T09:00:00.000Z");
+  });
 });

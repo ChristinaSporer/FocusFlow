@@ -129,4 +129,37 @@ describe("modules/state-store", () => {
     persistState({ custom: true });
     expect(JSON.parse(localStorage.getItem(STORAGE_KEY))).toEqual({ custom: true });
   });
+
+  it("normalisiert roughPlans die kein Array sind zu leeren Array", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        roughPlans: "nicht-ein-array",
+      })
+    );
+
+    const loaded = loadState();
+    expect(loaded.roughPlans).toEqual([]);
+  });
+
+  it("normalisiert roughPlan ohne plannedDays zu leerem Array", () => {
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        roughPlans: [{ id: "r1", date: "2026-04-06", hours: 2 }],
+      })
+    );
+
+    const loaded = loadState();
+    expect(loaded.roughPlans[0].plannedDays).toEqual([]);
+  });
+
+  it("normalisiert gespeicherten null-Wert zu Standarddaten", () => {
+    localStorage.setItem(STORAGE_KEY, "null");
+
+    // JSON.parse("null") = null → try-catch gibt defaultData() zurück
+    // Da null kein Objekt ist schlägt der Spread fehl → catch → defaultData()
+    const loaded = loadState();
+    expect(loaded).toMatchObject(defaultData());
+  });
 });

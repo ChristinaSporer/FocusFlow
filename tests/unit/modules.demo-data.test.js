@@ -150,4 +150,25 @@ describe("modules/demo-data", () => {
       themeMode: "dark",
     });
   });
+
+  it("erstellt Demodaten ohne themeMode und setzt endTime auf Basis von startTime", () => {
+    const state = buildDemoState({});
+
+    // themeMode darf nicht gesetzt sein (undefined → kein themeMode-Wert)
+    expect(state.settings.themeMode).toBeUndefined();
+
+    // Jeder DetailPlan soll eine gueltige endTime haben (addMinutesToTime normal path)
+    state.detailPlans.forEach((plan) => {
+      expect(typeof plan.startTime).toBe("string");
+      expect(typeof plan.endTime).toBe("string");
+      if (plan.startTime) {
+        expect(plan.endTime).toMatch(/^\d{2}:\d{2}$/);
+      }
+    });
+
+    // roughPlans haben plannedDays
+    state.roughPlans.forEach((plan) => {
+      expect(Array.isArray(plan.plannedDays)).toBe(true);
+    });
+  });
 });

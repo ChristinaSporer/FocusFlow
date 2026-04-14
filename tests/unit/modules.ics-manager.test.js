@@ -300,4 +300,54 @@ describe("modules/ics-manager", () => {
     expect(idxRough).toBeGreaterThan(-1);
     expect(idxDetail).toBeLessThan(idxRough);
   });
+
+  it("exportiert Grobplan mit plannedDays und verwendet das letzte Datum", async () => {
+    const createUrlSpy = vi.spyOn(URL, "createObjectURL").mockReturnValue("blob:planned-days");
+    vi.spyOn(URL, "revokeObjectURL").mockImplementation(() => {});
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    const { manager } = createManager({
+      roughPlans: [
+        {
+          id: "r1",
+          totalWorkloadHours: 5,
+          note: "Geplanter Plan",
+          plannedDays: [
+            { date: "2026-03-23", minutes: 120 },
+            { date: "2026-03-24", minutes: 180 },
+          ],
+        },
+      ],
+    });
+
+    const result = manager.exportToFile();
+    expect(result.ok).toBe(true);
+
+    const blobArg = createUrlSpy.mock.calls[0][0];
+    const text = await blobArg.text();
+
+    // Datum des letzten plannedDay soll verwendet werden
+    expect(text).toContain("DTSTART;VALUE=DATE:20260324");
+    expect(text).toContain("SUMMARY:Grobplanung: 5 h");
+    expect(text).toContain("Verteilte Lerntage: 2");
+  });
+
+  it("filtert Grobplaene ohne Datum und ohne hours heraus", () => {
+    const { manager } = createManager({
+      roughPlans: [
+        {
+          id: "r1",
+          hours: 0,
+          // kein date, kein plannedDays → wird ausgefiltert
+        },
+      ],
+      detailPlans: [],
+    });
+
+    const result = manager.exportToFile();
+    expect(result).toEqual({
+      ok: false,
+      status: "Keine App-Termine für den Export vorhanden.",
+    });
+  });
 });

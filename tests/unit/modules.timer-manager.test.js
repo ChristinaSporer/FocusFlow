@@ -352,6 +352,121 @@ describe("modules/timer-manager", () => {
     expect(onActivity).toHaveBeenCalledTimes(1);
     expect(onRenderAll).toHaveBeenCalledTimes(1);
   });
-});
 
-// --- Pomodoro Manager Tests ---
+  it("stoppt den Timer aber behaelt die Notiz wenn clearNote false ist", () => {
+    document.body.innerHTML =
+      '<div id="timer-display"></div><input id="track-note" value="Wichtige Notiz">';
+
+    const state = { timer: { start: "2026-03-24T09:57:00.000Z", selectedDetailPlanId: null } };
+    const dispatch = vi.fn((action) => {
+      if (action.type === "TIMER_STOP_AND_STORE_SESSION") {
+        state.timer.start = null;
+      }
+    });
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    manager.stopTimer({ clearNote: false });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "TIMER_STOP_AND_STORE_SESSION" })
+    );
+    // Notiz soll erhalten bleiben
+    expect(document.getElementById("track-note").value).toBe("Wichtige Notiz");
+  });
+
+  it("addManualSession gibt false zurueck fuer ungueltiges Datum", () => {
+    const { manager } = setupTimerManager();
+
+    const ok = manager.addManualSession({
+      date: "kein-datum",
+      minutes: 30,
+      note: "",
+      detailPlanId: null,
+    });
+
+    expect(ok).toBe(false);
+  });
+
+  it("addManualSession gibt false zurueck fuer 0 Minuten", () => {
+    const { manager } = setupTimerManager();
+
+    const ok = manager.addManualSession({
+      date: "2026-03-24",
+      minutes: 0,
+      note: "",
+      detailPlanId: null,
+    });
+
+    expect(ok).toBe(false);
+  });
+
+  it("updateTrackedSession gibt false zurueck wenn Session nicht existiert", () => {
+    const state = {
+      timer: { start: null, selectedDetailPlanId: null },
+      trackedSessions: [],
+    };
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch: vi.fn(),
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    const ok = manager.updateTrackedSession({
+      id: "nicht-vorhanden",
+      date: "2026-03-24",
+      minutes: 30,
+      note: "",
+      detailPlanId: null,
+    });
+
+    expect(ok).toBe(false);
+  });
+
+  it("startTimerForDetailPlan startet Timer wenn kein Timer laeuft", () => {
+    document.body.innerHTML = '<div id="timer-display"></div>';
+    const onActivity = vi.fn();
+    const onRenderAll = vi.fn();
+    const state = { timer: { start: null, selectedDetailPlanId: null } };
+
+    const dispatch = vi.fn((action) => {
+      if (action.type === "TIMER_START") {
+        state.timer.start = action.payload.start;
+        state.timer.selectedDetailPlanId = action.payload.selectedDetailPlanId;
+      }
+      if (action.type === "TIMER_SET_SELECTED_DETAIL_PLAN") {
+        state.timer.selectedDetailPlanId = action.payload.detailPlanId;
+      }
+    });
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity,
+      onRenderAll,
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    manager.startTimerForDetailPlan("d3", "Neues Detailplan");
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "TIMER_SET_SELECTED_DETAIL_PLAN",
+      payload: { detailPlanId: "d3" },
+    });
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "TIMER_START",
+      payload: { start: "2026-03-24T10:00:00.000Z", selectedDetailPlanId: "d3" },
+    });
+    expect(onActivity).toHaveBeenCalled();
+    expect(onRenderAll).toHaveBeenCalled();
+  });
+});

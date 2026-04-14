@@ -432,4 +432,66 @@ describe("modules/form-handlers", () => {
     });
     expect(deps.setInitialValues).toHaveBeenCalledTimes(2);
   });
+
+  it("speichert Standard-Lernzeiten wenn der Button geklickt wird", () => {
+    const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
+    const { deps } = setupHandlers();
+
+    document.getElementById("slt-mon-start").value = "09:00";
+    document.getElementById("slt-mon-end").value = "11:00";
+    document.getElementById("menu-save-learning-times").click();
+
+    expect(deps.dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "SET_STANDARD_LEARNING_TIMES",
+        payload: expect.objectContaining({
+          standardLearningTimes: expect.objectContaining({
+            mon: expect.objectContaining({ startTime: "09:00", endTime: "11:00" }),
+          }),
+        }),
+      })
+    );
+    expect(alertSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("deaktiviert Benachrichtigungen wenn Berechtigung verweigert wird", async () => {
+    const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
+    const { deps } = setupHandlers({
+      notificationPermission: vi.fn(async () => "denied"),
+    });
+
+    const toggle = document.getElementById("menu-notification-enabled");
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    await Promise.resolve();
+
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_NOTIFICATION_ENABLED",
+      payload: { enabled: false },
+    });
+    expect(toggle.checked).toBe(false);
+    expect(alertSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("pausiert und nimmt den Timer wieder auf", () => {
+    const { deps } = setupHandlers();
+
+    // Starte den Timer
+    document.getElementById("timer-start").click();
+    expect(deps.startTimer).toHaveBeenCalledTimes(1);
+
+    // Pausiere
+    document.getElementById("timer-pause").click();
+    // Nach Pause ist der Start-Button wieder sichtbar (d-none entfernt)
+    expect(
+      document.getElementById("timer-start").classList.contains("d-none")
+    ).toBe(false);
+
+    // Resume (Start-Button erneut klicken wenn pausiert)
+    document.getElementById("timer-start").click();
+    expect(deps.startTimer).toHaveBeenCalledTimes(2);
+    expect(deps.startTimer).toHaveBeenLastCalledWith(
+      expect.objectContaining({ resume: true })
+    );
+  });
 });
