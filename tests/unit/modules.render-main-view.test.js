@@ -583,7 +583,7 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("goal-progress").textContent).toBe("33%");
 
     const upcoming = Array.from(
-      document.querySelectorAll("#overview-next-items .list-group-item span")
+      document.querySelectorAll("#overview-next-items .list-group-item .lz-next-item-title")
     ).map((node) => node.textContent);
 
     const upcomingSubtitles = Array.from(
@@ -599,5 +599,13 @@ describe("modules/render-main-view", () => {
     expect(upcomingSubtitles.some((line) => line.includes("09:00-10:00"))).toBe(true);
     expect(upcoming).not.toContain("Detail: Detail hidden goal");
     expect(upcoming).not.toContain("Detail: Detail hidden milestone");
+
+    const markers = Array.from(
+      document.querySelectorAll("#overview-next-items .list-group-item .lz-legend-dot")
+    );
+    expect(markers).toHaveLength(5);
+
+    const firstItem = document.querySelector("#overview-next-items .list-group-item");
+    expect(firstItem?.style.borderLeft).toContain("6px solid");
   });
 });

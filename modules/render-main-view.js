@@ -1446,6 +1446,7 @@ export function renderStats({ state }) {
       date: goal.targetDate,
       title: goal.title,
       subtitle: `Fällig: ${formatDate(goal.targetDate)}`,
+      accentColor: goalColorCssVar(normalizeGoalColorKey(goal.colorKey), "base"),
     }));
 
   const upcomingDetailItems = (state.detailPlans || [])
@@ -1464,6 +1465,14 @@ export function renderStats({ state }) {
         subtitle: [formatDate(item.date), timeRange, `${Number(item.minutes || 0)} Min`]
           .filter(Boolean)
           .join(" · "),
+        accentColor: item.goalId
+          ? goalColorCssVar(
+              normalizeGoalColorKey(
+                (state.goals || []).find((goal) => goal.id === item.goalId)?.colorKey
+              ),
+              "soft"
+            )
+          : "var(--source-detail)",
       };
     });
 
@@ -1495,15 +1504,25 @@ export function renderStats({ state }) {
   nextItems.forEach((item) => {
     const li = document.createElement("li");
     li.className = "list-group-item d-flex flex-column gap-1";
+    li.style.borderLeft = `6px solid ${item.accentColor}`;
+
+    const heading = document.createElement("div");
+    heading.className = "d-flex align-items-center gap-2";
+
+    const dot = document.createElement("span");
+    dot.className = "lz-legend-dot";
+    dot.style.backgroundColor = item.accentColor;
 
     const title = document.createElement("span");
+    title.className = "lz-next-item-title";
     title.textContent = `${item.type === "detail" ? "Detail" : "Ziel"}: ${item.title}`;
 
     const subtitle = document.createElement("small");
     subtitle.className = "text-body-secondary";
     subtitle.textContent = item.subtitle;
 
-    li.append(title, subtitle);
+    heading.append(dot, title);
+    li.append(heading, subtitle);
     list.appendChild(li);
   });
 
