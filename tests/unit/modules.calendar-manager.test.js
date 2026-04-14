@@ -82,13 +82,10 @@ describe("modules/calendar-manager", () => {
     document.body.innerHTML = [
       '<div id="list-view"></div>',
       '<div id="calendar-view"></div>',
-      '<div id="backup-view"></div>',
       '<button id="tab-list" type="button"></button>',
       '<button id="tab-calendar" type="button"></button>',
-      '<button id="tab-backup" type="button"></button>',
       '<div id="calendar-month-label"></div>',
       '<div id="calendar-grid"></div>',
-      '<div id="calendar-legend"></div>',
     ].join("");
   }
 
@@ -147,38 +144,27 @@ describe("modules/calendar-manager", () => {
     expect(state.settings.calendarMonth).toBe("2026-05");
   });
 
-  it("rendert den Listen-, Kalender- und Backup-Ansichtsstatus fuer alle Zweige", () => {
+  it("rendert den Listen- und Kalender-Ansichtsstatus fuer alle Zweige", () => {
     const { manager, state } = createManager();
 
     state.settings.activeView = "list";
     manager.renderViewState();
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
-    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
     expect(document.getElementById("tab-list").getAttribute("aria-selected")).toBe("true");
     expect(document.getElementById("tab-calendar").getAttribute("aria-selected")).toBe("false");
-    expect(document.getElementById("tab-backup").getAttribute("aria-selected")).toBe("false");
 
     state.settings.activeView = "calendar";
     manager.renderViewState();
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(false);
-    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
     expect(document.getElementById("tab-list").getAttribute("aria-selected")).toBe("false");
     expect(document.getElementById("tab-calendar").getAttribute("aria-selected")).toBe("true");
-
-    state.settings.activeView = "backup";
-    manager.renderViewState();
-    expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
-    expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
-    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(false);
-    expect(document.getElementById("tab-backup").getAttribute("aria-selected")).toBe("true");
 
     state.settings.activeView = "unknown";
     manager.renderViewState();
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
-    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(true);
   });
 
   it("bricht in renderCalendar frueh ab, wenn Grid oder Label fehlen", () => {
@@ -190,7 +176,7 @@ describe("modules/calendar-manager", () => {
     expect(() => manager.renderCalendar()).not.toThrow();
   });
 
-  it("rendert Ereignisse, Sortierung, Aussentage und Legende", () => {
+  it("rendert Ereignisse, Sortierung und Aussentage", () => {
     const { manager } = createManager({
       settings: { activeView: "calendar", calendarMonth: "2026-03" },
       goals: [
@@ -254,8 +240,5 @@ describe("modules/calendar-manager", () => {
     expect(allEventsByDate.some((item) => item.day === "24" && item.text === "SE Abgabe")).toBe(
       true
     );
-
-    const legendItems = document.querySelectorAll("#calendar-legend .lz-legend-dot");
-    expect(legendItems).toHaveLength(3);
   });
 });

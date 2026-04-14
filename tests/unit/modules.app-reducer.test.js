@@ -89,9 +89,23 @@ describe("modules/app-reducer", () => {
 
     state = appReducer(state, {
       type: "GOAL_UPDATE",
-      payload: { goal: { id: "g2", title: "Updated", targetDate: "2026-04-10" } },
+      payload: {
+        goal: {
+          id: "g2",
+          title: "Updated",
+          startDate: "2026-04-01",
+          targetDate: "2026-04-10",
+          workloadHours: 10.5,
+          colorKey: "turquoise",
+        },
+      },
     });
     expect(state.goals.find((goal) => goal.id === "g2").title).toBe("Updated");
+    expect(state.goals.find((goal) => goal.id === "g2")).toMatchObject({
+      startDate: "2026-04-01",
+      workloadHours: 10.5,
+      colorKey: "turquoise",
+    });
 
     state = appReducer(state, {
       type: "GOAL_ADD_MILESTONE",

@@ -1,10 +1,11 @@
 import { byId } from "./dom.js";
 import { formatYmd } from "./date-utils.js";
+import { normalizeGoals } from "./goal-utils.js";
 import { defaultData } from "./state-store.js";
 import { normalizeThemeMode } from "./theme-manager.js";
 
 const ARRAY_KEYS = ["goals", "roughPlans", "detailPlans", "trackedSessions", "importedEvents"];
-const ALLOWED_VIEWS = new Set(["list", "calendar", "backup"]);
+const ALLOWED_VIEWS = new Set(["list", "calendar"]);
 
 function downloadFile(name, content, type) {
   const blob = new Blob([content], { type });
@@ -76,6 +77,13 @@ function normalizeSettings(importedSettings, fallbackSettings, warnings) {
     nextSettings.notificationEnabled = importedSettings.notificationEnabled;
   }
 
+  if (Number.isFinite(Number(importedSettings.notificationLeadMinutes))) {
+    nextSettings.notificationLeadMinutes = Math.min(
+      90,
+      Math.max(0, Math.round(Number(importedSettings.notificationLeadMinutes)))
+    );
+  }
+
   if (typeof importedSettings.activeView === "string") {
     if (ALLOWED_VIEWS.has(importedSettings.activeView)) {
       nextSettings.activeView = importedSettings.activeView;
@@ -93,6 +101,13 @@ function normalizeSettings(importedSettings, fallbackSettings, warnings) {
 
   if (typeof importedSettings.themeMode === "string") {
     nextSettings.themeMode = normalizeThemeMode(importedSettings.themeMode);
+  }
+
+  if (
+    importedSettings.standardLearningTimes &&
+    typeof importedSettings.standardLearningTimes === "object"
+  ) {
+    nextSettings.standardLearningTimes = importedSettings.standardLearningTimes;
   }
 
   return nextSettings;
@@ -135,6 +150,9 @@ function buildMergedState(currentState, importedState) {
     }
 
     merged[key] = mergeById(merged[key], collection.valid);
+    if (key === "goals") {
+      merged[key] = normalizeGoals(merged[key]);
+    }
     importedCounts[key] = collection.valid.length;
   });
 
@@ -153,12 +171,12 @@ export function createJsonManager({ getState }) {
 
   function exportToFile() {
     const state = getState();
-    const fileName = `focusflow-backup-${formatYmd(new Date())}.json`;
+    const fileName = `focusflow-export-${formatYmd(new Date())}.json`;
     const content = JSON.stringify(state, null, 2);
 
     downloadFile(fileName, content, "application/json;charset=utf-8");
 
-    const status = `Backup als ${fileName} exportiert.`;
+    const status = `JSON-App-Stand als ${fileName} exportiert.`;
     setStatus(status);
 
     return {

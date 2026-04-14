@@ -1,3 +1,44 @@
+import { normalizeGoal } from "./goal-utils.js";
+
+function applyDerivedGoalEndDates(state) {
+  const latestByGoalId = new Map();
+  (state.roughPlans || []).forEach((plan) => {
+    if (!plan.goalId) return;
+
+    const candidates = [];
+    if (Array.isArray(plan.plannedDays) && plan.plannedDays.length) {
+      plan.plannedDays.forEach((day) => {
+        if (day?.date) candidates.push(String(day.date));
+      });
+    } else if (plan.date) {
+      candidates.push(String(plan.date));
+    }
+
+    candidates.forEach((candidate) => {
+      const latest = latestByGoalId.get(plan.goalId);
+      if (!latest || String(candidate).localeCompare(latest) > 0) {
+        latestByGoalId.set(plan.goalId, String(candidate));
+      }
+    });
+  });
+
+  (state.detailPlans || []).forEach((plan) => {
+    if (!plan.goalId || !plan.date) return;
+    const latest = latestByGoalId.get(plan.goalId);
+    if (!latest || String(plan.date).localeCompare(latest) > 0) {
+      latestByGoalId.set(plan.goalId, String(plan.date));
+    }
+  });
+
+  return {
+    ...state,
+    goals: (state.goals || []).map((goal) => ({
+      ...goal,
+      targetDate: latestByGoalId.get(goal.id) || goal.targetDate || "",
+    })),
+  };
+}
+
 export function appReducer(currentState, action) {
   switch (action?.type) {
     case "TOUCH_ACTIVITY":
@@ -8,15 +49,23 @@ export function appReducer(currentState, action) {
           lastReminderRun: action.payload.timestamp,
         },
       };
-    case "GOAL_ADD":
-      return { ...currentState, goals: [...currentState.goals, action.payload.goal] };
+    case "GOAL_ADD": {
+      const normalizedGoal = normalizeGoal(action.payload.goal);
+      if (!normalizedGoal) return currentState;
+      return applyDerivedGoalEndDates({
+        ...currentState,
+        goals: [...currentState.goals, normalizedGoal],
+      });
+    }
     case "GOAL_UPDATE":
-      return {
+      return applyDerivedGoalEndDates({
         ...currentState,
         goals: currentState.goals.map((item) =>
-          item.id === action.payload.goal.id ? { ...item, ...action.payload.goal } : item
+          item.id === action.payload.goal.id
+            ? normalizeGoal({ ...item, ...action.payload.goal })
+            : normalizeGoal(item)
         ),
-      };
+      });
     case "GOAL_ADD_MILESTONE":
       return {
         ...currentState,
@@ -108,16 +157,19 @@ export function appReducer(currentState, action) {
         ),
       };
     case "DETAIL_ADD":
-      return { ...currentState, detailPlans: [...currentState.detailPlans, action.payload.plan] };
+      return applyDerivedGoalEndDates({
+        ...currentState,
+        detailPlans: [...currentState.detailPlans, action.payload.plan],
+      });
     case "DETAIL_UPDATE":
-      return {
+      return applyDerivedGoalEndDates({
         ...currentState,
         detailPlans: currentState.detailPlans.map((item) =>
           item.id === action.payload.id ? { ...item, ...action.payload.update } : item
         ),
-      };
+      });
     case "DETAIL_DELETE":
-      return {
+      return applyDerivedGoalEndDates({
         ...currentState,
         detailPlans: currentState.detailPlans.filter((item) => item.id !== action.payload.id),
         timer:
@@ -127,7 +179,7 @@ export function appReducer(currentState, action) {
                 selectedDetailPlanId: null,
               }
             : currentState.timer,
-      };
+      });
     case "DETAIL_SET_DONE":
       return {
         ...currentState,
@@ -217,12 +269,28 @@ export function appReducer(currentState, action) {
           notificationEnabled: action.payload.enabled,
         },
       };
+    case "SET_NOTIFICATION_LEAD_MINUTES":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          notificationLeadMinutes: action.payload.minutes,
+        },
+      };
     case "SET_THEME_MODE":
       return {
         ...currentState,
         settings: {
           ...currentState.settings,
           themeMode: action.payload.themeMode,
+        },
+      };
+    case "SET_STANDARD_LEARNING_TIMES":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          standardLearningTimes: action.payload.standardLearningTimes,
         },
       };
     case "REPLACE_IMPORTED_EVENTS":
@@ -236,7 +304,7 @@ export function appReducer(currentState, action) {
         ],
       };
     case "REPLACE_STATE":
-      return action.payload.state;
+      return applyDerivedGoalEndDates(action.payload.state);
     case "POMODORO_SAVE":
       return {
         ...currentState,

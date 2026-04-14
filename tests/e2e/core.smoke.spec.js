@@ -7,7 +7,7 @@ test("user can add a goal", async ({ page }) => {
 
   const title = `E2E Ziel ${Date.now()}`;
   await page.locator("#goal-title").fill(title);
-  await page.locator("#goal-date").fill("2026-03-15");
+  await page.locator("#goal-start-date").fill("2026-03-15");
   await page.locator("#goal-submit").click();
 
   await expect(page.locator("#goal-list")).toContainText(title);

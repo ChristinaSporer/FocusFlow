@@ -1,40 +1,14 @@
 import { byId } from "./dom.js";
-import {
-  formatCalendarWeek,
-  formatDate,
-  monthOf,
-  nowIso,
-  weekOverlapsMonth,
-  weekValueFromDate,
-} from "./date-utils.js";
+import { formatDate, monthOf, nowIso, weekOverlapsMonth } from "./date-utils.js";
 import { resolveDetailPlanContext } from "./detail-plan-utils.js";
 import { buildRow, renderEmptyList } from "./list-render-utils.js";
 import { uid } from "./app-utils.js";
+import { formatMinutesAsHoursLabel, goalColorCssVar, normalizeGoalColorKey } from "./goal-utils.js";
 
-function parseIsoWeek(weekValue) {
-  const match = /^(\d{4})-W(\d{1,2})$/.exec(String(weekValue || "").trim());
-  if (!match) return null;
-  const year = Number(match[1]);
-  const week = Number(match[2]);
-  if (!Number.isInteger(year) || !Number.isInteger(week)) return null;
-  return { year, week };
-}
-
-function parseCalendarWeekLabel(weekValue) {
-  const match = /^KW\s*(\d{1,2})\/(\d{4})$/i.exec(String(weekValue || "").trim());
-  if (!match) return null;
-  const week = Number(match[1]);
-  const year = Number(match[2]);
-  if (!Number.isInteger(year) || !Number.isInteger(week)) return null;
-  return { year, week };
-}
-
-function getWeekPartsFromPlan(plan) {
-  return (
-    parseIsoWeek(plan?.week) ||
-    parseCalendarWeekLabel(plan?.week) ||
-    parseIsoWeek(weekValueFromDate(plan?.date))
-  );
+function formatLegacyCalendarWeek(weekValue = "") {
+  const match = /^(\d{4})-W(\d{1,2})$/.exec(String(weekValue).trim());
+  if (!match) return weekValue || "";
+  return `KW ${Number(match[2])}/${match[1]}`;
 }
 
 function toMinutes(hours) {
@@ -78,43 +52,6 @@ function buildDetailPlanSelectionLabel(state, detailPlan) {
     parts.push(`${detailPlan.startTime}-${detailPlan.endTime}`);
   }
   return parts.filter(Boolean).join(" · ");
-}
-
-function roughPlansByGoalComparator(state, left, right) {
-  const leftGoalTitle = left.goalId
-    ? state.goals.find((goal) => goal.id === left.goalId)?.title || ""
-    : "";
-  const rightGoalTitle = right.goalId
-    ? state.goals.find((goal) => goal.id === right.goalId)?.title || ""
-    : "";
-
-  const goalOrder = leftGoalTitle.localeCompare(rightGoalTitle, "de", { sensitivity: "base" });
-  if (goalOrder !== 0) return goalOrder;
-
-  const weekOrder = (left.week || "").localeCompare(right.week || "");
-  if (weekOrder !== 0) return weekOrder;
-
-  return (left.date || "").localeCompare(right.date || "");
-}
-
-function roughPlansByWeekComparator(left, right) {
-  const leftWeek = getWeekPartsFromPlan(left);
-  const rightWeek = getWeekPartsFromPlan(right);
-
-  if (leftWeek && rightWeek) {
-    if (leftWeek.year !== rightWeek.year) {
-      return leftWeek.year - rightWeek.year;
-    }
-    if (leftWeek.week !== rightWeek.week) {
-      return leftWeek.week - rightWeek.week;
-    }
-  } else if (leftWeek && !rightWeek) {
-    return -1;
-  } else if (!leftWeek && rightWeek) {
-    return 1;
-  }
-
-  return (left.date || "").localeCompare(right.date || "");
 }
 
 function isDetailPlanHiddenByCompletion(state, item) {
@@ -200,9 +137,13 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     }
   });
 
-  const sorted = [...state.goals].sort((a, b) => a.targetDate.localeCompare(b.targetDate));
+  const sorted = [...state.goals].sort((a, b) =>
+    (a.targetDate || "").localeCompare(b.targetDate || "")
+  );
 
   sorted.forEach((goal) => {
+    const goalColorKey = normalizeGoalColorKey(goal.colorKey);
+    const goalBaseColor = goalColorCssVar(goalColorKey, "base");
     const milestones = Array.isArray(goal.milestones) ? goal.milestones : [];
     const completedMilestones = milestones.filter((milestone) => milestone.done).length;
 
@@ -248,6 +189,13 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
         doneDescription.textContent = goal.description;
         doneWrap.appendChild(doneDescription);
       }
+
+      const doneTimeSummary = document.createElement("small");
+      doneTimeSummary.className = "text-body-secondary";
+      const donePlannedMinutes = plannedByGoalId.get(goal.id) || 0;
+      const doneTrackedMinutes = trackedByGoalId.get(goal.id) || 0;
+      doneTimeSummary.textContent = `Zeit geplant: ${donePlannedMinutes} Min (${formatMinutesAsHoursLabel(donePlannedMinutes)}) · Lernzeit verwendet: ${doneTrackedMinutes} Min (${formatMinutesAsHoursLabel(doneTrackedMinutes)})`;
+      doneWrap.appendChild(doneTimeSummary);
 
       if (milestones.length) {
         const milestoneSummary = document.createElement("small");
@@ -309,7 +257,12 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     toggleButton.type = "button";
     toggleButton.setAttribute("data-goal-collapse-toggle", goal.id);
 
-    const goalDetails = [`Bis ${formatDate(goal.targetDate)}`];
+    const goalDetails = [];
+    if (goal.startDate) {
+      goalDetails.push(`Start ${formatDate(goal.startDate)}`);
+    }
+    goalDetails.push(goal.targetDate ? `Ende ${formatDate(goal.targetDate)}` : "Ende wird geplant");
+    goalDetails.push(`Workload ${Number(goal.workloadHours || 0).toFixed(1)} h`);
     if (goal.description) {
       goalDetails.push(goal.description);
     }
@@ -325,6 +278,8 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       },
       actions: [editButton],
     });
+    goalRow.style.borderLeftColor = goalBaseColor;
+    goalRow.style.boxShadow = `0 10px 20px -18px ${goalBaseColor}`;
 
     const info = goalRow.querySelector(".flex-grow-1");
     const titleElement = info.querySelector("span");
@@ -613,30 +568,58 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
       const goal = state.goals.find((g) => g.id === plan.goalId);
       return !goal?.completed;
     })
-    .sort(roughPlansByWeekComparator);
+    .sort((left, right) => (left.startDate || "").localeCompare(right.startDate || ""));
 
   data.forEach((plan) => {
     const goal = plan.goalId ? state.goals.find((g) => g.id === plan.goalId) : null;
-    const primaryText = goal
-      ? `${plan.hours} h geplant für ${goal.title}`
-      : `${plan.hours} h geplant`;
-    const weekLabel = formatCalendarWeek(plan.week || plan.date);
-    const secondaryText = `${weekLabel}${plan.note ? ` · ${plan.note}` : ""}`;
+    const rowColorKey = goal?.id ? normalizeGoalColorKey(goal.colorKey) : null;
+    const isLegacyPlan = typeof plan.hours === "number" || typeof plan.week === "string";
 
-    const editBtn = document.createElement("button");
-    editBtn.className = "btn btn-outline-secondary btn-sm";
-    editBtn.type = "button";
-    editBtn.setAttribute("aria-label", "Bearbeiten");
-    editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
-    editBtn.addEventListener("click", () => onEditRoughPlan?.(plan));
+    const primaryText = isLegacyPlan
+      ? goal
+        ? `${plan.hours} h geplant für ${goal.title}`
+        : `${plan.hours} h geplant`
+      : goal
+        ? `${goal.title} · ${Number(plan.totalWorkloadHours || 0).toFixed(1)} h`
+        : `Workload-Plan · ${Number(plan.totalWorkloadHours || 0).toFixed(1)} h`;
+
+    const endDate = plan.plannedDays?.length
+      ? plan.plannedDays[plan.plannedDays.length - 1]?.date
+      : "";
+    const secondaryText = isLegacyPlan
+      ? [formatLegacyCalendarWeek(plan.week || ""), plan.note || "", "Workload", "Tage: 1"]
+          .filter(Boolean)
+          .join(" · ")
+      : [
+          plan.startDate ? `Start ${formatDate(plan.startDate)}` : "",
+          endDate ? `Ende ${formatDate(endDate)}` : "",
+          `Tage: ${Array.isArray(plan.plannedDays) ? plan.plannedDays.length : 0}`,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
+    const actions = [];
+    if (isLegacyPlan && onEditRoughPlan) {
+      const editBtn = document.createElement("button");
+      editBtn.className = "btn btn-outline-secondary btn-sm";
+      editBtn.type = "button";
+      editBtn.setAttribute("aria-label", "Bearbeiten");
+      editBtn.innerHTML = '<i class="bi bi-pencil"></i>';
+      editBtn.addEventListener("click", () => onEditRoughPlan(plan));
+      actions.push(editBtn);
+    }
 
     const row = buildRow(primaryText, secondaryText, {
-      actions: [editBtn],
+      actions,
       onDelete: () => {
         dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
         onRenderAll();
       },
     });
+    if (rowColorKey) {
+      row.style.borderLeftColor = goalColorCssVar(rowColorKey, isLegacyPlan ? "base" : "soft");
+      row.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(rowColorKey, isLegacyPlan ? "base" : "soft")}`;
+    }
     list.appendChild(row);
   });
 
@@ -673,14 +656,19 @@ export function renderDetailPlans({
   const goalsById = new Map((state.goals || []).map((goal) => [goal.id, goal]));
 
   const monthlyRoughPlans = [...state.roughPlans]
-    .filter((plan) =>
-      plan.week ? weekOverlapsMonth(plan.week, selectedMonth) : monthOf(plan.date) === selectedMonth
-    )
+    .filter((plan) => {
+      if (Array.isArray(plan.plannedDays) && plan.plannedDays.length) {
+        return plan.plannedDays.some((day) => monthOf(day.date) === selectedMonth);
+      }
+      return plan.week
+        ? weekOverlapsMonth(plan.week, selectedMonth)
+        : monthOf(plan.date || plan.startDate) === selectedMonth;
+    })
     .filter((plan) => {
       if (!plan.goalId) return true;
       return !goalsById.get(plan.goalId)?.completed;
     })
-    .sort((a, b) => roughPlansByGoalComparator(state, a, b));
+    .sort((a, b) => (a.startDate || a.date || "").localeCompare(b.startDate || b.date || ""));
 
   const monthlyDetailPlans = [...state.detailPlans]
     .filter((item) => monthOf(item.date) === selectedMonth)
@@ -742,6 +730,7 @@ export function renderDetailPlans({
 
   function createDetailEntryRow(item, { onEdit } = {}) {
     const { goal, milestone } = resolveDetailPlanContext(state, item);
+    const detailColorKey = goal?.id ? normalizeGoalColorKey(goal.colorKey) : null;
     const focusTitle = milestone?.title || item.milestone || item.topic || "Detailplanung";
     const details = [formatDate(item.date)];
     if (item.startTime && item.endTime) details.push(`${item.startTime}-${item.endTime}`);
@@ -780,6 +769,10 @@ export function renderDetailPlans({
       },
       actions: [trackingButton, editButton],
     });
+    if (detailColorKey) {
+      row.style.borderLeftColor = goalColorCssVar(detailColorKey, "soft");
+      row.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(detailColorKey, "soft")}`;
+    }
 
     const info = row.querySelector(".flex-grow-1");
     const trackedText = document.createElement("small");
@@ -1034,6 +1027,11 @@ export function renderDetailPlans({
 
     const block = document.createElement("li");
     block.className = "list-group-item";
+    const blockColorKey = goal?.id ? normalizeGoalColorKey(goal.colorKey) : null;
+    if (blockColorKey) {
+      block.style.borderLeftColor = goalColorCssVar(blockColorKey, "base");
+      block.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(blockColorKey, "base")}`;
+    }
 
     const headerRow = document.createElement("div");
     headerRow.className = "d-flex align-items-start justify-content-between gap-2";
@@ -1042,22 +1040,27 @@ export function renderDetailPlans({
     header.className = "d-flex flex-column gap-1";
 
     const title = document.createElement("strong");
+    const planHours = Number(plan.totalWorkloadHours || plan.hours || 0);
     title.textContent = goal
-      ? `${plan.hours} h geplant für ${goal.title}`
-      : `${plan.hours} h geplant`;
+      ? `${planHours} h geplant für ${goal.title}`
+      : `${planHours} h geplant`;
 
     const subtitle = document.createElement("small");
     subtitle.className = "text-body-secondary";
+    const endDate =
+      Array.isArray(plan.plannedDays) && plan.plannedDays.length
+        ? plan.plannedDays[plan.plannedDays.length - 1].date
+        : "";
     subtitle.textContent = [
-      formatCalendarWeek(plan.week || plan.date),
-      plan.note || "",
-      goal ? "Zwischenziele auswählbar" : "Kein Hauptziel zugeordnet",
+      plan.startDate ? `Start: ${formatDate(plan.startDate)}` : "",
+      endDate ? `Ende: ${formatDate(endDate)}` : "",
+      goal ? "Ziel-Workload-Block" : "Kein Hauptziel zugeordnet",
     ]
       .filter(Boolean)
       .join(" · ");
     header.append(title, subtitle);
 
-    const plannedMinutes = toMinutes(plan.hours);
+    const plannedMinutes = toMinutes(Number(plan.totalWorkloadHours || plan.hours || 0));
     const allocatedMinutes = sum(entries.map((item) => Number(item.minutes)));
     const allocation = document.createElement("small");
     allocation.className = "text-body-secondary";
@@ -1100,7 +1103,7 @@ export function renderDetailPlans({
 
     const { form, startDetailEdit, toggleFormVisibility } = createDetailBlockForm({
       blockKey: plan.id,
-      defaultDate: plan.date,
+      defaultDate: plan.startDate || plan.date,
       toggleButton: planToggleButton,
       goal,
       milestones,
@@ -1250,6 +1253,9 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll, onEditTrac
 
   data.forEach((session) => {
     const linkedDetailPlan = detailPlans.find((item) => item.id === session.detailPlanId) || null;
+    const linkedGoal = linkedDetailPlan?.goalId
+      ? state.goals.find((item) => item.id === linkedDetailPlan.goalId) || null
+      : null;
     const linkedDetailText = linkedDetailPlan
       ? `Detail: ${buildDetailPlanSelectionLabel(state, linkedDetailPlan)}`
       : "";
@@ -1277,6 +1283,11 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll, onEditTrac
         },
       }
     );
+    if (linkedGoal?.id) {
+      const trackingColorKey = normalizeGoalColorKey(linkedGoal.colorKey);
+      row.style.borderLeftColor = goalColorCssVar(trackingColorKey, "base");
+      row.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(trackingColorKey, "base")}`;
+    }
     list.appendChild(row);
   });
 
@@ -1386,7 +1397,7 @@ export function renderPomodoro({ pomodoroState }) {
 
 export function renderStats({ state }) {
   const plannedTotalMin =
-    sum(state.roughPlans.map((item) => toMinutes(item.hours))) +
+    sum(state.roughPlans.map((item) => toMinutes(item.totalWorkloadHours || item.hours || 0))) +
     sum(state.detailPlans.map((item) => Number(item.minutes)));
 
   const trackedMin = sum(state.trackedSessions.map((item) => Number(item.minutes)));

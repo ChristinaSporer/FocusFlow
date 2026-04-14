@@ -19,6 +19,7 @@ import { createPomodoroManager } from "./modules/pomodoro-manager.js";
 import { createCalendarManager } from "./modules/calendar-manager.js";
 import { createIcsManager } from "./modules/ics-manager.js";
 import { createJsonManager } from "./modules/json-manager.js";
+import { createNotificationManager } from "./modules/notification-manager.js";
 
 const store = createStore(loadState(), appReducer);
 let state = store.getState();
@@ -145,8 +146,14 @@ function renderAll() {
   });
   renderStats({ state: getState(), currentMonth: selectedMonth });
   timerManager.renderTimer();
+  const isRunning = Boolean(getState().timer?.start);
+  const isPaused = timerManager.isPaused?.() || false;
+  byId("timer-start")?.classList.toggle("d-none", isRunning && !isPaused);
+  byId("timer-pause")?.classList.toggle("d-none", !isRunning || isPaused);
+  byId("timer-stop")?.classList.toggle("d-none", !isRunning);
   renderPomodoro({ pomodoroState: pomodoroManager.getState() });
   calendarManager.renderCalendar();
+  notificationManager.sync();
 }
 
 function loadDemoData() {
@@ -170,8 +177,11 @@ function setInitialValues() {
   const now = new Date();
   const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
-  byId("month-select").value = month;
-  if (!getState().settings.calendarMonth) {
+  const monthSelect = byId("month-select");
+  if (monthSelect) {
+    monthSelect.value = month;
+  }
+  if (monthSelect && !getState().settings.calendarMonth) {
     dispatch({ type: "SET_CALENDAR_MONTH", payload: { month } });
   }
 
@@ -186,19 +196,6 @@ function setInitialValues() {
     dispatch({ type: "SET_THEME_MODE", payload: { themeMode: normalizedTheme } });
   }
 
-  const themeModeValue = getState().settings.themeMode;
-  const themeModeSelect = byId("theme-mode");
-  if (themeModeSelect) {
-    themeModeSelect.value = themeModeValue;
-  }
-
-  const themeModeRadio = document.querySelector(
-    `input[name="theme-mode"][value="${themeModeValue}"]`
-  );
-  if (themeModeRadio) {
-    themeModeRadio.checked = true;
-  }
-
   themeManager.applyTheme();
   timerManager.syncFromState();
   pomodoroManager.syncFromState();
@@ -210,6 +207,7 @@ function initHandlers() {
   const handlersResult = initFormHandlers({
     dispatch,
     renderAll,
+    getState,
     touchActivity,
     defaultData,
     setInitialValues,
@@ -232,6 +230,9 @@ function initHandlers() {
     exportIcsFile: icsManager.exportToFile,
     importJsonFile: jsonManager.importFromFile,
     exportJsonFile: jsonManager.exportToFile,
+    notificationPermission: notificationManager.requestPermission,
+    getNotificationPermission: notificationManager.getPermission,
+    syncNotifications: notificationManager.sync,
   });
 
   goalFormController = {
@@ -291,6 +292,10 @@ const jsonManager = createJsonManager({
   getState,
 });
 
+const notificationManager = createNotificationManager({
+  getState,
+});
+
 export function bootstrap() {
   themeManager.initSystemTheme();
   setInitialValues();
@@ -306,4 +311,5 @@ export function shutdown() {
   timerManager.dispose();
   pomodoroManager.dispose();
   themeManager.dispose();
+  notificationManager.dispose();
 }

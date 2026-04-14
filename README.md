@@ -5,13 +5,12 @@ Alle Daten werden im Browser über `localStorage` gespeichert.
 
 ## Enthaltene Funktionen
 
-- Lernziele (Hauptziele) erfassen, als erreicht markieren
-- Meilensteine/Detailplanung zu Zielen anlegen
+- Lernziele mit Startdatum, automatisch abgeleitetem Enddatum, Workload und 8 Farboptionen verwalten
+- Automatische Grobplanung über Standard-Lernzeiten mit Verteilung freier Zeitfenster und erzeugter Detailplanung
+- Detailplanung, Lernzeit-Tracking, Pomodoro und Stoppuhr in einer gemeinsamen Oberfläche
 - Kalenderansicht für Ziele, Detailplanung und ICS-Importe
+- Menü für Theme, Demo-Daten, Reset, JSON-/ICS-Import und -Export sowie Browser-Benachrichtigungen
 - Übersicht aller kommenden Ziele und Detailplanungspunkte (scrollbar)
-- Pomodoro-Technik mit Timer und Benachrichtigungen
-- Stoppuhr für Lernzeit-Tracking
-- Umfangreiche Demo-Daten per Button laden
 
 ## Lokaler Start
 
@@ -122,7 +121,7 @@ Der Coverage-Report wird nach jedem erfolgreichen Run auf der Default-Branch aut
 
 ## Hinweise
 
-- Browser-Benachrichtigungen für Pomodoro müssen einmal erlaubt werden.
+- Browser-Benachrichtigungen müssen einmal erlaubt werden, damit Erinnerungen vor geplanten Lernsessions angezeigt werden.
 - Für einen echten Produktivbetrieb wären Benutzerkonten, serverseitige Persistenz und Synchronisation sinnvoll.
 
 ## Komponentendiagramm
@@ -511,7 +510,7 @@ flowchart LR
   NOTIF[Notification API]
   FILE[Datei Import und Export]
   ICS[ICS Datei]
-  JSON[JSON Backup]
+  JSON[JSON Import/Export]
 
   U --> APP
   APP --> LS

@@ -91,12 +91,27 @@ export function createIcsManager({ getState, dispatch }) {
       };
     });
 
-    const rough = state.roughPlans.map((item) => ({
-      uid: item.id || uid(),
-      date: item.date,
-      summary: `Grobplanung: ${item.hours} h`,
-      description: item.note || "",
-    }));
+    const rough = state.roughPlans
+      .filter(
+        (item) =>
+          (Array.isArray(item.plannedDays) && item.plannedDays.length) ||
+          (item.date && Number(item.hours || 0) > 0)
+      )
+      .map((item) => {
+        const hasPlannedDays = Array.isArray(item.plannedDays) && item.plannedDays.length > 0;
+        const hours = hasPlannedDays
+          ? Number(item.totalWorkloadHours || 0)
+          : Number(item.hours || 0);
+
+        return {
+          uid: item.id || uid(),
+          date: hasPlannedDays ? item.plannedDays[item.plannedDays.length - 1].date : item.date,
+          summary: `Grobplanung: ${hours} h`,
+          description: hasPlannedDays
+            ? `Verteilte Lerntage: ${item.plannedDays.length}`
+            : item.note || "",
+        };
+      });
 
     return [...detail, ...rough].sort((a, b) => a.date.localeCompare(b.date));
   }

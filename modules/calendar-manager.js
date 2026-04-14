@@ -1,6 +1,7 @@
 import { byId } from "./dom.js";
 import { addDays, formatYmd, monthOf } from "./date-utils.js";
 import { resolveDetailPlanContext } from "./detail-plan-utils.js";
+import { resolveGoalColorKey } from "./goal-utils.js";
 
 const SOURCE_META = {
   detail: { label: "Detailplanung", className: "lz-source-detail" },
@@ -23,15 +24,35 @@ export function createCalendarManager({ getState, dispatch }) {
   function getCalendarEvents() {
     const state = getState();
 
-    const goalEvents = (state.goals || [])
-      .filter((goal) => goal.targetDate)
-      .map((goal) => ({
-        id: `goal-${goal.id}`,
-        source: "goal",
-        date: goal.targetDate,
-        title: goal.title,
-        hint: goal.completed ? "Ziel (erledigt)" : "Ziel",
-      }));
+    const goalEvents = (state.goals || []).flatMap((goal) => {
+      const className = `lz-source-goal-${resolveGoalColorKey(goal.colorKey)}`;
+      const hint = `Start: ${goal.startDate || "-"} | Ende: ${goal.targetDate || "-"}${goal.completed ? " | Ziel (erledigt)" : ""}`;
+      const events = [];
+
+      if (goal.startDate) {
+        events.push({
+          id: `goal-start-${goal.id}`,
+          source: "goal",
+          className,
+          date: goal.startDate,
+          title: `Start: ${goal.title}`,
+          hint,
+        });
+      }
+
+      if (goal.targetDate) {
+        events.push({
+          id: `goal-end-${goal.id}`,
+          source: "goal",
+          className,
+          date: goal.targetDate,
+          title: goal.title,
+          hint,
+        });
+      }
+
+      return events;
+    });
 
     const detailEvents = state.detailPlans.map((item) => {
       const { goal, milestone } = resolveDetailPlanContext(state, item);
@@ -43,8 +64,12 @@ export function createCalendarManager({ getState, dispatch }) {
       return {
         id: item.id,
         source: "detail",
+        className: goal?.id ? `lz-source-detail-${resolveGoalColorKey(goal.colorKey)}` : "",
         date: item.date,
-        title: `${focusTitle} (${item.minutes} Min)`,
+        title:
+          item.startTime && item.endTime
+            ? `${item.startTime}-${item.endTime} ${focusTitle}`
+            : `${focusTitle} (${item.minutes} Min)`,
         hint: hintParts.join(" · "),
       };
     });
@@ -67,12 +92,10 @@ export function createCalendarManager({ getState, dispatch }) {
     const state = getState();
     const listView = byId("list-view");
     const calendarView = byId("calendar-view");
-    const backupView = byId("backup-view");
     const listTab = byId("tab-list");
     const calendarTab = byId("tab-calendar");
-    const backupTab = byId("tab-backup");
 
-    const active = ["list", "calendar", "backup"].includes(state.settings.activeView)
+    const active = ["list", "calendar"].includes(state.settings.activeView)
       ? state.settings.activeView
       : "list";
     if (listView) {
@@ -81,10 +104,6 @@ export function createCalendarManager({ getState, dispatch }) {
     if (calendarView) {
       calendarView.classList.toggle("d-none", active !== "calendar");
     }
-    if (backupView) {
-      backupView.classList.toggle("d-none", active !== "backup");
-    }
-
     if (listTab) {
       listTab.classList.toggle("active", active === "list");
       listTab.setAttribute("aria-selected", String(active === "list"));
@@ -93,29 +112,6 @@ export function createCalendarManager({ getState, dispatch }) {
       calendarTab.classList.toggle("active", active === "calendar");
       calendarTab.setAttribute("aria-selected", String(active === "calendar"));
     }
-    if (backupTab) {
-      backupTab.classList.toggle("active", active === "backup");
-      backupTab.setAttribute("aria-selected", String(active === "backup"));
-    }
-  }
-
-  function renderCalendarLegend() {
-    const legend = byId("calendar-legend");
-    legend.innerHTML = "";
-
-    Object.values(SOURCE_META).forEach((meta) => {
-      const item = document.createElement("div");
-      item.className = "d-inline-flex align-items-center gap-2 small text-body-secondary";
-
-      const dot = document.createElement("span");
-      dot.className = `lz-legend-dot ${meta.className}`;
-
-      const label = document.createElement("span");
-      label.textContent = meta.label;
-
-      item.append(dot, label);
-      legend.appendChild(item);
-    });
   }
 
   function renderCalendar() {
@@ -157,6 +153,26 @@ export function createCalendarManager({ getState, dispatch }) {
 
       const cell = document.createElement("div");
       cell.className = `lz-calendar-day${inActiveMonth ? "" : " lz-outside"}`;
+      cell.setAttribute("data-ymd", currentYmd);
+
+      cell.addEventListener("dragover", (event) => {
+        event.preventDefault();
+        cell.classList.add("lz-drag-over");
+      });
+      cell.addEventListener("dragleave", () => {
+        cell.classList.remove("lz-drag-over");
+      });
+      cell.addEventListener("drop", (event) => {
+        event.preventDefault();
+        cell.classList.remove("lz-drag-over");
+        const eventId = event.dataTransfer.getData("text/plain");
+        if (!eventId) return;
+        dispatch({
+          type: "DETAIL_UPDATE",
+          payload: { id: eventId, update: { date: currentYmd } },
+        });
+        renderCalendar();
+      });
 
       const dayNo = document.createElement("div");
       dayNo.className = "lz-calendar-day-number";
@@ -167,9 +183,23 @@ export function createCalendarManager({ getState, dispatch }) {
       events.forEach((event) => {
         const entry = document.createElement("div");
         const source = SOURCE_META[event.source] || SOURCE_META.detail;
-        entry.className = `lz-calendar-event ${source.className}`;
+        entry.className = `lz-calendar-event ${source.className} ${event.className || ""}`.trim();
         entry.title = event.hint || source.label;
         entry.textContent = event.title;
+
+        if (event.source === "detail") {
+          entry.draggable = true;
+          entry.setAttribute("data-event-id", event.id);
+          entry.addEventListener("dragstart", (dragEvent) => {
+            dragEvent.dataTransfer.setData("text/plain", event.id);
+            dragEvent.dataTransfer.effectAllowed = "move";
+            entry.classList.add("lz-dragging");
+          });
+          entry.addEventListener("dragend", () => {
+            entry.classList.remove("lz-dragging");
+          });
+        }
+
         cell.appendChild(entry);
       });
 
@@ -178,7 +208,6 @@ export function createCalendarManager({ getState, dispatch }) {
 
     grid.innerHTML = "";
     grid.append(weekdays, days);
-    renderCalendarLegend();
   }
 
   return {

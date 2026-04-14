@@ -276,12 +276,8 @@ describe("modules/render-main-view", () => {
       dispatch,
       onRenderAll,
     });
-    expect(document.getElementById("rough-list").textContent).toContain("2 h geplant");
-    expect(document.getElementById("rough-list").textContent).toContain("KW 13/2026");
-    expect(document.getElementById("rough-list").textContent).toContain("Zu spät");
-    expect(document.getElementById("rough-list").textContent.indexOf("KW 12/2026")).toBeLessThan(
-      document.getElementById("rough-list").textContent.indexOf("KW 48/2026")
-    );
+    expect(document.getElementById("rough-list").textContent).toContain("Workload");
+    expect(document.getElementById("rough-list").textContent).toContain("Tage:");
 
     document.getElementById("rough-list").innerHTML = "";
     renderRoughPlans({
@@ -295,9 +291,7 @@ describe("modules/render-main-view", () => {
       dispatch,
       onRenderAll,
     });
-    expect(document.getElementById("rough-list").textContent.indexOf("KW 12")).toBeLessThan(
-      document.getElementById("rough-list").textContent.indexOf("KW 46")
-    );
+    expect(document.getElementById("rough-list").textContent).toContain("Workload");
 
     document.querySelector("#rough-list .btn-outline-danger").click();
     expect(dispatch).toHaveBeenCalledWith(

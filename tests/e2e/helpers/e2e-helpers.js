@@ -52,7 +52,7 @@ async function seedAppState(page, partialState) {
 
 async function addGoal(page, { title, date, description = "" }) {
   await page.locator("#goal-title").fill(title);
-  await page.locator("#goal-date").fill(date);
+  await page.locator("#goal-start-date").fill(date);
   await page.locator("#goal-description").fill(description);
   await page.locator("#goal-submit").click();
   await expect(page.locator("#goal-list")).toContainText(title);

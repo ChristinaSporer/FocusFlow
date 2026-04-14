@@ -342,16 +342,15 @@ describe("App-UI-Integration (jsdom)", () => {
     );
   });
 
-  it("wechselt zum Backup-Ansichts-Tab", () => {
-    document.getElementById("tab-backup").click();
+  it("wechselt zum Kalender-Ansichts-Tab", () => {
+    document.getElementById("tab-calendar").click();
 
-    expect(document.getElementById("backup-view").classList.contains("d-none")).toBe(false);
-    expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(true);
+    expect(document.getElementById("calendar-view").classList.contains("d-none")).toBe(false);
     expect(document.getElementById("list-view").classList.contains("d-none")).toBe(true);
   });
 
   it("laedt Demodaten", () => {
-    document.getElementById("load-demo").click();
+    document.getElementById("menu-demo").click();
 
     expect(document.getElementById("goal-list").textContent).toContain(
       "Modul Software Engineering abschließen"
@@ -384,7 +383,7 @@ describe("App-UI-Integration (jsdom)", () => {
     document.getElementById("month-select").dispatchEvent(new Event("change", { bubbles: true }));
 
     document.getElementById("goal-title").value = "April Goal";
-    document.getElementById("goal-date").value = "2026-04-20";
+    document.getElementById("goal-start-date").value = "2026-04-20";
     document
       .getElementById("goal-form")
       .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));
@@ -427,7 +426,7 @@ describe("App-UI-Integration (jsdom)", () => {
 
   it("rendert monatliche Grobplanungsbloecke mit auswaehlbaren Meilensteinen", () => {
     document.getElementById("goal-title").value = "Block Goal";
-    document.getElementById("goal-date").value = "2026-03-25";
+    document.getElementById("goal-start-date").value = "2026-03-25";
     document
       .getElementById("goal-form")
       .dispatchEvent(new Event("submit", { bubbles: true, cancelable: true }));

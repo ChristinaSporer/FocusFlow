@@ -7,7 +7,8 @@ test("user can create edit and delete manually tracked time", async ({ page }) =
   await page.locator("#manual-tab").click();
 
   await page.locator("#track-manual-date").fill("2026-04-19");
-  await page.locator("#track-manual-minutes").fill("30");
+  await page.locator("#track-manual-hours").fill("0.5");
+  await page.locator("#track-manual-extra-minutes").fill("0");
   await page.locator("#track-note").fill("Tracking initial");
   await page.locator("#track-manual-submit").click();
 
@@ -15,7 +16,10 @@ test("user can create edit and delete manually tracked time", async ({ page }) =
   await expect(trackedRow).toBeVisible();
 
   await trackedRow.locator("[data-tracked-edit]").click();
-  await page.locator("#track-manual-minutes").fill("45");
+  await expect(page.locator("#track-edit-id")).not.toHaveValue("");
+  await expect(page.locator("#track-manual-submit")).toContainText("Änderungen speichern");
+  await page.locator("#track-manual-hours").fill("0");
+  await page.locator("#track-manual-extra-minutes").fill("45");
   await page.locator("#track-note").fill("Tracking updated");
   await page.locator("#track-manual-submit").click();
 

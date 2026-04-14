@@ -91,15 +91,18 @@ describe("modules/demo-data", () => {
     const state = buildDemoState({ themeMode: "dark" });
 
     expect(state.goals).toHaveLength(4);
-    expect(state.roughPlans).toHaveLength(4);
-    expect(state.detailPlans).toHaveLength(4);
-    expect(state.trackedSessions).toHaveLength(4);
+    expect(state.roughPlans).toHaveLength(3);
+    expect(state.detailPlans).toHaveLength(6);
+    expect(state.trackedSessions).toHaveLength(6);
     expect(state.importedEvents).toEqual([]);
     expect(state.timer).toEqual({ start: null });
 
     expect(state.goals[0]).toMatchObject({
       title: "Modul Software Engineering abschließen",
-      targetDate: "2026-04-13",
+      targetDate: "2026-04-07",
+      startDate: "2026-03-29",
+      workloadHours: 50,
+      colorKey: "dark-blue",
       completed: false,
       completedAt: null,
     });
@@ -107,36 +110,27 @@ describe("modules/demo-data", () => {
 
     expect(state.goals[1]).toMatchObject({
       title: "Klausurvorbereitung Mathematik",
-      targetDate: "2026-04-03",
+      targetDate: "2026-03-23",
+      workloadHours: 40,
       completed: true,
       completedAt: "2026-03-24T10:00:00.000Z",
     });
 
-    // Teste nur auf arrayContaining, da Demo-Daten dynamisch sind
-    expect(state.roughPlans).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ note: "Wiederholung UML" }),
-        expect.objectContaining({ note: "Altklausuren" }),
-        expect.objectContaining({ note: "Datenaufbereitung" }),
-        expect.objectContaining({ note: "Englisch Hörverstehen" }),
-      ])
-    );
-
-    expect(state.roughPlans).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ note: "Wiederholung UML" }),
-        expect.objectContaining({ note: "Altklausuren" }),
-        expect.objectContaining({ note: "Datenaufbereitung" }),
-        expect.objectContaining({ note: "Englisch Hörverstehen" }),
-      ])
-    );
+    state.roughPlans.forEach((plan) => {
+      expect(typeof plan.startDate).toBe("string");
+      expect(typeof plan.totalWorkloadHours).toBe("number");
+      expect(Array.isArray(plan.plannedDays)).toBe(true);
+      expect(plan.plannedDays.length).toBeGreaterThan(0);
+    });
 
     expect(state.detailPlans).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ topic: "User Stories" }),
-        expect.objectContaining({ topic: "Testmethoden" }),
-        expect.objectContaining({ topic: "Daten bereinigen" }),
-        expect.objectContaining({ topic: "Listening Comprehension" }),
+        expect.objectContaining({ topic: "Anforderungsanalyse durcharbeiten" }),
+        expect.objectContaining({ topic: "User Stories und Akzeptanzkriterien" }),
+        expect.objectContaining({ topic: "Altklausur 2019 \u2013 Analysis" }),
+        expect.objectContaining({ topic: "Lineare Algebra Formeln zusammenfassen" }),
+        expect.objectContaining({ topic: "Datensatz explorieren und bereinigen" }),
+        expect.objectContaining({ topic: "Feature Engineering und Modellauswahl" }),
       ])
     );
 

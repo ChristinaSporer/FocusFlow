@@ -50,58 +50,185 @@
               >
                 Kalender
               </button>
+            </div>
+            <div class="dropdown">
               <button
-                id="tab-backup"
-                class="btn btn-outline-primary"
+                class="btn btn-outline-secondary dropdown-toggle"
                 type="button"
-                data-view="backup"
-                role="tab"
-                aria-selected="false"
+                id="quick-actions-toggle"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                aria-expanded="false"
               >
-                Backup
+                Men&uuml;
               </button>
-            </div>
-            <div class="d-flex flex-wrap justify-content-lg-end align-items-center gap-2">
-              <span class="form-label mb-0 small text-body-secondary">Darstellung</span>
-              <div class="btn-group btn-group-sm" role="group" aria-label="Darstellung">
-                <input
-                  type="radio"
-                  class="btn-check"
-                  name="theme-mode"
-                  id="theme-mode-auto"
-                  value="auto"
-                  autocomplete="off"
-                />
-                <label class="btn btn-outline-secondary" for="theme-mode-auto">Auto (System)</label>
+              <div
+                class="dropdown-menu dropdown-menu-end p-3 lz-quick-menu"
+                style="min-width: 340px"
+              >
+                <p class="small text-body-secondary mb-2">Darstellung</p>
+                <div class="btn-group btn-group-sm w-100 mb-3" role="group" aria-label="Theme Menü">
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    data-menu-theme-mode="auto"
+                  >
+                    Auto
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    data-menu-theme-mode="light"
+                  >
+                    Hell
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-outline-secondary"
+                    data-menu-theme-mode="dark"
+                  >
+                    Dunkel
+                  </button>
+                </div>
 
-                <input
-                  type="radio"
-                  class="btn-check"
-                  name="theme-mode"
-                  id="theme-mode-light"
-                  value="light"
-                  autocomplete="off"
-                />
-                <label class="btn btn-outline-secondary" for="theme-mode-light">Hell</label>
+                <p class="small text-body-secondary mb-2">Schnellaktionen</p>
+                <div class="d-grid gap-2 mb-3">
+                  <button id="menu-demo" class="btn btn-secondary btn-sm" type="button">
+                    Demo-Daten laden
+                  </button>
+                  <button id="menu-reset" class="btn btn-danger btn-sm" type="button">
+                    Alles l&ouml;schen
+                  </button>
+                </div>
 
-                <input
-                  type="radio"
-                  class="btn-check"
-                  name="theme-mode"
-                  id="theme-mode-dark"
-                  value="dark"
-                  autocomplete="off"
-                />
-                <label class="btn btn-outline-secondary" for="theme-mode-dark">Dunkel</label>
+                <details class="mb-2 lz-menu-section">
+                  <summary class="lz-menu-section-summary">JSON</summary>
+                  <div class="pt-2">
+                    <input
+                      id="menu-json-file"
+                      class="form-control form-control-sm mb-2"
+                      type="file"
+                      accept=".json,application/json"
+                    />
+                    <div class="d-grid gap-2 mb-2">
+                      <button id="menu-json-import" class="btn btn-primary btn-sm" type="button">
+                        JSON importieren
+                      </button>
+                      <button id="menu-json-export" class="btn btn-secondary btn-sm" type="button">
+                        JSON exportieren
+                      </button>
+                    </div>
+                    <p id="json-status" class="text-body-secondary small mb-0">
+                      Noch kein JSON-Import oder -Export durchgef&uuml;hrt.
+                    </p>
+                  </div>
+                </details>
+
+                <details class="mb-2 lz-menu-section">
+                  <summary class="lz-menu-section-summary">ICS</summary>
+                  <div class="pt-2">
+                    <input
+                      id="menu-ics-file"
+                      class="form-control form-control-sm mb-2"
+                      type="file"
+                      accept=".ics,text/calendar"
+                    />
+                    <div class="d-grid gap-2 mb-2">
+                      <button id="menu-ics-import" class="btn btn-primary btn-sm" type="button">
+                        ICS importieren
+                      </button>
+                      <button id="menu-ics-export" class="btn btn-secondary btn-sm" type="button">
+                        ICS exportieren
+                      </button>
+                    </div>
+                    <p id="ics-status" class="text-body-secondary small mb-0">
+                      Noch kein ICS-Import durchgef&uuml;hrt.
+                    </p>
+                  </div>
+                </details>
+
+                <p class="small text-body-secondary mt-3 mb-2">Benachrichtigungen</p>
+                <div class="form-check form-switch mb-2">
+                  <input class="form-check-input" type="checkbox" id="menu-notification-enabled" />
+                  <label class="form-check-label" for="menu-notification-enabled">
+                    Erinnerung vor Lernzeit senden
+                  </label>
+                </div>
+                <div class="mb-2">
+                  <label for="menu-notification-lead" class="form-label small mb-1"
+                    >Minuten vorher</label
+                  >
+                  <input
+                    id="menu-notification-lead"
+                    class="form-control form-control-sm"
+                    type="number"
+                    min="0"
+                    max="90"
+                    step="5"
+                    value="15"
+                  />
+                </div>
+                <p id="menu-notification-status" class="text-body-secondary small mb-3">
+                  Browser-Berechtigung noch nicht best&auml;tigt.
+                </p>
+
+                <details class="mb-2 lz-menu-section">
+                  <summary class="lz-menu-section-summary">Standard-Lernzeiten</summary>
+                  <div class="pt-2">
+                    <div class="small lz-learning-times-grid mb-2">
+                      <label>Mo</label
+                      ><input
+                        id="slt-mon-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-mon-end" class="form-control form-control-sm" type="time" />
+                      <label>Di</label
+                      ><input
+                        id="slt-tue-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-tue-end" class="form-control form-control-sm" type="time" />
+                      <label>Mi</label
+                      ><input
+                        id="slt-wed-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-wed-end" class="form-control form-control-sm" type="time" />
+                      <label>Do</label
+                      ><input
+                        id="slt-thu-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-thu-end" class="form-control form-control-sm" type="time" />
+                      <label>Fr</label
+                      ><input
+                        id="slt-fri-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-fri-end" class="form-control form-control-sm" type="time" />
+                      <label>Sa</label
+                      ><input
+                        id="slt-sat-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-sat-end" class="form-control form-control-sm" type="time" />
+                      <label>So</label
+                      ><input
+                        id="slt-sun-start"
+                        class="form-control form-control-sm"
+                        type="time"
+                      /><input id="slt-sun-end" class="form-control form-control-sm" type="time" />
+                    </div>
+                    <button
+                      id="menu-save-learning-times"
+                      class="btn btn-outline-primary btn-sm w-100"
+                      type="button"
+                    >
+                      Standard-Lernzeiten speichern
+                    </button>
+                  </div>
+                </details>
               </div>
-            </div>
-            <div class="d-flex flex-wrap justify-content-lg-end gap-2">
-              <button id="load-demo" class="btn btn-secondary" type="button">
-                Demo-Daten laden
-              </button>
-              <button id="reset-data" class="btn btn-danger" type="button">
-                Alles l&ouml;schen
-              </button>
             </div>
           </div>
         </div>
@@ -197,7 +324,152 @@
                     />
                   </div>
                   <div class="col-12 col-md-4">
-                    <input type="date" id="goal-date" class="form-control" required />
+                    <input
+                      type="date"
+                      id="goal-start-date"
+                      class="form-control"
+                      aria-label="Startdatum"
+                      title="Startdatum"
+                      required
+                    />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <input
+                      type="text"
+                      id="goal-date"
+                      class="form-control"
+                      aria-label="Enddatum (automatisch)"
+                      title="Enddatum wird automatisch aus der Detailplanung berechnet"
+                      placeholder="Enddatum wird automatisch berechnet"
+                      readonly
+                    />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <input
+                      type="number"
+                      id="goal-workload-hours"
+                      class="form-control"
+                      min="0"
+                      step="0.5"
+                      placeholder="Workload in Stunden"
+                    />
+                  </div>
+                  <div class="col-12">
+                    <div class="lz-goal-color-picker" role="radiogroup" aria-label="Zielfarbe">
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-light-blue"
+                        value="light-blue"
+                        checked
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="light-blue"
+                        for="goal-color-light-blue"
+                        title="Hellblau"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-dark-blue"
+                        value="dark-blue"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="dark-blue"
+                        for="goal-color-dark-blue"
+                        title="Dunkelblau"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-turquoise"
+                        value="turquoise"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="turquoise"
+                        for="goal-color-turquoise"
+                        title="Türkis"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-dark-green"
+                        value="dark-green"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="dark-green"
+                        for="goal-color-dark-green"
+                        title="Dunkelgrün"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-purple"
+                        value="purple"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="purple"
+                        for="goal-color-purple"
+                        title="Lila"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-orange"
+                        value="orange"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="orange"
+                        for="goal-color-orange"
+                        title="Orange"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-pink"
+                        value="pink"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="pink"
+                        for="goal-color-pink"
+                        title="Rosa"
+                      ></label>
+                      <input
+                        type="radio"
+                        class="btn-check lz-goal-color-input"
+                        name="goal-color"
+                        id="goal-color-yellow"
+                        value="yellow"
+                        autocomplete="off"
+                      />
+                      <label
+                        class="lz-goal-color-option"
+                        data-goal-color="yellow"
+                        for="goal-color-yellow"
+                        title="Gelb"
+                      ></label>
+                    </div>
                   </div>
                   <div class="col-12">
                     <textarea
@@ -259,44 +531,40 @@
               <div class="mt-3" data-main-card-body="rough" id="main-card-body-rough">
                 <form id="rough-form" class="row g-2 mt-1">
                   <input type="hidden" id="rough-edit-id" />
-                  <div class="col-12 col-md-4">
-                    <input type="week" id="rough-week" class="form-control" required />
-                  </div>
-                  <div class="col-12 col-md-3">
+                  <div class="visually-hidden" aria-hidden="true">
+                    <input type="week" id="rough-week" class="form-control" />
                     <input
                       type="number"
                       id="rough-hours"
                       class="form-control"
                       min="0.5"
                       step="0.5"
-                      placeholder="Stunden"
-                      required
                     />
+                    <textarea id="rough-note" class="form-control"></textarea>
+                    <button id="rough-cancel-edit" type="button">Bearbeitung abbrechen</button>
                   </div>
-                  <div class="col-12 col-md">
+                  <div class="col-12">
                     <select id="rough-goal" class="form-control">
                       <option value="">Kein Ziel zugeordnet</option>
                     </select>
                   </div>
                   <div class="col-12">
-                    <textarea
-                      id="rough-note"
-                      class="form-control"
-                      placeholder="Beschreibung (optional)"
-                      rows="1"
-                    ></textarea>
+                    <p id="rough-plan-summary" class="small text-body-secondary mb-1">
+                      Wähle ein Ziel, um die automatische Workload-Verteilung zu sehen.
+                    </p>
+                    <div id="rough-plan-grid" class="lz-planning-grid"></div>
+                  </div>
+                  <div class="col-12 d-grid">
+                    <button
+                      id="rough-load-more"
+                      class="btn btn-outline-secondary btn-sm d-none"
+                      type="button"
+                    >
+                      3 weitere freie Termine anzeigen
+                    </button>
                   </div>
                   <div class="col-12 col-md-auto d-grid">
                     <button id="rough-submit" class="btn btn-primary" type="submit">Planen</button>
-                  </div>
-                  <div class="col-12 col-md-auto d-grid">
-                    <button
-                      id="rough-cancel-edit"
-                      class="btn btn-outline-secondary d-none"
-                      type="button"
-                    >
-                      Bearbeitung abbrechen
-                    </button>
                   </div>
                 </form>
                 <ul id="rough-list" class="list-group lz-list-panel mt-2"></ul>
@@ -503,18 +771,28 @@
                       <div class="col-12 col-md-5">
                         <input type="date" id="track-manual-date" class="form-control" required />
                       </div>
-                      <div class="col-12 col-md-4">
+                      <div class="col-12 col-md-3">
                         <input
                           type="number"
-                          id="track-manual-minutes"
+                          id="track-manual-hours"
                           class="form-control"
-                          min="1"
-                          step="1"
-                          placeholder="Minuten"
-                          required
+                          min="0"
+                          step="0.1"
+                          placeholder="Stunden (dezimal)"
                         />
                       </div>
-                      <div class="col-12 col-md-3 d-grid">
+                      <div class="col-12 col-md-3">
+                        <input
+                          type="number"
+                          id="track-manual-extra-minutes"
+                          class="form-control"
+                          min="0"
+                          step="1"
+                          placeholder="Minuten"
+                        />
+                      </div>
+                      <input type="hidden" id="track-manual-minutes" />
+                      <div class="col-12 d-grid">
                         <button
                           id="track-manual-submit"
                           class="btn btn-outline-primary"
@@ -594,7 +872,7 @@
           <div class="card-body">
             <h2 class="h4">Kalenderansicht</h2>
             <p class="text-body-secondary small mt-1">
-              Termine aus Detailplanung, Grobplanung, Tracking und ICS-Import.
+              Termine aus Ziele, Detailplanung und ICS-Import.
             </p>
 
             <div
@@ -607,64 +885,7 @@
               <button id="calendar-next" class="btn btn-secondary" type="button">Monat vor</button>
             </div>
 
-            <div id="calendar-legend" class="d-flex flex-wrap gap-3 mb-3"></div>
-
-            <div class="row g-2 align-items-center mb-2">
-              <div class="col-12 col-lg-5">
-                <input id="ics-file" class="form-control" type="file" accept=".ics,text/calendar" />
-              </div>
-              <div class="col-12 col-sm-auto d-grid">
-                <button id="ics-import" type="button" class="btn btn-primary">
-                  ICS importieren
-                </button>
-              </div>
-              <div class="col-12 col-sm-auto d-grid">
-                <button id="ics-export" type="button" class="btn btn-secondary">
-                  App-Termine als ICS exportieren
-                </button>
-              </div>
-            </div>
-            <p id="ics-status" class="text-body-secondary small mb-3">
-              Noch kein Import durchgef&uuml;hrt.
-            </p>
-
             <div id="calendar-grid" class="lz-calendar-grid"></div>
-          </div>
-        </div>
-      </section>
-
-      <section id="backup-view" class="mb-4 d-none">
-        <div class="card shadow-sm">
-          <div class="card-body">
-            <h2 class="h4">Backup &amp; Wiederherstellung (JSON)</h2>
-            <p class="text-body-secondary small mt-1">
-              Exportiere den kompletten App-Stand als JSON-Datei oder importiere einen vorhandenen
-              Backup-Stand.
-            </p>
-
-            <div class="row g-2 align-items-center mb-2">
-              <div class="col-12 col-lg-5">
-                <input
-                  id="json-file"
-                  class="form-control"
-                  type="file"
-                  accept=".json,application/json"
-                />
-              </div>
-              <div class="col-12 col-sm-auto d-grid">
-                <button id="json-import" type="button" class="btn btn-primary">
-                  JSON importieren
-                </button>
-              </div>
-              <div class="col-12 col-sm-auto d-grid">
-                <button id="json-export" type="button" class="btn btn-secondary">
-                  App-Daten als JSON exportieren
-                </button>
-              </div>
-            </div>
-            <p id="json-status" class="text-body-secondary small mb-0">
-              Noch kein JSON-Import oder -Export durchgef&uuml;hrt.
-            </p>
           </div>
         </div>
       </section>

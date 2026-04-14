@@ -131,8 +131,8 @@ describe("modules/json-manager", () => {
     const result = manager.exportToFile();
     expect(result).toEqual({
       ok: true,
-      status: "Backup als focusflow-backup-2026-03-24.json exportiert.",
-      fileName: "focusflow-backup-2026-03-24.json",
+      status: "JSON-App-Stand als focusflow-export-2026-03-24.json exportiert.",
+      fileName: "focusflow-export-2026-03-24.json",
     });
 
     const blobArg = createUrlSpy.mock.calls[0][0];
@@ -140,7 +140,7 @@ describe("modules/json-manager", () => {
     const parsed = JSON.parse(text);
     expect(parsed.goals).toHaveLength(1);
     expect(document.getElementById("json-status").textContent).toBe(
-      "Backup als focusflow-backup-2026-03-24.json exportiert."
+      "JSON-App-Stand als focusflow-export-2026-03-24.json exportiert."
     );
     expect(clickSpy).toHaveBeenCalledTimes(1);
     expect(revokeUrlSpy).toHaveBeenCalledWith("blob:json-export");
@@ -148,7 +148,7 @@ describe("modules/json-manager", () => {
 
   it("importiert gueltiges JSON und fuehrt Sammlungen sowie Einstellungen zusammen", async () => {
     const { manager } = createManager({
-      goals: [{ id: "g1", title: "Bestand" }],
+      goals: [{ id: "g1", title: "Bestand", colorKey: "blue" }],
       settings: { activeView: "list", inactivityDays: 3 },
     });
 
@@ -157,10 +157,16 @@ describe("modules/json-manager", () => {
       text: vi.fn(async () =>
         JSON.stringify({
           goals: [
-            { id: "g1", title: "Import aktualisiert" },
+            {
+              id: "g1",
+              title: "Import aktualisiert",
+              startDate: "2026-03-20",
+              workloadHours: 6.5,
+              colorKey: "red",
+            },
             { id: "g2", title: "Neu" },
           ],
-          settings: { activeView: "backup", inactivityDays: 5, themeMode: "dark" },
+          settings: { activeView: "calendar", inactivityDays: 5, themeMode: "dark" },
         })
       ),
     };
@@ -169,7 +175,17 @@ describe("modules/json-manager", () => {
     expect(result.ok).toBe(true);
     expect(result.state.goals).toHaveLength(2);
     expect(result.state.goals.find((goal) => goal.id === "g1").title).toBe("Import aktualisiert");
-    expect(result.state.settings.activeView).toBe("backup");
+    expect(result.state.goals.find((goal) => goal.id === "g1")).toMatchObject({
+      startDate: "2026-03-20",
+      workloadHours: 6.5,
+      colorKey: "red",
+    });
+    expect(result.state.goals.find((goal) => goal.id === "g2")).toMatchObject({
+      startDate: "",
+      workloadHours: 0,
+      colorKey: "blue",
+    });
+    expect(result.state.settings.activeView).toBe("calendar");
     expect(result.state.settings.inactivityDays).toBe(5);
     expect(result.state.settings.themeMode).toBe("dark");
   });

@@ -137,6 +137,15 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     const selectedDetailPlanId = detailPlanId || null;
     const stateBefore = getState();
 
+    const stopwatchTab = byId("stopwatch-tab");
+    if (stopwatchTab) {
+      if (typeof window.bootstrap?.Tab === "function") {
+        window.bootstrap.Tab.getOrCreateInstance(stopwatchTab).show();
+      } else {
+        stopwatchTab.click();
+      }
+    }
+
     if (stateBefore.timer.start) {
       const switchLabel = String(detailLabel || "Detailplanung").trim();
       stopTimer({
@@ -267,6 +276,7 @@ export function createTimerManager({ getState, dispatch, onActivity, onRenderAll
     syncFromState,
     dispose,
     getElapsed,
+    isPaused: () => isPaused,
     stopInterval,
   };
 }

@@ -1,3 +1,6 @@
+import { normalizeGoals } from "./goal-utils.js";
+import { defaultStandardLearningTimes, normalizeStandardLearningTimes } from "./planning-utils.js";
+
 export const STORAGE_KEY = "focusflow-v1";
 
 export const defaultData = () => ({
@@ -10,9 +13,11 @@ export const defaultData = () => ({
     inactivityDays: 3,
     lastReminderRun: null,
     notificationEnabled: false,
+    notificationLeadMinutes: 15,
     activeView: "list",
     calendarMonth: null,
     themeMode: "auto",
+    standardLearningTimes: defaultStandardLearningTimes(),
   },
   timer: {
     start: null,
@@ -38,8 +43,21 @@ export function loadState() {
     return {
       ...defaults,
       ...parsed,
+      goals: normalizeGoals(parsed.goals),
+      roughPlans: Array.isArray(parsed.roughPlans)
+        ? parsed.roughPlans.map((plan) => ({
+            ...plan,
+            plannedDays: Array.isArray(plan.plannedDays) ? plan.plannedDays : [],
+          }))
+        : [],
       importedEvents: Array.isArray(parsed.importedEvents) ? parsed.importedEvents : [],
-      settings: { ...defaults.settings, ...(parsed.settings || {}) },
+      settings: {
+        ...defaults.settings,
+        ...(parsed.settings || {}),
+        standardLearningTimes: normalizeStandardLearningTimes(
+          parsed.settings?.standardLearningTimes
+        ),
+      },
       timer: { ...defaults.timer, ...(parsed.timer || {}) },
       pomodoro: { ...defaults.pomodoro, ...(parsed.pomodoro || {}) },
     };
