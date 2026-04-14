@@ -483,15 +483,11 @@ describe("modules/form-handlers", () => {
     // Pausiere
     document.getElementById("timer-pause").click();
     // Nach Pause ist der Start-Button wieder sichtbar (d-none entfernt)
-    expect(
-      document.getElementById("timer-start").classList.contains("d-none")
-    ).toBe(false);
+    expect(document.getElementById("timer-start").classList.contains("d-none")).toBe(false);
 
     // Resume (Start-Button erneut klicken wenn pausiert)
     document.getElementById("timer-start").click();
     expect(deps.startTimer).toHaveBeenCalledTimes(2);
-    expect(deps.startTimer).toHaveBeenLastCalledWith(
-      expect.objectContaining({ resume: true })
-    );
+    expect(deps.startTimer).toHaveBeenLastCalledWith(expect.objectContaining({ resume: true }));
   });
 });
