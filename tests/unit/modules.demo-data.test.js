@@ -171,4 +171,36 @@ describe("modules/demo-data", () => {
       expect(Array.isArray(plan.plannedDays)).toBe(true);
     });
   });
+
+  it("faellt auf das Startdatum zurueck wenn die Verteilung keine Tage liefert", async () => {
+    vi.resetModules();
+    vi.doMock("../../modules/planning-utils.js", async () => {
+      const actual = await vi.importActual("../../modules/planning-utils.js");
+      return {
+        ...actual,
+        distributeGoalWorkload: vi.fn(() => ({
+          days: [],
+          candidateSlots: [],
+          remainingMinutes: 120,
+          projectedEndDate: "",
+        })),
+      };
+    });
+
+    const { buildDemoState: buildDemoStateMitLeeremPlan } =
+      await import("../../modules/demo-data.js");
+    const state = buildDemoStateMitLeeremPlan({ themeMode: "light" });
+
+    expect(state.goals.map((goal) => goal.targetDate)).toEqual([
+      "2026-03-29",
+      "2026-03-14",
+      "2026-04-13",
+      "2026-04-03",
+    ]);
+    expect(state.roughPlans.every((plan) => plan.plannedDays.length === 0)).toBe(true);
+    expect(state.detailPlans.every((plan) => plan.startTime === "08:00")).toBe(true);
+
+    vi.doUnmock("../../modules/planning-utils.js");
+    vi.resetModules();
+  });
 });

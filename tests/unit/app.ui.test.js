@@ -54,11 +54,53 @@ function createMainCardBreakpointMock(initialDesktop) {
   return { matchMedia, update };
 }
 
+function createLegacyMainCardBreakpointMock(initialDesktop) {
+  const listeners = new Set();
+  const mediaQuery = {
+    matches: Boolean(initialDesktop),
+    media: "(min-width: 1200px)",
+    onchange: null,
+    addListener(listener) {
+      listeners.add(listener);
+    },
+    removeListener(listener) {
+      listeners.delete(listener);
+    },
+  };
+
+  const matchMedia = vi.fn((query) => {
+    if (query === mediaQuery.media) return mediaQuery;
+    return {
+      matches: false,
+      media: query,
+      onchange: null,
+      addListener() {},
+      removeListener() {},
+    };
+  });
+
+  function update(nextDesktop) {
+    mediaQuery.matches = Boolean(nextDesktop);
+    const event = { matches: mediaQuery.matches, media: mediaQuery.media };
+    listeners.forEach((listener) => listener(event));
+    if (typeof mediaQuery.onchange === "function") {
+      mediaQuery.onchange(event);
+    }
+  }
+
+  return { matchMedia, update };
+}
+
 describe("App-UI-Integration (jsdom)", () => {
   let appModule;
   let breakpointController;
 
-  async function bootApp({ notification, storedState, viewport = "desktop" } = {}) {
+  async function bootApp({
+    notification,
+    storedState,
+    viewport = "desktop",
+    matchMediaMode = "modern",
+  } = {}) {
     localStorage.clear();
     if (storedState) {
       localStorage.setItem("focusflow-v1", JSON.stringify(storedState));
@@ -84,8 +126,16 @@ describe("App-UI-Integration (jsdom)", () => {
       };
     }
 
-    breakpointController = createMainCardBreakpointMock(viewport !== "mobile");
-    window.matchMedia = breakpointController.matchMedia;
+    breakpointController = null;
+    if (matchMediaMode === "none") {
+      Reflect.deleteProperty(window, "matchMedia");
+    } else {
+      breakpointController =
+        matchMediaMode === "legacy"
+          ? createLegacyMainCardBreakpointMock(viewport !== "mobile")
+          : createMainCardBreakpointMock(viewport !== "mobile");
+      window.matchMedia = breakpointController.matchMedia;
+    }
 
     vi.resetModules();
     const module = await import("../../app.js");
@@ -1102,5 +1152,49 @@ describe("App-UI-Integration (jsdom)", () => {
     expect(parsed.trackedSessions[0].start.startsWith("2026-03-25")).toBe(true);
     expect(document.getElementById("track-list").textContent).toContain("Bearbeitete Session");
     expect(document.getElementById("track-edit-id").value).toBe("");
+  });
+
+  it("bootstrappt auch ohne matchMedia und beendet sauber", async () => {
+    appModule.shutdown();
+
+    appModule = await bootApp({ matchMediaMode: "none" });
+
+    expect(document.querySelectorAll("[data-main-card-body]").length).toBeGreaterThan(0);
+    expect(() => appModule.shutdown()).not.toThrow();
+
+    appModule = await bootApp();
+  });
+
+  it("faellt fuer Breakpoint-Listener auf addListener und removeListener zurueck", async () => {
+    appModule.shutdown();
+
+    appModule = await bootApp({ matchMediaMode: "legacy" });
+
+    const goalCardBody = document.querySelector('[data-main-card-body="goals"]');
+    expect(goalCardBody.classList.contains("d-none")).toBe(false);
+
+    breakpointController.update(false);
+    expect(goalCardBody.classList.contains("d-none")).toBe(true);
+
+    breakpointController.update(true);
+    expect(goalCardBody.classList.contains("d-none")).toBe(false);
+  });
+
+  it("ueberschreibt einen bereits gespeicherten Kalendermonat beim Bootstrap nicht", async () => {
+    appModule.shutdown();
+
+    appModule = await bootApp({
+      storedState: {
+        settings: {
+          themeMode: "auto",
+          activeView: "list",
+          calendarMonth: "2026-02",
+        },
+      },
+    });
+
+    const persisted = JSON.parse(localStorage.getItem("focusflow-v1"));
+    expect(persisted.settings.calendarMonth).toBe("2026-02");
+    expect(document.getElementById("month-select").value).toBe("2026-03");
   });
 });

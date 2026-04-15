@@ -469,4 +469,173 @@ describe("modules/timer-manager", () => {
     expect(onActivity).toHaveBeenCalled();
     expect(onRenderAll).toHaveBeenCalled();
   });
+
+  it("nimmt einen pausierten Timer mit angepasster Startzeit wieder auf", () => {
+    document.body.innerHTML = '<div id="timer-display"></div>';
+    window.__timerPausedAt = new Date("2026-03-24T09:55:00.000Z").getTime();
+
+    const state = { timer: { start: "2026-03-24T09:50:00.000Z", selectedDetailPlanId: "d7" } };
+    const dispatch = vi.fn((action) => {
+      if (action.type === "TIMER_START") {
+        state.timer.start = action.payload.start;
+        state.timer.selectedDetailPlanId = action.payload.selectedDetailPlanId;
+      }
+    });
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    manager.startTimer({ resume: true });
+
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "TIMER_START",
+      payload: {
+        start: "2026-03-24T09:55:00.000Z",
+        selectedDetailPlanId: "d7",
+      },
+    });
+    expect(document.getElementById("timer-display").textContent).toBe("00:05:00");
+  });
+
+  it("beendet stopTimer frueh wenn kein Timer aktiv ist", () => {
+    const dispatch = vi.fn();
+    const onActivity = vi.fn();
+    const onRenderAll = vi.fn();
+    const manager = createTimerManager({
+      getState: () => ({ timer: { start: null, selectedDetailPlanId: null } }),
+      dispatch,
+      onActivity,
+      onRenderAll,
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    manager.stopTimer();
+
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(onActivity).not.toHaveBeenCalled();
+    expect(onRenderAll).not.toHaveBeenCalled();
+  });
+
+  it("nutzt die Bootstrap-Tab-API und den Standardtext beim Detailwechsel", () => {
+    document.body.innerHTML =
+      '<div id="timer-display"></div><input id="track-note" value="Vorher"><button id="stopwatch-tab" type="button"></button>';
+    const show = vi.fn();
+    function Tab() {}
+    Tab.getOrCreateInstance = vi.fn(() => ({ show }));
+    window.bootstrap = {
+      Tab,
+    };
+
+    const state = { timer: { start: "2026-03-24T09:58:00.000Z", selectedDetailPlanId: "d1" } };
+    const dispatch = vi.fn((action) => {
+      if (action.type === "TIMER_STOP_AND_STORE_SESSION") {
+        state.timer.start = null;
+      }
+      if (action.type === "TIMER_SET_SELECTED_DETAIL_PLAN") {
+        state.timer.selectedDetailPlanId = action.payload.detailPlanId;
+      }
+      if (action.type === "TIMER_START") {
+        state.timer.start = action.payload.start;
+        state.timer.selectedDetailPlanId = action.payload.selectedDetailPlanId;
+      }
+    });
+
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    manager.startTimerForDetailPlan("d2");
+
+    expect(Tab.getOrCreateInstance).toHaveBeenCalledWith(document.getElementById("stopwatch-tab"));
+    expect(show).toHaveBeenCalledTimes(1);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "TIMER_STOP_AND_STORE_SESSION",
+        payload: expect.objectContaining({
+          session: expect.objectContaining({
+            note: "Vorher | Automatisch beendet: Wechsel zu Detailplanung",
+          }),
+        }),
+      })
+    );
+  });
+
+  it("weist unvollstaendige oder ungueltige Aktualisierungen zurueck", () => {
+    const state = {
+      timer: { start: null, selectedDetailPlanId: null },
+      trackedSessions: [{ id: "t1", start: "2026-03-24T12:00:00.000Z" }],
+    };
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch: vi.fn(),
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    expect(
+      manager.updateTrackedSession({
+        id: "",
+        date: "2026-03-25",
+        minutes: 30,
+        note: "",
+        detailPlanId: null,
+      })
+    ).toBe(false);
+
+    expect(
+      manager.updateTrackedSession({
+        id: "t1",
+        date: "ungueltig",
+        minutes: 30,
+        note: "",
+        detailPlanId: null,
+      })
+    ).toBe(false);
+  });
+
+  it("verwendet 12 Uhr als Fallback wenn die alte Session-Uhrzeit ungueltig ist", () => {
+    const state = {
+      timer: { start: null, selectedDetailPlanId: null },
+      trackedSessions: [
+        {
+          id: "t1",
+          start: "kein-datum",
+          end: "2026-03-24T12:25:00.000Z",
+          minutes: 25,
+          note: "Initial",
+          detailPlanId: null,
+        },
+      ],
+    };
+    const dispatch = vi.fn();
+    const manager = createTimerManager({
+      getState: () => state,
+      dispatch,
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      nowIso: vi.fn(() => "2026-03-24T10:00:00.000Z"),
+    });
+
+    const ok = manager.updateTrackedSession({
+      id: "t1",
+      date: "2026-03-25",
+      minutes: 40,
+      note: "Updated",
+      detailPlanId: null,
+    });
+
+    expect(ok).toBe(true);
+    const dispatchedSession = dispatch.mock.calls[0][0].payload.session;
+    expect(new Date(dispatchedSession.start).getHours()).toBe(12);
+  });
 });
