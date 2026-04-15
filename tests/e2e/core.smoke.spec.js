@@ -1,6 +1,6 @@
 const { test, expect } = require("@playwright/test");
 
-test("user can add a goal", async ({ page }) => {
+test("Smoke: Lernziel kann angelegt werden", async ({ page }) => {
   await page.goto("/");
 
   await expect(page.getByRole("heading", { level: 1, name: "Lernzeitplaner" })).toBeVisible();
@@ -13,7 +13,7 @@ test("user can add a goal", async ({ page }) => {
   await expect(page.locator("#goal-list")).toContainText(title);
 });
 
-test("user can switch to calendar and see created appointment", async ({ page }) => {
+test("Smoke: Kalenderansicht zeigt angelegte Detailplanung", async ({ page }) => {
   await page.goto("/");
 
   await page.locator('[data-detail-plan-toggle="additional"]').click();

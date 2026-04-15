@@ -1,7 +1,7 @@
 const { test, expect } = require("@playwright/test");
-const { addGoal, addMilestoneToGoal, setMonth } = require("./helpers/e2e-helpers");
+const { addGoal, addMilestoneToGoal, setMonth, addRoughPlan } = require("./helpers/e2e-helpers");
 
-test("user can create goal with milestone", async ({ page }) => {
+test("Lernziel mit Zwischenziel kann angelegt werden", async ({ page }) => {
   await page.goto("/");
 
   const goalTitle = `E2E Goal ${Date.now()}`;
@@ -14,7 +14,7 @@ test("user can create goal with milestone", async ({ page }) => {
   await expect(page.locator("#goal-list")).toContainText(milestoneTitle);
 });
 
-test("completed milestone hides linked planning", async ({ page }) => {
+test("Erledigtes Zwischenziel blendet verknüpfte Detailplanung aus", async ({ page }) => {
   await page.goto("/");
   await setMonth(page, "2026-04");
 
@@ -44,7 +44,7 @@ test("completed milestone hides linked planning", async ({ page }) => {
   await expect(page.locator("#detail-list")).not.toContainText(`60 Min für ${milestoneTitle}`);
 });
 
-test("completed goal hides planning and moves to achieved; uncheck restores planning", async ({
+test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert werden", async ({
   page,
 }) => {
   await page.goto("/");
@@ -55,12 +55,14 @@ test("completed goal hides planning and moves to achieved; uncheck restores plan
   const detailTopic = "Goal Linked Detail";
 
   await addGoal(page, { title: goalTitle, date: "2026-04-28" });
+  await addMilestoneToGoal(page, { goalTitle, milestoneTitle: "MS Abschluss" });
 
-  await page.locator("#rough-week").fill("2026-W16");
-  await page.locator("#rough-hours").fill("4");
-  await page.locator("#rough-note").fill(roughNote);
-  await page.locator("#rough-goal").selectOption({ label: goalTitle });
-  await page.locator("#rough-submit").click();
+  await addRoughPlan(page, {
+    goalTitle,
+    week: "2026-W16",
+    hours: 4,
+    note: roughNote,
+  });
   await expect(page.locator("#rough-list")).toContainText(roughNote);
 
   await page
@@ -71,16 +73,35 @@ test("completed goal hides planning and moves to achieved; uncheck restores plan
   await page.locator("[data-detail-start]:visible").fill("09:00");
   await page.locator("[data-detail-end]:visible").fill("10:00");
   await page.locator("[data-detail-topic]:visible").fill(detailTopic);
+  await page.locator("[data-detail-milestone-select]:visible").selectOption({ index: 1 });
   await page.locator('[data-detail-block-form]:visible button[type="submit"]').click();
   await expect(page.locator("#detail-list")).toContainText(detailTopic);
+
+  await page.locator("#manual-tab").click();
+  await page.locator("#track-detail-select").selectOption({ index: 1 });
+  await page.locator("#track-manual-date").fill("2026-04-17");
+  await page.locator("#track-manual-hours").fill("1");
+  await page.locator("#track-manual-extra-minutes").fill("0");
+  await page.locator("#track-note").fill("Abschlusssession");
+  await page.locator("#track-manual-submit").click();
+  await expect(page.locator("#track-list")).toContainText("Abschlusssession");
+
+  await page.locator("#tab-list").click();
+  await expect(page.locator("#goal-list")).toContainText("Geplant:");
+  await expect(page.locator("#goal-list")).toContainText("Getrackt:");
 
   const openGoalRow = page.locator("#goal-list li").filter({ hasText: goalTitle }).first();
   await openGoalRow.locator("[data-goal-toggle]").click();
 
   await expect(page.locator("#achieved-list")).toContainText(goalTitle);
+  await expect(page.locator("#achieved-list")).toContainText("Zeit geplant:");
+  await expect(page.locator("#achieved-list")).toContainText("Lernzeit verwendet:");
   await expect(page.locator("#goal-list")).not.toContainText(goalTitle);
   await expect(page.locator("#rough-list")).not.toContainText(roughNote);
   await expect(page.locator("#detail-list")).not.toContainText(detailTopic);
+
+  await page.locator("#tab-calendar").click();
+  await expect(page.locator("#calendar-grid")).not.toContainText(detailTopic);
 
   const achievedGoalRow = page.locator("#achieved-list li").filter({ hasText: goalTitle }).first();
   await achievedGoalRow.locator("[data-goal-toggle]").click();
@@ -88,4 +109,6 @@ test("completed goal hides planning and moves to achieved; uncheck restores plan
   await expect(page.locator("#goal-list")).toContainText(goalTitle);
   await expect(page.locator("#rough-list")).toContainText(roughNote);
   await expect(page.locator("#detail-list")).toContainText(detailTopic);
+  await page.locator("#tab-calendar").click();
+  await expect(page.locator("#calendar-grid")).toContainText(detailTopic);
 });

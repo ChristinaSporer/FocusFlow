@@ -1,8 +1,8 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("fs/promises");
-const { addGoal } = require("./helpers/e2e-helpers");
+const { addGoal, openMenuSection } = require("./helpers/e2e-helpers");
 
-test("user can import app state from JSON export", async ({ page }) => {
+test("JSON-Import lädt einen gültigen App-Stand", async ({ page }) => {
   await page.goto("/");
 
   const importedGoalTitle = `Imported Goal ${Date.now()}`;
@@ -29,29 +29,28 @@ test("user can import app state from JSON export", async ({ page }) => {
     pomodoro: {},
   };
 
-  await page.locator("#quick-actions-toggle").click();
-  await page.locator(".lz-quick-menu details:has(#menu-json-file) summary").click();
+  await openMenuSection(page, "JSON");
   await page.locator("#menu-json-file").setInputFiles({
     name: "focusflow-export.json",
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(exportedPayload)),
   });
-  page.once("dialog", (dialog) => dialog.accept());
+  const dialogPromise = page.waitForEvent("dialog");
   await page.locator("#menu-json-import").click();
+  await (await dialogPromise).accept();
 
   await expect(page.locator("#json-status")).toContainText("Import erfolgreich");
 
   await expect(page.locator("#goal-list")).toContainText(importedGoalTitle);
 });
 
-test("user can export app state as JSON file", async ({ page }) => {
+test("JSON-Export erzeugt eine herunterladbare Sicherung", async ({ page }) => {
   await page.goto("/");
 
   const goalTitle = `Export Goal ${Date.now()}`;
   await addGoal(page, { title: goalTitle, date: "2026-04-27" });
 
-  await page.locator("#quick-actions-toggle").click();
-  await page.locator(".lz-quick-menu details:has(#menu-json-export) summary").click();
+  await openMenuSection(page, "JSON");
 
   const [download] = await Promise.all([
     page.waitForEvent("download"),
@@ -65,4 +64,38 @@ test("user can export app state as JSON file", async ({ page }) => {
   expect(Array.isArray(exported.goals)).toBe(true);
   expect(exported.goals.some((goal) => goal.title === goalTitle)).toBe(true);
   await expect(page.locator("#json-status")).toContainText("exportiert");
+});
+
+test("JSON-Import zeigt Fehler bei ungültigem JSON", async ({ page }) => {
+  await page.goto("/");
+  await openMenuSection(page, "JSON");
+
+  await page.locator("#menu-json-file").setInputFiles({
+    name: "kaputt.json",
+    mimeType: "application/json",
+    buffer: Buffer.from('{"goals": [}', "utf-8"),
+  });
+
+  const dialogPromise = page.waitForEvent("dialog");
+  await page.locator("#menu-json-import").click();
+  await (await dialogPromise).accept();
+
+  await expect(page.locator("#json-status")).toContainText("Import fehlgeschlagen");
+});
+
+test("JSON-Import zeigt Fehler bei falschem Dateiformat", async ({ page }) => {
+  await page.goto("/");
+  await openMenuSection(page, "JSON");
+
+  await page.locator("#menu-json-file").setInputFiles({
+    name: "falsch.txt",
+    mimeType: "text/plain",
+    buffer: Buffer.from("kein gueltiges json", "utf-8"),
+  });
+
+  const dialogPromise = page.waitForEvent("dialog");
+  await page.locator("#menu-json-import").click();
+  await (await dialogPromise).accept();
+
+  await expect(page.locator("#json-status")).toContainText("Import fehlgeschlagen");
 });
