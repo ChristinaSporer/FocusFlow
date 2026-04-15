@@ -10,7 +10,9 @@ const {
   setMonth,
 } = require("./helpers/e2e-helpers");
 
-test("Menü: Demo-Daten laden, Übersicht prüfen und anschließend Alles löschen", async ({ page }) => {
+test("Menü: Demo-Daten laden, Übersicht prüfen und anschließend Alles löschen", async ({
+  page,
+}) => {
   await page.goto("/");
   await openMenu(page);
 
@@ -31,7 +33,9 @@ test("Menü: Demo-Daten laden, Übersicht prüfen und anschließend Alles lösch
   await expect(page.locator("#detail-list")).toContainText("Noch keine weitere Detailplanung");
 });
 
-test("Darstellung kann auf Hell, Dunkel und zurück auf Auto gewechselt werden", async ({ page }) => {
+test("Darstellung kann auf Hell, Dunkel und zurück auf Auto gewechselt werden", async ({
+  page,
+}) => {
   await page.goto("/");
   await openMenu(page);
 

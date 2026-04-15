@@ -1,10 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const {
-  addGoal,
-  addRoughPlan,
-  seedAppState,
-  setMonth,
-} = require("./helpers/e2e-helpers");
+const { addGoal, addRoughPlan, seedAppState, setMonth } = require("./helpers/e2e-helpers");
 
 test("Lernzeit-Tracking: Zeit nachtragen mit und ohne Detailbezug", async ({ page }) => {
   await page.goto("/");
@@ -73,7 +68,7 @@ test("Stoppuhr startet über Detailplanungspunkt und wechselt auf den Stoppuhr-T
   await page.locator('[data-detail-block-form]:visible button[type="submit"]').click();
 
   await page.locator("#manual-tab").click();
-  await page.locator('[data-detail-start-tracking]').first().click();
+  await page.locator("[data-detail-start-tracking]").first().click();
 
   await expect(page.locator("#timer-display")).toBeVisible();
   await expect(page.locator("#timer-stop")).toBeVisible();

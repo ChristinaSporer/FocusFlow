@@ -73,7 +73,9 @@ test("Grobplanung: Ziel mit Farbe, Slot-Auswahl, Detailerzeugung und erneute Pla
 
   const firstChecked = page.locator('#rough-plan-grid input[type="checkbox"]:checked').first();
   await expect(firstChecked).toBeVisible();
-  const uncheckedBefore = page.locator('#rough-plan-grid input[type="checkbox"]:not(:checked)').count();
+  const uncheckedBefore = page
+    .locator('#rough-plan-grid input[type="checkbox"]:not(:checked)')
+    .count();
   const checkedHandle = await firstChecked.elementHandle();
   await checkedHandle.evaluate((input) => {
     input.checked = false;
@@ -83,7 +85,9 @@ test("Grobplanung: Ziel mit Farbe, Slot-Auswahl, Detailerzeugung und erneute Pla
   if (await page.locator("#rough-load-more").isVisible()) {
     await page.locator("#rough-load-more").click();
   }
-  const firstUnchecked = page.locator('#rough-plan-grid input[type="checkbox"]:not(:checked)').first();
+  const firstUnchecked = page
+    .locator('#rough-plan-grid input[type="checkbox"]:not(:checked)')
+    .first();
   const uncheckedHandle = await firstUnchecked.elementHandle();
   await uncheckedHandle.evaluate((input) => {
     input.checked = true;
@@ -106,9 +110,7 @@ test("Grobplanung: Ziel mit Farbe, Slot-Auswahl, Detailerzeugung und erneute Pla
     zustandNachPlanung.details[zustandNachPlanung.details.length - 1].date
   );
 
-  const optionenNachPlan = await page
-    .locator("#rough-goal option")
-    .allTextContents();
+  const optionenNachPlan = await page.locator("#rough-goal option").allTextContents();
   expect(optionenNachPlan.join(" ")).not.toContain(zielA);
   expect(optionenNachPlan.join(" ")).toContain(zielB);
 
@@ -189,15 +191,18 @@ test("Detailplanung: Bearbeiten, Kalender-Drag&Drop, mit und ohne Hauptziel plan
   await detailEvent.dragTo(targetDay);
 
   await page.locator("#tab-list").click();
-  const statusNachDrag = await page.evaluate(({ title, thema }) => {
-    const state = JSON.parse(window.localStorage.getItem("focusflow-v1"));
-    const goal = state.goals.find((goalItem) => goalItem.title === title);
-    const draggedDetail = state.detailPlans.find((detail) => detail.topic === thema);
-    return {
-      draggedDate: draggedDetail.date,
-      goalTargetDate: goal.targetDate,
-    };
-  }, { title: zielTitel, thema: detailThema });
+  const statusNachDrag = await page.evaluate(
+    ({ title, thema }) => {
+      const state = JSON.parse(window.localStorage.getItem("focusflow-v1"));
+      const goal = state.goals.find((goalItem) => goalItem.title === title);
+      const draggedDetail = state.detailPlans.find((detail) => detail.topic === thema);
+      return {
+        draggedDate: draggedDetail.date,
+        goalTargetDate: goal.targetDate,
+      };
+    },
+    { title: zielTitel, thema: detailThema }
+  );
   expect(statusNachDrag.draggedDate).toBe("2026-04-29");
   expect(statusNachDrag.goalTargetDate).toBe("2026-04-29");
 

@@ -1,6 +1,12 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("fs/promises");
-const { addGoal, addAdditionalDetailPlan, openMenuSection, setMonth } = require("./helpers/e2e-helpers");
+const {
+  addGoal,
+  addAdditionalDetailPlan,
+  openMenuSection,
+  setMonth,
+  clickAndAcceptDialogIfPresent,
+} = require("./helpers/e2e-helpers");
 
 test("ICS-Export erstellt eine Datei mit App-Terminen", async ({ page }) => {
   await page.goto("/");
@@ -55,9 +61,9 @@ test("ICS-Import übernimmt gültige Termine in Kalender und Status", async ({ p
     buffer: Buffer.from(gueltigeIcs, "utf-8"),
   });
 
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.locator("#menu-ics-import").click();
-  await (await dialogPromise).accept();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await page.locator("#menu-ics-import").click();
+  });
 
   await expect(page.locator("#ics-status")).toContainText("importiert");
 

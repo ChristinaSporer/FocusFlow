@@ -139,28 +139,31 @@ async function addAdditionalDetailPlan(
 }
 
 async function installNotificationMock(page, { permission = "granted" } = {}) {
-  await page.addInitScript(({ initialPermission }) => {
-    window.__notificationCalls = [];
+  await page.addInitScript(
+    ({ initialPermission }) => {
+      window.__notificationCalls = [];
 
-    class MockNotification {
-      static permission = initialPermission;
+      class MockNotification {
+        static permission = initialPermission;
 
-      static requestPermission() {
-        this.permission = "granted";
-        return Promise.resolve("granted");
+        static requestPermission() {
+          this.permission = "granted";
+          return Promise.resolve("granted");
+        }
+
+        constructor(title, options = {}) {
+          window.__notificationCalls.push({ title, options });
+        }
       }
 
-      constructor(title, options = {}) {
-        window.__notificationCalls.push({ title, options });
-      }
-    }
-
-    Object.defineProperty(window, "Notification", {
-      configurable: true,
-      writable: true,
-      value: MockNotification,
-    });
-  }, { initialPermission: permission });
+      Object.defineProperty(window, "Notification", {
+        configurable: true,
+        writable: true,
+        value: MockNotification,
+      });
+    },
+    { initialPermission: permission }
+  );
 }
 
 async function getNotificationCalls(page) {

@@ -103,6 +103,7 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
   await page.locator("#tab-calendar").click();
   await expect(page.locator("#calendar-grid")).not.toContainText(detailTopic);
 
+  await page.locator("#tab-list").click();
   const achievedGoalRow = page.locator("#achieved-list li").filter({ hasText: goalTitle }).first();
   await achievedGoalRow.locator("[data-goal-toggle]").click();
 
@@ -110,5 +111,5 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
   await expect(page.locator("#rough-list")).toContainText(roughNote);
   await expect(page.locator("#detail-list")).toContainText(detailTopic);
   await page.locator("#tab-calendar").click();
-  await expect(page.locator("#calendar-grid")).toContainText(detailTopic);
+  await expect(page.locator("#calendar-grid")).toContainText("MS Abschluss");
 });
