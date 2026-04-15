@@ -1,725 +1,317 @@
 # FocusFlow
 
-Ein einfacher Frontend-Prototyp (ohne Backend) für Lernzeitplanung und Lernzeit-Tracking.
-Alle Daten werden im Browser über `localStorage` gespeichert.
+Frontend-Prototyp fuer Lernzeitplanung und Lernzeit-Tracking ohne Backend.
+Alle Daten werden lokal im Browser in `localStorage` gespeichert (`focusflow-v1`).
 
-## Enthaltene Funktionen
+## Features
 
-- Lernziele mit Startdatum, automatisch abgeleitetem Enddatum, Workload und 8 Farboptionen verwalten
-- Automatische Grobplanung über Standard-Lernzeiten mit Verteilung freier Zeitfenster und erzeugter Detailplanung
-- Detailplanung, Lernzeit-Tracking, Pomodoro und Stoppuhr in einer gemeinsamen Oberfläche
-- Kalenderansicht für Ziele, Detailplanung und ICS-Importe
-- Menü für Theme, Demo-Daten, Reset, JSON-/ICS-Import und -Export sowie Browser-Benachrichtigungen
-- Übersicht aller kommenden Ziele und Detailplanungspunkte (scrollbar)
+- Lernziele mit Startdatum, abgeleitetem Enddatum, Workload, Farbe und Zwischenzielen
+- Grobplanung auf Basis konfigurierbarer Standard-Lernzeiten
+- Detailplanung aus Grobplanung sowie freie Zusatz-Detailplanung
+- Lernzeit-Tracking per Stoppuhr, manueller Eintragung und Pomodoro
+- Kalenderansicht fuer Ziele, Detailplanung und importierte ICS-Termine
+- JSON- und ICS-Import/Export ueber das Menue
+- Browser-Benachrichtigungen fuer geplante Lernzeiten
+- Demo-Daten und Reset fuer schnelle Tests
 
 ## Lokaler Start
 
-Da es statisches HTML/CSS/JS ist, kann `index.html` direkt im Browser geöffnet werden.
-Für Browser-Benachrichtigungen bitte über `localhost` starten.
+### Variante 1: npm
 
-1. Abhängigkeiten installieren:
-
-- `npm install`
-
-2. Lokalen Server starten (öffnet automatisch im Standardbrowser):
-
-- `npm start`
-
-Standard-URL: `http://localhost:8080/index.html`
-
-### One-Click Start (Windows)
-
-Im Projekt liegt die Datei `start-localhost.bat`.
-Diese Datei kann per Doppelklick gestartet werden und:
-
-1. wechselt automatisch in den Projektordner,
-2. führt bei Bedarf `npm install` aus,
-3. startet die Anwendung mit `npm start` auf `localhost`.
-
-## Code-Qualität (Lint/Format)
-
-1. Abhängigkeiten installieren:
+1. Abhaengigkeiten installieren:
    - `npm install`
-2. Linting ausführen:
-   - `npm run lint`
-   - `npm run lint:fix` (mit Auto-Fixes)
-3. Formatting prüfen/anwenden:
-   - `npm run format`
-   - `npm run format:write`
+2. App starten:
+   - `npm start`
+3. Aufrufen unter:
+   - `http://localhost:8080/index.html`
 
-## Automatische Tests
+### Variante 2: Windows One-Click
 
-1. Test-Dependencies installieren:
-   - `npm install`
-2. Unit-/DOM-Tests (Vitest):
-   - `npm run test`
-   - `npm run test:watch`
-3. End-to-End-Test (Playwright):
-   - `npm run test:e2e`
-4. Alles zusammen:
-   - `npm run test:all`
-5. Coverage Test:
-   - `npm run test:coverage`
+- `start-localhost.bat` per Doppelklick ausfuehren.
+- Das Skript installiert bei Bedarf Abhaengigkeiten und startet den lokalen Server.
 
-## Continuous Integration (CI)
+## Scripts
 
-Bei jedem Commit / Push wird automatisch eine GitHub Actions Workflow ausgeführt, die:
+- `npm start`: Lokaler Server mit Auto-Open
+- `npm run serve`: Lokaler Server ohne Auto-Open
+- `npm run lint`: ESLint + Stylelint
+- `npm run lint:fix`: Linting mit Auto-Fixes
+- `npm run format`: Prettier Check
+- `npm run format:write`: Prettier Write
+- `npm run test`: Unit-/DOM-Tests (Vitest)
+- `npm run test:coverage`: Unit-Tests mit Coverage
+- `npm run test:watch`: Vitest Watch Mode
+- `npm run test:e2e`: Playwright E2E
+- `npm run test:all`: Unit + E2E
 
-- **Lint & Format**: ESLint, Stylelint und Prettier-Check
-- **Unit Tests**: Vitest mit Coverage-Bericht
-- **E2E Tests**: Playwright-Tests
-- **Test Report**: Zusammenfassung aller gelaufenen Tests mit ihren `it(...)`-Titeln
+## Tests
 
-**App und Coverage auf GitHub Pages:**
+- Unit-/DOM-Tests liegen unter `tests/unit`.
+- E2E-Tests liegen unter `tests/e2e`.
+- Die E2E-Testspezifikation liegt unter:
+  - `tests/e2e/TESTSPEZIFIKATION.md`
 
-Die eigentliche Anwendung wird im Root der GitHub-Pages-Site veröffentlicht. Der Coverage-Report liegt zusätzlich unter `/coverage/index.html`.
+## CI/CD (GitHub Actions)
 
-1. App im Root:
+Workflow: `.github/workflows/ci.yml`
 
+Enthaelt folgende Jobs:
+
+1. `lint`
+   - ESLint, Stylelint, Prettier-Check
+   - Hinweis: Job ist aktuell mit `continue-on-error: true` konfiguriert
+2. `unit-tests`
+   - Vitest mit Coverage
+   - Artefakte: `coverage-report`, `unit-test-results`
+3. `e2e-tests`
+   - Playwright (Chromium)
+   - Artefakte: `e2e-test-results`, bei Fehlern `playwright-traces`
+4. `test-report`
+   - Kombinierter Report aus Unit- und E2E-Ergebnissen
+   - Artefakt: `ci-test-report`
+5. `coverage-pages`
+   - Deploy von App + Coverage auf GitHub Pages (nur Push auf Default-Branch)
+
+## GitHub Pages
+
+Bei erfolgreichem Default-Branch-Push werden App und Coverage bereitgestellt:
+
+- App: `https://<username>.github.io/FocusFlow/`
+- Coverage: `https://<username>.github.io/FocusFlow/coverage/index.html`
+
+Voraussetzung in GitHub:
+
+- `Settings -> Pages -> Source: GitHub Actions`
+
+## Architektur
+
+### Kontextdiagramm (Systemgrenze und externe Schnittstellen)
+
+```mermaid
+graph TB
+    User["👤 <b>Nutzer</b>"]
+    Browser["🌐 <b>Web Browser</b><br/>(HTML5 / JavaScript)"]
+    
+    subgraph System ["📦 FocusFlow System"]
+        App["FocusFlow Frontend<br/>(app.js + Module)"]
+    end
+    
+    LocalStorage["💾 <b>localStorage</b><br/>(focusflow-v1)"]
+    NotificationAPI["🔔 <b>Notification API</b><br/>(Browser-Benachrichtigungen)"]
+    FileAPI["📁 <b>File API</b><br/>(JSON/ICS Import-Export)"]
+    
+    User -->|Interaktion| Browser
+    Browser -->|rendert| System
+    App -->|persistiert / liest| LocalStorage
+    App -->|sendet Benachrichtigungen| NotificationAPI
+    NotificationAPI -->|zeigt an| Browser
+    App -->|importiert / exportiert| FileAPI
+    FileAPI -->|Download-Dialog / Dateiauswahl| Browser
+    
+    style System fill:#4EBE9B
+    style LocalStorage fill:#D6A4E0
+    style NotificationAPI fill:#A6B7DE
+    style FileAPI fill:#F8D096
 ```
-https://<dein-username>.github.io/FocusFlow/
+
+### Kurzueberblick (ohne Diagramme)
+
+- `app.js` initialisiert die Anwendung und orchestriert Rendering, Handler und Manager.
+- Zustandsaenderungen laufen zentral ueber `form-handlers.js` -> `app-reducer.js` -> `state-store.js`.
+- Der komplette App-Status wird nach jeder Aktion in `localStorage` persistiert.
+- Fachmodule (`calendar-manager`, `timer-manager`, `pomodoro-manager`, `ics-manager`, `json-manager`, `notification-manager`) kapseln klar getrennte Verantwortlichkeiten.
+- Die UI wird ueber `render-main-view.js` aus dem aktuellen Zustand neu aufgebaut.
+- Import/Export und Benachrichtigungen nutzen Browser-APIs (File/Blob/Notification).
+- Tests sind zweistufig aufgebaut: Vitest fuer Unit/DOM, Playwright fuer E2E.
+
+### Komponentenuebersicht
+
+```mermaid
+flowchart LR
+  U[Nutzer]
+  UI[index.html / styles.css]
+  APP[app.js Bootstrap + Orchestrierung]
+
+  FH[form-handlers.js]
+  RED[app-reducer.js]
+  STORE[state-store.js]
+  RENDER[render-main-view.js]
+
+  CAL[calendar-manager.js]
+  TIM[timer-manager.js]
+  POM[pomodoro-manager.js]
+  THEME[theme-manager.js]
+  ICS[ics-manager.js]
+  JSON[json-manager.js]
+  NOTIF[notification-manager.js]
+
+  LS[(localStorage)]
+  BROWSER[Browser APIs\nNotification / File / Blob]
+
+  U --> UI
+  UI --> APP
+
+  APP --> FH
+  FH --> RED
+  RED --> STORE
+  STORE --> LS
+
+  APP --> RENDER
+  APP --> CAL
+  APP --> TIM
+  APP --> POM
+  APP --> THEME
+  APP --> ICS
+  APP --> JSON
+  APP --> NOTIF
+
+  CAL --> STORE
+  TIM --> STORE
+  POM --> STORE
+  ICS --> STORE
+
+  ICS --> BROWSER
+  JSON --> BROWSER
+  NOTIF --> BROWSER
 ```
 
-2. Coverage-Report:
+### Datenmodell
 
+```mermaid
+classDiagram
+  class AppState {
+    goals: Goal[]
+    roughPlans: RoughPlan[]
+    detailPlans: DetailPlan[]
+    trackedSessions: TrackedSession[]
+    importedEvents: ImportedEvent[]
+    settings: Settings
+    timer: TimerState
+    pomodoro: PomodoroState
+  }
+
+  class Goal {
+    id: string
+    title: string
+    targetDate: string
+    completed: boolean
+    completedAt: string|null
+    milestones: Milestone[]
+    colorKey: string
+  }
+
+  class Milestone {
+    id: string
+    title: string
+    done: boolean
+  }
+
+  class RoughPlan {
+    id: string
+    goalId: string|null
+    date: string
+    hours: number
+    note: string
+    plannedDays: object[]
+  }
+
+  class DetailPlan {
+    id: string
+    goalId: string|null
+    milestoneId: string|null
+    date: string
+    startTime: string
+    endTime: string
+    topic: string
+    done: boolean
+  }
+
+  class TrackedSession {
+    id: string
+    date: string
+    minutes: number
+    note: string
+    detailPlanId: string|null
+  }
+
+  class ImportedEvent {
+    id: string
+    sourceKey: string
+    sourceName: string
+    date: string
+    summary: string
+  }
+
+  class Settings {
+    inactivityDays: number
+    lastReminderRun: string|null
+    notificationEnabled: boolean
+    notificationLeadMinutes: number
+    activeView: string
+    calendarMonth: string|null
+    themeMode: string
+    standardLearningTimes: object
+  }
+
+  class TimerState {
+    start: string|null
+    selectedDetailPlanId: string|null
+  }
+
+  class PomodoroState {
+    active: boolean
+    phase: string
+    pomodorosCompleted: number
+    secondsLeft: number
+    phaseStartedAt: string|null
+  }
+
+  AppState --> Goal
+  Goal --> Milestone
+  AppState --> RoughPlan
+  AppState --> DetailPlan
+  AppState --> TrackedSession
+  AppState --> ImportedEvent
+  AppState --> Settings
+  AppState --> TimerState
+  AppState --> PomodoroState
 ```
-https://<dein-username>.github.io/FocusFlow/coverage/index.html
+
+### Sequenz: Detailplanung erstellen und Tracking starten
+
+```mermaid
+sequenceDiagram
+  actor Nutzer
+  participant UI as Formular/Buttons
+  participant FH as form-handlers.js
+  participant RED as app-reducer.js
+  participant STORE as state-store.js
+  participant RENDER as render-main-view.js
+  participant TIM as timer-manager.js
+
+  Nutzer->>UI: Detailplanung erfassen
+  UI->>FH: Submit Event
+  FH->>RED: DETAIL_ADD
+  RED->>STORE: neuer State
+  STORE->>STORE: persistState(localStorage)
+  FH->>RENDER: renderAll()
+
+  Nutzer->>UI: Tracking starten
+  UI->>TIM: startTimerForDetailPlan()
+  TIM->>RED: TIMER_START
+  RED->>STORE: State Update
+  STORE->>STORE: persistState(localStorage)
+  TIM->>RENDER: renderAll()
+
+  Nutzer->>UI: Tracking stoppen
+  UI->>TIM: stopTimer()
+  TIM->>RED: TIMER_STOP_AND_STORE_SESSION
+  RED->>STORE: Session gespeichert
+  STORE->>STORE: persistState(localStorage)
+  TIM->>RENDER: renderAll()
 ```
-
-**Coverage-Report ansehen (GitHub Pages):**
-
-Der Coverage-Report wird nach jedem erfolgreichen Run auf der Default-Branch automatisch zu GitHub Pages deployed und unter `/coverage/index.html` veröffentlicht.
-
-1. Gehe zu deinem **GitHub Pages** (z.B. `https://ChristinaSporer.github.io/FocusFlow/`)
-2. Öffne den **Coverage-Report** unter: `/coverage/index.html`
-3. Oder direkt:
-   ```
-   https://<dein-username>.github.io/FocusFlow/coverage/index.html
-   ```
-
-**Einmalige Aktivierung (falls noch nicht geschehen):**
-
-- Gehe in GitHub → **Settings → Pages**
-- Source: **GitHub Actions**
-- Der Workflow deployed die Pages-Inhalte direkt aus GitHub Actions
-- Es ist keine `gh-pages`-Branch und keine manuelle Branch-Auswahl nötig
-
-**Test-Report ansehen:**
-
-1. Oeffne in GitHub den jeweiligen Workflow-Run unter **Actions**
-2. Im Bereich **Summary** wird ein Testreport mit allen gelaufenen Unit- und E2E-Tests angezeigt
-3. Zusaetzlich kann das Artefakt `ci-test-report` heruntergeladen werden
-4. Fuer E2E-Laeufe steht ausserdem das Artefakt `e2e-test-results` mit dem Playwright-HTML-Report bereit
-
-## GitHub Pages Deployment
-
-1. Repository auf GitHub erstellen und Dateien pushen.
-2. In GitHub: `Settings > Pages` öffnen.
-3. Source: `GitHub Actions` auswählen.
-4. Nach einem erfolgreichen Push auf die Default-Branch wird der Coverage-Report automatisch deployed.
-5. Anschließend steht die Pages-URL mit dem Coverage-Report unter `/coverage/index.html` bereit.
 
 ## Hinweise
 
-- Browser-Benachrichtigungen müssen einmal erlaubt werden, damit Erinnerungen vor geplanten Lernsessions angezeigt werden.
-- Für einen echten Produktivbetrieb wären Benutzerkonten, serverseitige Persistenz und Synchronisation sinnvoll.
-
-## Komponentendiagramm
-
-```mermaid
-flowchart LR
-  U[Nutzer]
-  UI[index.html + styles.css]
-  APP[app.js: Controller + Fachlogik]
-  RENDER[Render Main View]
-  ST[(In-Memory State)]
-  MS[Milestones/Detailplanung]
-  LS[(localStorage)]
-  NTF[Notification API]
-  ICS[ICS Import/Export]
-  JSON[JSON Import/Export]
-  FILE[File/Blob API]
-  CAL[Calendar Manager]
-  POM[Pomodoro Manager]
-  TIM[Timer Manager]
-  THEME[Theme Manager]
-  FORM[Form Handlers]
-
-  U --> UI
-  UI --> RENDER
-  RENDER <--> APP
-  APP <--> ST
-  APP <--> MS
-  MS <--> ST
-  APP <--> LS
-  APP --> NTF
-  APP <--> ICS
-  APP <--> JSON
-  APP --> FILE
-  APP --> CAL
-  APP --> POM
-  APP --> TIM
-  APP --> THEME
-  APP --> FORM
-```
-
-## Klassendiagramm
-
-```mermaid
-classDiagram
-  class AppState {
-    goals[]
-    roughPlans[]
-    detailPlans[]
-    trackedSessions[]
-    importedEvents[]
-    settings
-    timer
-    pomodoro
-  }
-
-  class Goal
-  class Milestone
-  class RoughPlan
-  class DetailPlan
-  class TrackedSession
-  class ImportedEvent
-  class Settings
-  class TimerState
-  class PomodoroState
-
-  AppState --> Goal
-  Goal --> Milestone
-  AppState --> RoughPlan
-  AppState --> DetailPlan
-  AppState --> TrackedSession
-  AppState --> ImportedEvent
-  AppState --> Settings
-  AppState --> TimerState
-  AppState --> PomodoroState
-```
-
-## Sequenzdiagramme
-
-### Ziel anlegen
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant Form as goal-form
-  participant App as app.js Handler
-  participant State as state.goals
-  participant Store as localStorage
-  participant UI as renderAll()
-
-  Nutzer->>Form: Titel + Datum eingeben, Submit
-  Form->>App: submit event
-  App->>State: push(goal)
-  App->>Store: saveState()
-  App->>UI: renderAll()
-  UI-->>Nutzer: aktualisierte Ziel-Liste
-```
-
-### Zwischenziel (Milestone) anlegen
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant Form as milestone-form
-  participant App as app.js Handler
-  participant State as state.goals.milestones
-  participant Store as localStorage
-  participant UI as renderAll()
-
-  Nutzer->>Form: Titel + Ziel wählen, Submit
-  Form->>App: submit event
-  App->>State: push(milestone)
-  App->>Store: saveState()
-  App->>UI: renderAll()
-  UI-->>Nutzer: aktualisierte Milestone-Liste
-```
-
-### Grobplanung erstellen
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant Form as roughplan-form
-  participant App as app.js Handler
-  participant State as state.roughPlans
-  participant Store as localStorage
-  participant UI as renderAll()
-
-  Nutzer->>Form: Datum + Stunden + Notiz, Submit
-  Form->>App: submit event
-  App->>State: push(roughPlan)
-  App->>Store: saveState()
-  App->>UI: renderAll()
-  UI-->>Nutzer: aktualisierte Grobplanung
-```
-
-### Detailplanung erstellen
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant Form as detailplan-form
-  participant App as app.js Handler
-  participant State as state.detailPlans
-  participant Store as localStorage
-  participant UI as renderAll()
-
-  Nutzer->>Form: Datum + Minuten + Thema, Submit
-  Form->>App: submit event
-  App->>State: push(detailPlan)
-  App->>Store: saveState()
-  App->>UI: renderAll()
-  UI-->>Nutzer: aktualisierte Detailplanung
-```
-
-### Stoppuhr starten und speichern
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant UI as Timer-UI
-  participant App as app.js Handler
-  participant State as state.trackedSessions
-  participant Store as localStorage
-
-  Nutzer->>UI: Start-Button drücken
-  UI->>App: startTimer event
-  App->>State: timer.start setzen
-  Nutzer->>UI: Stop-Button drücken
-  UI->>App: stopTimer event
-  App->>State: push(trackedSession)
-  App->>Store: saveState()
-  UI-->>Nutzer: neue Session gespeichert
-```
-
-### Pomodoro starten und abschließen
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant UI as Pomodoro-UI
-  participant App as app.js Handler
-  participant State as state.pomodoro
-  participant Store as localStorage
-  participant NOTIF as Notification API
-
-  Nutzer->>UI: Pomodoro starten
-  UI->>App: startPomodoro event
-  App->>State: pomodoro.active = true
-  App->>Store: saveState()
-  App->>NOTIF: Benachrichtigung bei Ende
-  Nutzer->>UI: Pomodoro beenden
-  UI->>App: stopPomodoro event
-  App->>State: pomodoro.active = false
-  App->>Store: saveState()
-  UI-->>Nutzer: Pomodoro abgeschlossen
-```
-
-### Zeit manuell eintragen
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant Form as tracked-form
-  participant App as app.js Handler
-  participant State as state.trackedSessions
-  participant Store as localStorage
-  participant UI as renderAll()
-
-  Nutzer->>Form: Start/Ende + Notiz, Submit
-  Form->>App: submit event
-  App->>State: push(trackedSession)
-  App->>Store: saveState()
-  App->>UI: renderAll()
-  UI-->>Nutzer: neue Session sichtbar
-```
-
-## Klassendiagramm: Datenmodell
-
-```mermaid
-  classDiagram
-  class AppState {
-    +goals: Goal[]
-    +roughPlans: RoughPlan[]
-    +detailPlans: DetailPlan[]
-    +trackedSessions: TrackedSession[]
-    +importedEvents: ImportedEvent[]
-    +settings: Settings
-    +timer: TimerState
-    +pomodoro: PomodoroState
-  }
-  class PomodoroState {
-    +active: boolean
-    +phase: string
-    +pomodorosCompleted: number
-    +secondsLeft: number
-    +phaseStartedAt: string|null
-  }
-
-  class Goal {
-    +id: string
-    +title: string
-    +targetDate: string
-    +completed: boolean
-    +completedAt: string|null
-    +milestones: Milestone[]
-  }
-
-  class Milestone {
-    +id: string
-    +title: string
-    +done: boolean
-  }
-
-  class RoughPlan {
-    +id: string
-    +date: string
-    +hours: number
-    +note: string
-  }
-
-  class DetailPlan {
-    +id: string
-    +date: string
-    +minutes: number
-    +topic: string
-    +milestone: string
-    +done: boolean
-  }
-
-  class TrackedSession {
-    +id: string
-    +start: string
-    +end: string
-    +minutes: number
-    +note: string
-  }
-
-  class ImportedEvent {
-    +id: string
-    +sourceKey: string
-    +sourceName: string
-    +sourceHash: string
-    +externalUid: string
-    +date: string
-    +summary: string
-    +createdAt: string
-  }
-
-  class Settings {
-    +inactivityDays: number
-    +lastReminderRun: string|null
-    +notificationEnabled: boolean
-    +activeView: string
-    +calendarMonth: string|null
-  }
-
-  class TimerState {
-    +start: string|null
-  }
-
-  AppState --> Goal
-  Goal --> Milestone
-  AppState --> RoughPlan
-  AppState --> DetailPlan
-  AppState --> TrackedSession
-  AppState --> ImportedEvent
-  AppState --> Settings
-  AppState --> TimerState
-  AppState --> PomodoroState
-```
-
-## Use-Case Diagramm
-
-```mermaid
-flowchart LR
-  Nutzer((Nutzer))
-  UC1([Ziel anlegen])
-  UC2([Meilenstein anlegen])
-  UC3([Lernzeit tracken])
-  UC4([Pomodoro nutzen])
-  UC5([Kalender anzeigen])
-  UC6([Daten importieren])
-  UC7([Daten exportieren])
-  UC8([Demo-Daten laden])
-
-  PC([Lokaler PC Dateisystem])
-  NOTIF([Browser Notification API])
-  STORAGE([localStorage])
-  FILEAPI([File/Blob API])
-
-  Nutzer --> UC1
-  Nutzer --> UC2
-  Nutzer --> UC3
-  Nutzer --> UC4
-  Nutzer --> UC5
-  Nutzer --> UC6
-  Nutzer --> UC7
-  Nutzer --> UC8
-
-  UC6 -- "Import" --> PC
-  UC7 -- "Export" --> PC
-  UC6 -- "File lesen" --> FILEAPI
-  UC7 -- "File schreiben" --> FILEAPI
-  UC4 -- "Benachrichtigung" --> NOTIF
-  UC1 -- "Speichern" --> STORAGE
-  UC2 -- "Speichern" --> STORAGE
-  UC3 -- "Speichern" --> STORAGE
-  UC4 -- "Speichern" --> STORAGE
-  UC5 -- "Speichern" --> STORAGE
-  UC8 -- "Speichern" --> STORAGE
-```
-
-## Zustandsdiagramm Pomodoro Technik
-
-```mermaid
-stateDiagram-v2
-  [*] --> Idle
-
-  Idle --> Work: Start
-  Work --> Paused: Pause
-  Paused --> Work: Fortsetzen
-  Work --> ShortBreak: Phase beendet
-  ShortBreak --> Paused: Pause
-  Paused --> ShortBreak: Fortsetzen
-  ShortBreak --> Work: Nächste Arbeitsphase
-
-  Work --> LongBreak: Nach mehreren Pomodoros
-  LongBreak --> Paused: Pause
-  Paused --> LongBreak: Fortsetzen
-  LongBreak --> Work: Nächste Arbeitsphase
-
-  Work --> Idle: Reset / Stop
-  ShortBreak --> Idle: Reset / Stop
-  LongBreak --> Idle: Reset / Stop
-  Paused --> Idle: Reset / Stop
-```
-
-## Kontextdiagramm
-
-```mermaid
-flowchart LR
-  U[Nutzer]
-  APP[FocusFlow Browser App]
-  LS[(localStorage)]
-  NOTIF[Notification API]
-  FILE[Datei Import und Export]
-  ICS[ICS Datei]
-  JSON[JSON Import/Export]
-
-  U --> APP
-  APP --> LS
-  APP --> NOTIF
-  APP --> FILE
-  FILE --> ICS
-  FILE --> JSON
-  ICS --> APP
-  JSON --> APP
-```
-
-## Komponentendiagramm
-
-```mermaid
-flowchart LR
-  UI[Benutzeroberflaeche]
-  APP[App Orchestrator]
-  STORE[State Store]
-  REDUCER[Reducer]
-  FORM[Form Handler]
-  RENDER[Render Module]
-
-  CAL[Calendar Manager]
-  TIMER[Timer Manager]
-  POMO[Pomodoro Manager]
-  ICS[ICS Manager]
-  JSON[JSON Manager]
-  THEME[Theme Manager]
-
-  LS[(localStorage)]
-  NOTIF[Notification API]
-  FILE[File API]
-
-  UI --> FORM
-  FORM --> APP
-  APP --> REDUCER
-  REDUCER --> STORE
-  STORE --> LS
-  STORE --> APP
-  APP --> RENDER
-  RENDER --> UI
-
-  APP --> CAL
-  APP --> TIMER
-  APP --> POMO
-  APP --> ICS
-  APP --> JSON
-  APP --> THEME
-
-  POMO --> NOTIF
-  ICS --> FILE
-  JSON --> FILE
-```
-
-## Datenmodell
-
-```mermaid
-classDiagram
-  class AppState {
-    goals
-    roughPlans
-    detailPlans
-    trackedSessions
-    importedEvents
-    settings
-    timer
-    pomodoro
-  }
-
-  class Goal {
-    id
-    title
-    targetDate
-    description
-    completed
-    completedAt
-  }
-
-  class Milestone {
-    id
-    title
-    done
-  }
-
-  class RoughPlan {
-    id
-    week
-    date
-    hours
-    note
-    goalId
-  }
-
-  class DetailPlan {
-    id
-    date
-    minutes
-    topic
-    milestone
-    goalId
-    milestoneId
-    roughPlanId
-    done
-  }
-
-  class TrackedSession {
-    id
-    start
-    end
-    minutes
-    note
-    detailPlanId
-  }
-
-  class ImportedEvent {
-    id
-    sourceKey
-    sourceName
-    sourceHash
-    externalUid
-    date
-    summary
-    createdAt
-  }
-
-  class Settings {
-    inactivityDays
-    lastReminderRun
-    notificationEnabled
-    activeView
-    calendarMonth
-    themeMode
-  }
-
-  class TimerState {
-    start
-    selectedDetailPlanId
-  }
-
-  class PomodoroState {
-    active
-    phase
-    pomodorosCompleted
-    secondsLeft
-    phaseStartedAt
-  }
-
-  AppState --> Goal
-  Goal --> Milestone
-  AppState --> RoughPlan
-  AppState --> DetailPlan
-  AppState --> TrackedSession
-  AppState --> ImportedEvent
-  AppState --> Settings
-  AppState --> TimerState
-  AppState --> PomodoroState
-```
-
-## Sequenzdiagramm Standard Use-Case
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant UI as Formular
-  participant Handler
-  participant App
-  participant Reducer
-  participant Store
-  participant LocalStorage
-  participant View
-
-  Nutzer->>UI: Eingabe und Submit
-  UI->>Handler: submit event
-  Handler->>App: dispatch action
-  App->>Reducer: state update
-  Reducer->>Store: neuer state
-  Store->>LocalStorage: speichern
-  Store->>View: render
-  View-->>Nutzer: aktualisierte Ansicht
-```
-
-## Sequenzdiagramm Import-Flow
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant UI as Import UI
-  participant Handler
-  participant Manager
-  participant Parser
-  participant Store
-  participant LocalStorage
-  participant View
-
-  Nutzer->>UI: Datei auswaehlen
-  Nutzer->>UI: Import starten
-  UI->>Handler: click event
-  Handler->>Manager: import file
-  Manager->>Parser: lesen und validieren
-
-  alt gueltige Datei
-    Parser-->>Manager: Daten ok
-    Manager->>Store: merge oder replace
-    Store->>LocalStorage: speichern
-    Store->>View: render
-    View-->>Nutzer: Status und neue Ansicht
-  else ungueltige Datei
-    Parser-->>Manager: Fehler
-    Manager-->>UI: Fehlermeldung
-    UI-->>Nutzer: Import fehlgeschlagen
-  end
-```
+- Browser-Benachrichtigungen erfordern Berechtigung im Browser.
+- Fuer produktiven Einsatz fehlen u. a. Authentifizierung, Mehrbenutzerfaehigkeit und serverseitige Persistenz.
