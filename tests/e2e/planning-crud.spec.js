@@ -276,7 +276,7 @@ test("Erledigtes Ziel gibt belegten Detailplanungstag fuer neue Grobplanung wied
 
   const altesZielRow = page.locator("#goal-list li").filter({ hasText: altesZiel }).first();
   await clickAndAcceptDialogIfPresent(page, async () => {
-    await altesZielRow.locator('[data-goal-toggle]').click();
+    await altesZielRow.locator("[data-goal-toggle]").click();
   });
 
   await addGoal(page, { title: neuesZiel, date: "2026-05-08", workloadHours: 2 });

@@ -414,17 +414,15 @@ describe("modules/render-main-view", () => {
       onEditTrackedSession,
     });
     expect(document.getElementById("track-list").textContent).toContain("Detail:");
-    document
-      .querySelector('#track-list li:nth-child(2) [data-tracked-edit]')
-      .click();
+    document.querySelector("#track-list li:nth-child(2) [data-tracked-edit]").click();
     expect(onEditTrackedSession).toHaveBeenCalledWith(
       expect.objectContaining({ id: "t1", minutes: 25, note: "X" })
     );
-    document.querySelector('#track-list li:nth-child(2) .btn-outline-danger').click();
+    document.querySelector("#track-list li:nth-child(2) .btn-outline-danger").click();
     expect(dispatch).toHaveBeenCalledWith({ type: "TRACKED_DELETE", payload: { id: "t1" } });
-    expect(
-      document.querySelector("#track-list .lz-tracked-unlinked")?.textContent
-    ).toContain("Ohne Detail");
+    expect(document.querySelector("#track-list .lz-tracked-unlinked")?.textContent).toContain(
+      "Ohne Detail"
+    );
 
     document.getElementById("track-list").innerHTML = "";
     renderTrackedSessions({

@@ -187,9 +187,7 @@ describe("modules/planning-utils", () => {
           goalId: "g-completed",
         },
       ],
-      goals: [
-        { id: "g-completed", title: "IT-Service lernen", completed: true },
-      ],
+      goals: [{ id: "g-completed", title: "IT-Service lernen", completed: true }],
       horizonDays: 1,
     });
 
@@ -221,9 +219,7 @@ describe("modules/planning-utils", () => {
           goalId: "g-completed",
         },
       ],
-      goals: [
-        { id: "g-completed", title: "IT-Service lernen", completed: true },
-      ],
+      goals: [{ id: "g-completed", title: "IT-Service lernen", completed: true }],
       horizonDays: 1,
     });
 

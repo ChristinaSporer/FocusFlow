@@ -148,6 +148,7 @@ describe("modules/demo-data", () => {
       activeView: "list",
       calendarMonth: "2026-03",
       themeMode: "dark",
+      confirmDialogsEnabled: true,
     });
   });
 

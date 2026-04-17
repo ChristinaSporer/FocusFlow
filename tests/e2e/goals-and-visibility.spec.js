@@ -116,7 +116,9 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
     .filter({ hasText: "MS Abschluss" });
   await expect(fadedEntries.first()).toBeVisible();
 
-  const opacityValue = await fadedEntries.first().evaluate((node) => getComputedStyle(node).opacity);
+  const opacityValue = await fadedEntries
+    .first()
+    .evaluate((node) => getComputedStyle(node).opacity);
   expect(Number(opacityValue)).toBeCloseTo(0.35, 2);
 
   await page.locator("#tab-list").click();
