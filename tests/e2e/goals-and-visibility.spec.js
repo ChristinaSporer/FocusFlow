@@ -1,5 +1,11 @@
 const { test, expect } = require("@playwright/test");
-const { addGoal, addMilestoneToGoal, setMonth, addRoughPlan } = require("./helpers/e2e-helpers");
+const {
+  addGoal,
+  addMilestoneToGoal,
+  setMonth,
+  addRoughPlan,
+  clickAndAcceptDialogIfPresent,
+} = require("./helpers/e2e-helpers");
 
 test("Lernziel mit Zwischenziel kann angelegt werden", async ({ page }) => {
   await page.goto("/");
@@ -91,7 +97,9 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
   await expect(page.locator("#goal-list")).toContainText("Getrackt:");
 
   const openGoalRow = page.locator("#goal-list li").filter({ hasText: goalTitle }).first();
-  await openGoalRow.locator("[data-goal-toggle]").click();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await openGoalRow.locator("[data-goal-toggle]").click();
+  });
 
   await expect(page.locator("#achieved-list")).toContainText(goalTitle);
   await expect(page.locator("#achieved-list")).toContainText("Zeit geplant:");
@@ -101,11 +109,21 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
   await expect(page.locator("#detail-list")).not.toContainText(detailTopic);
 
   await page.locator("#tab-calendar").click();
-  await expect(page.locator("#calendar-grid")).not.toContainText(detailTopic);
+  await expect(page.locator("#calendar-grid")).toContainText("MS Abschluss");
+
+  const fadedEntries = page
+    .locator(".lz-calendar-event.lz-calendar-event-completed")
+    .filter({ hasText: "MS Abschluss" });
+  await expect(fadedEntries.first()).toBeVisible();
+
+  const opacityValue = await fadedEntries.first().evaluate((node) => getComputedStyle(node).opacity);
+  expect(Number(opacityValue)).toBeCloseTo(0.35, 2);
 
   await page.locator("#tab-list").click();
   const achievedGoalRow = page.locator("#achieved-list li").filter({ hasText: goalTitle }).first();
-  await achievedGoalRow.locator("[data-goal-toggle]").click();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await achievedGoalRow.locator("[data-goal-toggle]").click();
+  });
 
   await expect(page.locator("#goal-list")).toContainText(goalTitle);
   await expect(page.locator("#rough-list")).toContainText(roughNote);

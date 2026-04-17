@@ -13,6 +13,7 @@ export const defaultData = () => ({
     inactivityDays: 3,
     lastReminderRun: null,
     notificationEnabled: false,
+    confirmDialogsEnabled: true,
     notificationLeadMinutes: 15,
     activeView: "list",
     calendarMonth: null,

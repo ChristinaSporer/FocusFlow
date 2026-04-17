@@ -180,7 +180,7 @@ describe("App-UI-Integration (jsdom)", () => {
     expect(parsed.goals[0].targetDate).toBe(date);
     expect(parsed.goals[0].description).toBe(description);
     expect(document.getElementById("goal-list").textContent).toContain(description);
-    expect(document.querySelector("#goal-list [data-goal-toggle]")).not.toBeNull();
+    expect(document.getElementById("goal-list").textContent).toContain("Als erreicht markieren");
   });
 
   it("bearbeitet ein bestehendes Ziel inklusive Titel, Datum und Beschreibung", () => {

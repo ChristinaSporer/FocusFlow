@@ -34,6 +34,7 @@ export function createCalendarManager({ getState, dispatch }) {
           id: `goal-start-${goal.id}`,
           source: "goal",
           className,
+          completedLinked: Boolean(goal.completed),
           date: goal.startDate,
           title: `Start: ${goal.title}`,
           hint,
@@ -45,6 +46,7 @@ export function createCalendarManager({ getState, dispatch }) {
           id: `goal-end-${goal.id}`,
           source: "goal",
           className,
+          completedLinked: Boolean(goal.completed),
           date: goal.targetDate,
           title: goal.title,
           hint,
@@ -65,6 +67,7 @@ export function createCalendarManager({ getState, dispatch }) {
         id: item.id,
         source: "detail",
         className: goal?.id ? `lz-source-detail-${resolveGoalColorKey(goal.colorKey)}` : "",
+        completedLinked: Boolean(goal?.completed),
         date: item.date,
         title:
           item.startTime && item.endTime
@@ -184,6 +187,9 @@ export function createCalendarManager({ getState, dispatch }) {
         const entry = document.createElement("div");
         const source = SOURCE_META[event.source] || SOURCE_META.detail;
         entry.className = `lz-calendar-event ${source.className} ${event.className || ""}`.trim();
+        if (event.completedLinked) {
+          entry.classList.add("lz-calendar-event-completed");
+        }
         entry.title = event.hint || source.label;
         entry.textContent = event.title;
 

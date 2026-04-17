@@ -40,6 +40,9 @@ test("Lernzeit-Tracking: Zeit nachtragen mit und ohne Detailbezug", async ({ pag
   await page.locator("#track-detail-select").selectOption({ value: "" });
   await page.locator("#track-manual-submit").click();
   await expect(page.locator("#track-list")).toContainText("Ohne Detail");
+
+  const unlinkedRow = page.locator("#track-list li").filter({ hasText: "Ohne Detail" }).first();
+  await expect(unlinkedRow).toHaveClass(/lz-tracked-unlinked/);
 });
 
 test("Stoppuhr startet über Detailplanungspunkt und wechselt auf den Stoppuhr-Tab", async ({

@@ -50,11 +50,55 @@ export function initFormHandlers({
     extraSlotsVisible: 3,
   };
 
+  function shouldShowConfirmDialogs() {
+    return getState().settings?.confirmDialogsEnabled !== false;
+  }
+
+  function askConfirmation(message) {
+    if (!shouldShowConfirmDialogs()) return true;
+    return confirm(message);
+  }
+
+  function syncTrackedEditHighlight(activeId = "") {
+    document.querySelectorAll("[data-tracked-edit]").forEach((button) => {
+      const isActive = String(button.getAttribute("data-tracked-edit") || "") === String(activeId);
+      button.classList.toggle("btn-secondary", isActive);
+      button.classList.toggle("text-white", isActive);
+      button.classList.toggle("btn-outline-secondary", !isActive);
+      const row = button.closest("li");
+      if (row) row.classList.toggle("lz-tracked-editing", isActive);
+    });
+  }
+
+  function prefillManualTrackingFromDetail(detailPlanId) {
+    if (!detailPlanId) return;
+    const detailPlan = (getState().detailPlans || []).find((item) => item.id === detailPlanId);
+    if (!detailPlan) return;
+    const dateInput = byId("track-manual-date");
+    const minutesInput = byId("track-manual-minutes");
+    const hoursInput = byId("track-manual-hours");
+    const extraMinutesInput = byId("track-manual-extra-minutes");
+    const safeMinutes = Math.max(0, Number(detailPlan.minutes || 0));
+    if (dateInput) dateInput.value = detailPlan.date || dateInput.value;
+    if (minutesInput) minutesInput.value = safeMinutes > 0 ? String(safeMinutes) : "";
+    if (hoursInput) hoursInput.value = String(Math.floor(safeMinutes / 60));
+    if (extraMinutesInput) extraMinutesInput.value = String(safeMinutes % 60);
+  }
+
+  function setGoalTargetDateDisplay(value) {
+    const safeValue = String(value || "").trim();
+    const textNode = byId("goal-date-text");
+    if (textNode) {
+      textNode.textContent = safeValue || "Enddatum wird automatisch berechnet";
+    }
+  }
+
   function resetGoalForm() {
     if (byId("goal-edit-id")) byId("goal-edit-id").value = "";
     if (byId("goal-title")) byId("goal-title").value = "";
     if (byId("goal-start-date")) byId("goal-start-date").value = "";
     if (byId("goal-date")) byId("goal-date").value = "";
+    setGoalTargetDateDisplay("");
     if (byId("goal-workload-hours")) byId("goal-workload-hours").value = "";
     if (byId("goal-description")) byId("goal-description").value = "";
     const defaultColorInput = byId(`goal-color-${DEFAULT_GOAL_COLOR_KEY}`);
@@ -139,6 +183,7 @@ export function initFormHandlers({
     if (byId("goal-title")) byId("goal-title").value = goal.title;
     if (byId("goal-start-date")) byId("goal-start-date").value = goal.startDate || "";
     if (byId("goal-date")) byId("goal-date").value = goal.targetDate || "";
+    setGoalTargetDateDisplay(goal.targetDate || "");
     if (byId("goal-workload-hours")) {
       byId("goal-workload-hours").value =
         Number.isFinite(Number(goal.workloadHours)) && Number(goal.workloadHours) > 0
@@ -205,6 +250,7 @@ export function initFormHandlers({
       standardLearningTimes: getCurrentLearningTimes(),
       selectedSlotKeys,
       detailPlans: getState().detailPlans,
+      goals: getState().goals,
     });
 
     planningDraft.distributedDays = distribution.days;
@@ -279,6 +325,7 @@ export function initFormHandlers({
     if (note) note.value = "";
     if (submit) submit.textContent = "Zeit nachtragen";
     if (cancel) cancel.classList.add("d-none");
+    syncTrackedEditHighlight("");
   }
 
   function syncLegacyManualMinutesFromSplitInputs() {
@@ -316,6 +363,15 @@ export function initFormHandlers({
     if (detail) detail.value = session.detailPlanId || "";
     if (submit) submit.textContent = "Änderungen speichern";
     if (cancel) cancel.classList.remove("d-none");
+    syncTrackedEditHighlight(session.id);
+    const manualTab = byId("manual-tab");
+    if (manualTab) {
+      if (typeof window.bootstrap?.Tab === "function") {
+        window.bootstrap.Tab.getOrCreateInstance(manualTab).show();
+      } else {
+        manualTab.click();
+      }
+    }
     if (minutes) minutes.focus();
   }
 
@@ -499,7 +555,12 @@ export function initFormHandlers({
     });
   }
 
-  byId("month-select")?.addEventListener("change", renderAll);
+  const monthSelectInput = byId("month-select");
+  if (monthSelectInput) {
+    monthSelectInput.readOnly = false;
+    monthSelectInput.disabled = false;
+    monthSelectInput.addEventListener("change", renderAll);
+  }
 
   [byId("tab-list"), byId("tab-calendar")].forEach((btn) => {
     if (!btn) return;
@@ -575,7 +636,9 @@ export function initFormHandlers({
   // Initial state
   updateTimerButtons(false, false);
   byId("track-detail-select")?.addEventListener("change", (event) => {
-    setSelectedTimerDetailPlan?.(event.target.value || null);
+    const selectedDetailPlanId = event.target.value || null;
+    setSelectedTimerDetailPlan?.(selectedDetailPlanId);
+    prefillManualTrackingFromDetail(selectedDetailPlanId);
   });
 
   byId("track-manual-hours")?.addEventListener("input", syncLegacyManualMinutesFromSplitInputs);
@@ -665,7 +728,7 @@ export function initFormHandlers({
   });
 
   byId("menu-reset")?.addEventListener("click", () => {
-    const ok = confirm("Alle Daten wirklich löschen?");
+    const ok = askConfirmation("Alle Daten wirklich löschen?");
     if (!ok) return;
     dispatch({ type: "REPLACE_STATE", payload: { state: defaultData() } });
     resetGoalForm();
@@ -691,12 +754,16 @@ export function initFormHandlers({
   });
 
   const notificationToggle = byId("menu-notification-enabled");
+  const confirmDialogsToggle = byId("menu-confirm-dialogs-enabled");
   const notificationLeadInput = byId("menu-notification-lead");
   const notificationStatus = byId("menu-notification-status");
 
   function syncNotificationInputs() {
     const settings = getState().settings || {};
     if (notificationToggle) notificationToggle.checked = Boolean(settings.notificationEnabled);
+    if (confirmDialogsToggle) {
+      confirmDialogsToggle.checked = settings.confirmDialogsEnabled !== false;
+    }
     if (notificationLeadInput) {
       notificationLeadInput.value = String(settings.notificationLeadMinutes ?? 15);
     }
@@ -735,6 +802,10 @@ export function initFormHandlers({
     const minutes = Math.min(90, Math.max(0, Number(notificationLeadInput.value || 0)));
     dispatch({ type: "SET_NOTIFICATION_LEAD_MINUTES", payload: { minutes } });
     syncNotifications?.();
+  });
+
+  confirmDialogsToggle?.addEventListener("change", (event) => {
+    dispatch({ type: "SET_CONFIRM_DIALOGS_ENABLED", payload: { enabled: event.target.checked } });
   });
 
   byId("menu-ics-import")?.addEventListener("click", async () => {

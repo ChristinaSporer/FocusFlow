@@ -206,7 +206,7 @@ export function buildDemoState({ themeMode }) {
         milestoneId: milestoneTwoId,
         goalId: goalOneId,
         roughPlanId: roughPlanOneId,
-        done: true,
+        done: false,
       },
       {
         id: detailOneBId,
@@ -353,6 +353,7 @@ export function buildDemoState({ themeMode }) {
       inactivityDays: 3,
       lastReminderRun: nowIso(),
       notificationEnabled: false,
+      confirmDialogsEnabled: true,
       activeView: "list",
       calendarMonth: month,
       themeMode,

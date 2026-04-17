@@ -66,6 +66,15 @@ function isDetailPlanHiddenByCompletion(state, item) {
   return false;
 }
 
+function shouldShowConfirmDialogs(state) {
+  return state.settings?.confirmDialogsEnabled !== false;
+}
+
+function askConfirmation(state, message) {
+  if (!shouldShowConfirmDialogs(state)) return true;
+  return confirm(message);
+}
+
 export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGoal }) {
   const list = byId("goal-list");
   const achieved = byId("achieved-list");
@@ -154,33 +163,35 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       const doneWrap = document.createElement("div");
       doneWrap.className = "d-flex flex-column gap-1";
 
-      const doneTitleRow = document.createElement("label");
-      doneTitleRow.className = "form-check d-flex align-items-start gap-2 mb-0";
+      const doneTitleRow = document.createElement("div");
+      doneTitleRow.className = "d-flex align-items-start justify-content-between gap-2";
 
-      const doneCheckbox = document.createElement("input");
-      doneCheckbox.type = "checkbox";
-      doneCheckbox.checked = true;
-      doneCheckbox.title = "Als offen markieren";
-      doneCheckbox.className = "form-check-input mt-1";
-      doneCheckbox.setAttribute("data-goal-toggle", goal.id);
-      doneCheckbox.addEventListener("change", () => {
+      const doneTitleText = document.createElement("span");
+      doneTitleText.textContent = goal.title;
+      doneTitleText.className = "text-body-secondary";
+
+      const reactivateButton = document.createElement("button");
+      reactivateButton.type = "button";
+      reactivateButton.className = "btn btn-outline-success btn-sm";
+      reactivateButton.textContent = "Wieder aktivieren";
+      reactivateButton.title = "Ziel wieder auf Bearbeitung setzen";
+      reactivateButton.setAttribute("data-goal-toggle", goal.id);
+      reactivateButton.addEventListener("click", () => {
+        const ok = askConfirmation(state, "Dieses Ziel wieder auf Bearbeitung setzen?");
+        if (!ok) return;
         dispatch({
           type: "GOAL_SET_COMPLETED",
           payload: {
             id: goal.id,
-            completed: doneCheckbox.checked,
-            completedAt: doneCheckbox.checked ? nowIso() : null,
+            completed: false,
+            completedAt: null,
           },
         });
         onActivity();
         onRenderAll();
       });
 
-      const doneTitleText = document.createElement("span");
-      doneTitleText.textContent = goal.title;
-      doneTitleText.className = "text-body-secondary";
-
-      doneTitleRow.append(doneCheckbox, doneTitleText);
+      doneTitleRow.append(doneTitleText, reactivateButton);
       doneWrap.appendChild(doneTitleRow);
 
       if (goal.description) {
@@ -225,17 +236,21 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       return;
     }
 
-    const checkbox = document.createElement("input");
-    checkbox.type = "checkbox";
-    checkbox.checked = goal.completed;
-    checkbox.title = "Als erreicht markieren";
-    checkbox.addEventListener("change", () => {
+    const completeButton = document.createElement("button");
+    completeButton.className = "btn btn-outline-success btn-sm";
+    completeButton.type = "button";
+    completeButton.textContent = "Als erreicht markieren";
+    completeButton.title = "Hauptziel als erreicht markieren";
+    completeButton.setAttribute("data-goal-toggle", goal.id);
+    completeButton.addEventListener("click", () => {
+      const ok = askConfirmation(state, "Dieses Hauptziel wirklich als erreicht markieren?");
+      if (!ok) return;
       dispatch({
         type: "GOAL_SET_COMPLETED",
         payload: {
           id: goal.id,
-          completed: checkbox.checked,
-          completedAt: checkbox.checked ? nowIso() : null,
+          completed: true,
+          completedAt: nowIso(),
         },
       });
       onActivity();
@@ -273,6 +288,8 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     const goalRow = buildRow(goal.title, goalDetails.join(" · "), {
       done: goal.completed,
       onDelete: () => {
+        const ok = askConfirmation(state, "Hauptziel wirklich löschen?");
+        if (!ok) return;
         dispatch({ type: "GOAL_DELETE", payload: { id: goal.id } });
         onRenderAll();
       },
@@ -284,11 +301,8 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
     const info = goalRow.querySelector(".flex-grow-1");
     const titleElement = info.querySelector("span");
 
-    const goalTitleRow = document.createElement("label");
-    goalTitleRow.className = "form-check d-flex align-items-start gap-2 mb-0";
-
-    checkbox.classList.add("form-check-input", "mt-1");
-    checkbox.setAttribute("data-goal-toggle", goal.id);
+    const goalTitleRow = document.createElement("span");
+    goalTitleRow.className = "d-inline-block";
 
     const goalTitleText = document.createElement("span");
     goalTitleText.textContent = goal.title;
@@ -296,7 +310,7 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       goalTitleText.classList.add("text-decoration-line-through", "text-body-secondary");
     }
 
-    goalTitleRow.append(checkbox, goalTitleText);
+    goalTitleRow.append(goalTitleText);
     titleElement.replaceWith(goalTitleRow);
 
     const goalPlanned = plannedByGoalId.get(goal.id) || 0;
@@ -334,10 +348,11 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
       milestones.forEach((milestone) => {
         const milestoneRow = document.createElement("div");
-        milestoneRow.className = "d-flex align-items-start gap-2 flex-wrap";
+        milestoneRow.className = "d-flex align-items-start gap-2 lz-milestone-row";
 
         const label = document.createElement("label");
         label.className = "form-check d-flex align-items-start gap-2 mb-0 flex-grow-1";
+        label.style.minWidth = "0";
 
         const milestoneCheckbox = document.createElement("input");
         milestoneCheckbox.type = "checkbox";
@@ -390,7 +405,7 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
         deleteMilestoneButton.innerHTML = '<i class="bi bi-trash"></i>';
         deleteMilestoneButton.setAttribute("data-goal-milestone-delete", milestone.id);
         deleteMilestoneButton.addEventListener("click", () => {
-          const ok = confirm("Zwischenziel wirklich löschen?");
+          const ok = askConfirmation(state, "Zwischenziel wirklich löschen?");
           if (!ok) return;
 
           dispatch({
@@ -450,6 +465,10 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
         inlineEditForm.append(inlineEditInput, saveMilestoneButton, cancelMilestoneButton);
 
+        const milestoneActions = document.createElement("div");
+        milestoneActions.className = "d-flex gap-1 flex-shrink-0 lz-milestone-actions";
+        milestoneActions.append(editMilestoneButton, deleteMilestoneButton);
+
         const msPlanned = plannedByMilestoneId.get(milestone.id) || 0;
         const msTracked = trackedByMilestoneId.get(milestone.id) || 0;
         if (msPlanned > 0) {
@@ -472,7 +491,7 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
         }
 
         label.append(milestoneCheckbox, milestoneContent);
-        milestoneRow.append(label, inlineEditForm, editMilestoneButton, deleteMilestoneButton);
+        milestoneRow.append(label, inlineEditForm, milestoneActions);
         milestoneList.appendChild(milestoneRow);
       });
 
@@ -530,6 +549,12 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
 
     const actionsContainer = goalRow.querySelector(".ms-auto");
     actionsContainer.insertBefore(toggleButton, editButton);
+
+    goalRow.classList.add("flex-wrap");
+    const completeRow = document.createElement("div");
+    completeRow.className = "w-100 d-flex justify-content-end mt-2";
+    completeRow.appendChild(completeButton);
+    goalRow.appendChild(completeRow);
 
     list.appendChild(goalRow);
   });
@@ -617,8 +642,8 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
       },
     });
     if (rowColorKey) {
-      row.style.borderLeftColor = goalColorCssVar(rowColorKey, isLegacyPlan ? "base" : "soft");
-      row.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(rowColorKey, isLegacyPlan ? "base" : "soft")}`;
+      row.style.borderLeftColor = goalColorCssVar(rowColorKey, "base");
+      row.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(rowColorKey, "base")}`;
     }
     list.appendChild(row);
   });
@@ -1254,7 +1279,7 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll, onEditTrac
   data.forEach((session) => {
     const linkedDetailPlan = detailPlans.find((item) => item.id === session.detailPlanId) || null;
     const linkedGoal = linkedDetailPlan?.goalId
-      ? state.goals.find((item) => item.id === linkedDetailPlan.goalId) || null
+      ? (state.goals || []).find((item) => item.id === linkedDetailPlan.goalId) || null
       : null;
     const linkedDetailText = linkedDetailPlan
       ? `Detail: ${buildDetailPlanSelectionLabel(state, linkedDetailPlan)}`
@@ -1287,6 +1312,10 @@ export function renderTrackedSessions({ state, dispatch, onRenderAll, onEditTrac
       const trackingColorKey = normalizeGoalColorKey(linkedGoal.colorKey);
       row.style.borderLeftColor = goalColorCssVar(trackingColorKey, "base");
       row.style.boxShadow = `0 10px 20px -18px ${goalColorCssVar(trackingColorKey, "base")}`;
+    } else if (!session.detailPlanId) {
+      row.classList.add("lz-tracked-unlinked");
+      row.style.borderLeftColor = "#6c757d";
+      row.style.boxShadow = "0 10px 20px -18px rgba(108, 117, 125, 0.4)";
     }
     list.appendChild(row);
   });

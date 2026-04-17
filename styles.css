@@ -280,6 +280,10 @@ details[open] > .lz-menu-section-summary::before {
   overflow-wrap: anywhere;
 }
 
+.lz-calendar-event-completed {
+  opacity: 0.35;
+}
+
 .lz-calendar-event[draggable="true"] {
   cursor: grab;
 }
@@ -336,6 +340,18 @@ details[open] > .lz-menu-section-summary::before {
 .lz-source-goal-yellow {
   background: var(--goal-color-yellow-base);
   color: #111;
+}
+
+.lz-milestone-row {
+  flex-wrap: nowrap;
+}
+
+.lz-milestone-actions {
+  align-self: flex-start;
+}
+
+.lz-tracked-editing {
+  box-shadow: 0 0 0 2px rgb(59 130 246 / 35%) inset;
 }
 
 .lz-source-detail-light-blue {

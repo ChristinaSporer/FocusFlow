@@ -240,3 +240,47 @@ test("Detailplanung: Bearbeiten, Kalender-Drag&Drop, mit und ohne Hauptziel plan
   }, zielTitel);
   expect(zielNachLoeschen.targetDate).toBe(zielNachLoeschen.lastDate);
 });
+
+test("Erledigtes Ziel gibt belegten Detailplanungstag fuer neue Grobplanung wieder frei", async ({
+  page,
+}) => {
+  await page.goto("/");
+  await setMonth(page, "2026-05");
+
+  const altesZiel = `IT-Service lernen ${Date.now()}`;
+  const neuesZiel = `Deutsch lernen ${Date.now()}`;
+
+  await page.locator("#goal-title").fill(altesZiel);
+  await page.locator("#goal-start-date").fill("2026-05-08");
+  await page.locator("#goal-workload-hours").fill("4");
+  await page.locator("#goal-submit").click();
+
+  await openMenu(page);
+  await openMenuSection(page, "Standard-Lernzeiten");
+  await page.locator("#slt-fri-start").fill("08:00");
+  await page.locator("#slt-fri-end").fill("12:00");
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await page.locator("#menu-save-learning-times").click({ force: true });
+  });
+
+  await page.locator("#rough-goal").selectOption({ label: altesZiel });
+  await expect(page.locator("#rough-plan-grid")).toContainText("2026-05-08");
+  const slotHandle = await page.locator('[data-rough-day="2026-05-08"]').first().elementHandle();
+  await slotHandle.evaluate((input) => {
+    input.checked = true;
+    input.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await page.locator("#rough-submit").click();
+
+  await expect(page.locator("#detail-list")).toContainText(altesZiel);
+
+  const altesZielRow = page.locator("#goal-list li").filter({ hasText: altesZiel }).first();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await altesZielRow.locator('[data-goal-toggle]').click();
+  });
+
+  await addGoal(page, { title: neuesZiel, date: "2026-05-08", workloadHours: 2 });
+  await page.locator("#rough-goal").selectOption({ label: neuesZiel });
+
+  await expect(page.locator("#rough-plan-grid")).toContainText("2026-05-08");
+});

@@ -170,6 +170,73 @@ describe("modules/planning-utils", () => {
     expect(result.days.length).toBeLessThanOrEqual(1);
   });
 
+  it("gibt Termine erledigter Hauptziele fuer neue Planung wieder frei", () => {
+    const learningTimes = defaultStandardLearningTimes();
+    learningTimes.fri = { startTime: "08:00", endTime: "12:00" };
+
+    const slots = buildAvailablePlanningSlots({
+      startDate: "2026-05-08",
+      standardLearningTimes: learningTimes,
+      detailPlans: [
+        {
+          id: "d1",
+          date: "2026-05-08",
+          startTime: "08:00",
+          endTime: "10:00",
+          minutes: 120,
+          goalId: "g-completed",
+        },
+      ],
+      goals: [
+        { id: "g-completed", title: "IT-Service lernen", completed: true },
+      ],
+      horizonDays: 1,
+    });
+
+    expect(slots).toEqual([
+      expect.objectContaining({
+        date: "2026-05-08",
+        startTime: "08:00",
+        endTime: "12:00",
+        availableMinutes: 240,
+      }),
+    ]);
+  });
+
+  it("beruecksichtigt erledigte Ziel-Detailplaene nicht mehr als Blocker bei Workload-Verteilung", () => {
+    const learningTimes = defaultStandardLearningTimes();
+    learningTimes.fri = { startTime: "08:00", endTime: "12:00" };
+
+    const result = distributeGoalWorkload({
+      startDate: "2026-05-08",
+      workloadHours: 2,
+      standardLearningTimes: learningTimes,
+      detailPlans: [
+        {
+          id: "d1",
+          date: "2026-05-08",
+          startTime: "08:00",
+          endTime: "10:00",
+          minutes: 120,
+          goalId: "g-completed",
+        },
+      ],
+      goals: [
+        { id: "g-completed", title: "IT-Service lernen", completed: true },
+      ],
+      horizonDays: 1,
+    });
+
+    expect(result.days).toEqual([
+      expect.objectContaining({
+        date: "2026-05-08",
+        startTime: "08:00",
+        endTime: "10:00",
+        minutes: 120,
+      }),
+    ]);
+  });
+
   it("normalizeStandardLearningTimes gibt Standardwerte fuer null zurueck", () => {
     const result = normalizeStandardLearningTimes(null);
     const defaults = defaultStandardLearningTimes();

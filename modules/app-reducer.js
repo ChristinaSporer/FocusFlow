@@ -277,6 +277,14 @@ export function appReducer(currentState, action) {
           notificationLeadMinutes: action.payload.minutes,
         },
       };
+    case "SET_CONFIRM_DIALOGS_ENABLED":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          confirmDialogsEnabled: action.payload.enabled,
+        },
+      };
     case "SET_THEME_MODE":
       return {
         ...currentState,

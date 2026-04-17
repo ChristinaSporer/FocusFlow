@@ -127,7 +127,10 @@ describe("modules/render-main-view", () => {
     const onEditGoal = vi.fn();
     const confirmSpy = vi
       .spyOn(globalThis, "confirm")
+      .mockReturnValueOnce(true)
+      .mockReturnValueOnce(true)
       .mockReturnValueOnce(false)
+      .mockReturnValueOnce(true)
       .mockReturnValueOnce(true);
 
     renderGoals({
@@ -162,13 +165,12 @@ describe("modules/render-main-view", () => {
       onEditGoal,
     });
 
-    document
-      .querySelector('[data-goal-toggle="g1"]')
-      .dispatchEvent(new Event("change", { bubbles: true }));
+    const completeGoalButton = document.querySelector("#goal-list .btn-outline-success");
+    completeGoalButton.click();
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "GOAL_SET_COMPLETED",
-        payload: expect.objectContaining({ id: "g1" }),
+        payload: expect.objectContaining({ id: "g1", completed: true }),
       })
     );
 
@@ -187,9 +189,10 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("achieved-list").textContent).toContain("Done MS (erledigt)");
     expect(document.getElementById("achieved-list").textContent).toContain("Open MS (offen)");
 
-    const achievedToggle = document.querySelector('#achieved-list [data-goal-toggle="g2"]');
-    achievedToggle.checked = false;
-    achievedToggle.dispatchEvent(new Event("change", { bubbles: true }));
+    const achievedToggle = Array.from(
+      document.querySelectorAll('#achieved-list [data-goal-toggle="g2"]')
+    ).find((button) => button.textContent.includes("Wieder aktivieren"));
+    achievedToggle.click();
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "GOAL_SET_COMPLETED",
@@ -210,7 +213,7 @@ describe("modules/render-main-view", () => {
     );
 
     document.querySelector('[data-goal-milestone-delete="m1"]').click();
-    expect(confirmSpy).toHaveBeenCalledTimes(1);
+    expect(confirmSpy).toHaveBeenCalledTimes(3);
     document.querySelector('[data-goal-milestone-delete="m1"]').click();
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -237,6 +240,7 @@ describe("modules/render-main-view", () => {
 
     expect(onActivity).toHaveBeenCalled();
     expect(onRenderAll).toHaveBeenCalled();
+    expect(confirmSpy).toHaveBeenCalledTimes(5);
     expect(document.getElementById("achieved-list").textContent).toContain("Erreicht am");
   });
 
@@ -395,19 +399,32 @@ describe("modules/render-main-view", () => {
             note: "X",
             detailPlanId: "d1",
           },
+          {
+            id: "t2",
+            start: "2026-03-24T11:00:00.000Z",
+            minutes: 15,
+            note: "Ohne Detail",
+            detailPlanId: null,
+          },
         ],
+        goals: [],
       },
       dispatch,
       onRenderAll,
       onEditTrackedSession,
     });
     expect(document.getElementById("track-list").textContent).toContain("Detail:");
-    document.querySelector("#track-list [data-tracked-edit]").click();
+    document
+      .querySelector('#track-list li:nth-child(2) [data-tracked-edit]')
+      .click();
     expect(onEditTrackedSession).toHaveBeenCalledWith(
       expect.objectContaining({ id: "t1", minutes: 25, note: "X" })
     );
-    document.querySelector("#track-list .btn-outline-danger").click();
+    document.querySelector('#track-list li:nth-child(2) .btn-outline-danger').click();
     expect(dispatch).toHaveBeenCalledWith({ type: "TRACKED_DELETE", payload: { id: "t1" } });
+    expect(
+      document.querySelector("#track-list .lz-tracked-unlinked")?.textContent
+    ).toContain("Ohne Detail");
 
     document.getElementById("track-list").innerHTML = "";
     renderTrackedSessions({

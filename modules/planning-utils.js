@@ -134,9 +134,14 @@ function subtractIntervals(baseInterval, occupiedIntervals) {
   return freeIntervals.filter((interval) => interval.endMinutes > interval.startMinutes);
 }
 
-function buildOccupiedIntervals(detailPlans, date) {
+function buildOccupiedIntervals(detailPlans, date, goals = []) {
+  const completedGoalIds = new Set(
+    (goals || []).filter((goal) => goal?.completed).map((goal) => goal.id)
+  );
+
   return (detailPlans || [])
     .filter((plan) => plan?.date === date)
+    .filter((plan) => !plan?.goalId || !completedGoalIds.has(plan.goalId))
     .map((plan) => {
       const timedInterval = normalizeInterval(
         parseTimeToMinutes(plan.startTime),
@@ -160,6 +165,7 @@ export function buildAvailablePlanningSlots({
   startDate,
   standardLearningTimes,
   detailPlans,
+  goals,
   horizonDays = 730,
 }) {
   if (!startDate) return [];
@@ -178,7 +184,7 @@ export function buildAvailablePlanningSlots({
         parseTimeToMinutes(availability.endTime)
       );
       const freeIntervals = baseInterval
-        ? subtractIntervals(baseInterval, buildOccupiedIntervals(detailPlans, date))
+        ? subtractIntervals(baseInterval, buildOccupiedIntervals(detailPlans, date, goals))
         : [];
 
       freeIntervals.forEach((interval) => {
@@ -207,6 +213,7 @@ export function distributeGoalWorkload({
   standardLearningTimes,
   selectedSlotKeys,
   detailPlans,
+  goals,
   horizonDays,
 }) {
   const remainingInitial = Math.max(0, Math.round(Number(workloadHours || 0) * 60));
@@ -219,6 +226,7 @@ export function distributeGoalWorkload({
     startDate,
     standardLearningTimes,
     detailPlans,
+    goals,
     horizonDays,
   });
 
