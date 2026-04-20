@@ -938,6 +938,8 @@ describe("App-UI-Integration (jsdom)", () => {
     const additionalForm = document.querySelector('[data-detail-block-form="additional"]');
     expect(document.getElementById("detail-list").textContent).toContain("Weitere Detailplanung");
     expect(additionalForm).toBeTruthy();
+    expect(additionalForm.querySelector('[data-detail-milestone-select="additional"]')).toBeNull();
+    expect(additionalForm.querySelector('[data-detail-topic="additional"]').required).toBe(true);
 
     additionalForm.querySelector("[data-detail-start]").value = "14:00";
     additionalForm.querySelector("[data-detail-end]").value = "15:15";

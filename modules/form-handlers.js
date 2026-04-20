@@ -384,12 +384,18 @@ export function initFormHandlers({
     const title = byId("goal-title").value.trim();
     const targetDate = byId("goal-date")?.value || "";
     const startDate = byId("goal-start-date")?.value || targetDate || formatYmd(new Date());
-    const workloadRaw = byId("goal-workload-hours")?.value || "";
-    const workloadHours = Math.max(0, Number(workloadRaw || 0));
+    const workloadInput = byId("goal-workload-hours");
+    const workloadRaw = String(workloadInput?.value || "").trim().replace(",", ".");
+    const parsedWorkload = Number(workloadRaw || 0);
+    const workloadHours = Math.max(0, Number.isFinite(parsedWorkload) ? parsedWorkload : 0);
     const description = byId("goal-description").value.trim();
     const selectedColor = document.querySelector('input[name="goal-color"]:checked');
     const colorKey = normalizeGoalColorKey(selectedColor?.value || DEFAULT_GOAL_COLOR_KEY);
     if (!title || !startDate) return;
+    if (!editId && workloadHours <= 0 && event.isTrusted) {
+      workloadInput?.focus();
+      return;
+    }
 
     if (editId) {
       dispatch({

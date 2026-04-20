@@ -208,6 +208,72 @@ export function renderGoals({ state, dispatch, onActivity, onRenderAll, onEditGo
       doneTimeSummary.textContent = `Zeit geplant: ${donePlannedMinutes} Min (${formatMinutesAsHoursLabel(donePlannedMinutes)}) · Lernzeit verwendet: ${doneTrackedMinutes} Min (${formatMinutesAsHoursLabel(doneTrackedMinutes)})`;
       doneWrap.appendChild(doneTimeSummary);
 
+      const doneWorkloadMinutes = Math.max(0, Math.round(Number(goal.workloadHours || 0) * 60));
+      const doneWorkloadSummary = document.createElement("small");
+      doneWorkloadSummary.className = "text-body-secondary";
+      doneWorkloadSummary.setAttribute("data-achieved-workload", "true");
+      doneWorkloadSummary.textContent = `Workload: ${Number(goal.workloadHours || 0).toFixed(1)} h (${doneWorkloadMinutes} Min)`;
+      doneWrap.appendChild(doneWorkloadSummary);
+
+      const doneWorkloadDelta = document.createElement("small");
+      doneWorkloadDelta.className = "text-body-secondary lz-achieved-workload-status";
+      doneWorkloadDelta.setAttribute("data-achieved-workload-delta", "true");
+      doneRow.classList.add("lz-achieved-status-positive");
+      if (doneWorkloadMinutes <= 0) {
+        doneWorkloadDelta.textContent = "Kein Workload gesetzt.";
+      } else {
+        const deltaMinutes = doneTrackedMinutes - doneWorkloadMinutes;
+        if (deltaMinutes > 0) {
+          doneRow.classList.remove("lz-achieved-status-positive");
+          doneRow.classList.add("lz-achieved-status-negative");
+          doneWorkloadDelta.classList.remove("lz-achieved-workload-positive");
+          doneWorkloadDelta.classList.add("lz-achieved-workload-negative");
+          doneWorkloadDelta.textContent = `Die gelernte Zeit übersteigt den Workload um ${deltaMinutes} Min (${formatMinutesAsHoursLabel(deltaMinutes)}).`;
+        } else if (deltaMinutes < 0) {
+          const remainingMinutes = Math.abs(deltaMinutes);
+          doneWorkloadDelta.classList.remove("lz-achieved-workload-negative");
+          doneWorkloadDelta.classList.add("lz-achieved-workload-positive");
+          doneWorkloadDelta.textContent = `Die gelernte Zeit liegt ${remainingMinutes} Min (${formatMinutesAsHoursLabel(remainingMinutes)}) unter dem Workload.`;
+        } else {
+          doneWorkloadDelta.classList.remove("lz-achieved-workload-negative");
+          doneWorkloadDelta.classList.add("lz-achieved-workload-positive");
+          doneWorkloadDelta.textContent = "Die gelernte Zeit entspricht genau dem Workload.";
+        }
+      }
+      doneWrap.appendChild(doneWorkloadDelta);
+
+      const doneProgressWrap = document.createElement("div");
+      doneProgressWrap.className = "lz-achieved-progress-wrap";
+      const doneProgressPercent =
+        donePlannedMinutes > 0 ? Math.round((doneTrackedMinutes / donePlannedMinutes) * 100) : 0;
+      const doneProgressPercentText = document.createElement("small");
+      doneProgressPercentText.className = "text-body-secondary";
+      doneProgressPercentText.setAttribute("data-achieved-progress-text", "true");
+      if (donePlannedMinutes > 0) {
+        doneProgressPercentText.textContent = `${doneProgressPercent}% der geplanten Zeit wurden gelernt`;
+      } else {
+        doneProgressPercentText.textContent = "Keine geplante Zeit vorhanden";
+      }
+
+      const doneProgressBarWrap = document.createElement("div");
+      doneProgressBarWrap.className = "progress lz-achieved-progress";
+      const doneProgressBar = document.createElement("div");
+      doneProgressBar.className = "progress-bar bg-success";
+      doneProgressBar.setAttribute("data-achieved-progress-bar", "true");
+      doneProgressBar.setAttribute("role", "progressbar");
+      doneProgressBar.setAttribute("aria-valuemin", "0");
+      doneProgressBar.setAttribute("aria-valuemax", "100");
+      doneProgressBar.setAttribute("aria-valuenow", String(Math.min(100, doneProgressPercent)));
+      doneProgressBar.setAttribute(
+        "aria-label",
+        `${doneProgressPercent}% der geplanten Zeit wurden gelernt`
+      );
+      doneProgressBar.style.width = `${Math.min(100, Math.max(0, doneProgressPercent))}%`;
+      doneProgressBarWrap.appendChild(doneProgressBar);
+
+      doneProgressWrap.append(doneProgressPercentText, doneProgressBarWrap);
+      doneWrap.appendChild(doneProgressWrap);
+
       if (milestones.length) {
         const milestoneSummary = document.createElement("small");
         milestoneSummary.className = "text-body-secondary";
@@ -830,6 +896,7 @@ export function renderDetailPlans({
     roughPlanId,
     onDone,
   }) {
+    const isAdditionalBlock = blockKey === "additional";
     const form = document.createElement("form");
     form.className = "row g-2 d-none mt-3";
     form.setAttribute("data-detail-block-form", blockKey);
@@ -849,27 +916,31 @@ export function renderDetailPlans({
     dateInput.setAttribute("data-detail-date", blockKey);
     dateCol.appendChild(dateInput);
 
-    const milestoneCol = document.createElement("div");
-    milestoneCol.className = "col-12 col-lg-4";
-    const milestoneSelect = document.createElement("select");
-    milestoneSelect.className = "form-control";
-    milestoneSelect.setAttribute("data-detail-milestone-select", blockKey);
+    let milestoneCol = null;
+    let milestoneSelect = null;
+    if (!isAdditionalBlock) {
+      milestoneCol = document.createElement("div");
+      milestoneCol.className = "col-12 col-lg-4";
+      milestoneSelect = document.createElement("select");
+      milestoneSelect.className = "form-control";
+      milestoneSelect.setAttribute("data-detail-milestone-select", blockKey);
 
-    const emptyOption = document.createElement("option");
-    emptyOption.value = "";
-    emptyOption.textContent = "Kein Zwischenziel (optional)";
-    milestoneSelect.appendChild(emptyOption);
+      const emptyOption = document.createElement("option");
+      emptyOption.value = "";
+      emptyOption.textContent = "Kein Zwischenziel (optional)";
+      milestoneSelect.appendChild(emptyOption);
 
-    milestones.forEach((milestone) => {
-      const option = document.createElement("option");
-      option.value = milestone.id;
-      const goalLabel = milestone.goal?.title ? ` - ${milestone.goal.title}` : "";
-      option.textContent = milestone.done
-        ? `${milestone.title}${goalLabel} (erledigt)`
-        : `${milestone.title}${goalLabel}`;
-      milestoneSelect.appendChild(option);
-    });
-    milestoneCol.appendChild(milestoneSelect);
+      milestones.forEach((milestone) => {
+        const option = document.createElement("option");
+        option.value = milestone.id;
+        const goalLabel = milestone.goal?.title ? ` - ${milestone.goal.title}` : "";
+        option.textContent = milestone.done
+          ? `${milestone.title}${goalLabel} (erledigt)`
+          : `${milestone.title}${goalLabel}`;
+        milestoneSelect.appendChild(option);
+      });
+      milestoneCol.appendChild(milestoneSelect);
+    }
 
     const startCol = document.createElement("div");
     startCol.className = "col-12 col-md-6 col-lg-4";
@@ -894,7 +965,8 @@ export function renderDetailPlans({
     const topicInput = document.createElement("input");
     topicInput.type = "text";
     topicInput.className = "form-control";
-    topicInput.placeholder = "Lerninhalt (optional)";
+    topicInput.placeholder = isAdditionalBlock ? "Lerninhalt" : "Lerninhalt (optional)";
+    topicInput.required = isAdditionalBlock;
     topicInput.setAttribute("data-detail-topic", blockKey);
     topicCol.appendChild(topicInput);
 
@@ -936,7 +1008,7 @@ export function renderDetailPlans({
     function resetBlockForm() {
       editIdInput.value = "";
       dateInput.value = defaultDate;
-      milestoneSelect.value = "";
+      if (milestoneSelect) milestoneSelect.value = "";
       startInput.value = "";
       endInput.value = "";
       topicInput.value = "";
@@ -948,7 +1020,7 @@ export function renderDetailPlans({
       setFormVisible(true);
       editIdInput.value = item.id;
       dateInput.value = item.date;
-      milestoneSelect.value = item.milestoneId || "";
+      if (milestoneSelect) milestoneSelect.value = item.milestoneId || "";
       const startMinutes = parseTimeToMinutes(item.startTime || "");
       const endMinutes = parseTimeToMinutes(item.endTime || "");
       if (
@@ -975,25 +1047,31 @@ export function renderDetailPlans({
       setFormVisible(false);
     });
 
-    form.append(dateCol, startCol, endCol, milestoneCol, topicCol, buttonCol, cancelCol);
+    const formParts = [dateCol, startCol, endCol];
+    if (milestoneCol) formParts.push(milestoneCol);
+    formParts.push(topicCol, buttonCol, cancelCol);
+    form.append(...formParts);
     form.addEventListener("submit", (event) => {
       event.preventDefault();
 
       const editId = editIdInput.value;
       const date = dateInput.value;
-      const milestoneId = milestoneSelect.value;
+      const milestoneId = milestoneSelect?.value || "";
       const startTime = startInput.value;
       const endTime = endInput.value;
       const startMinutes = parseTimeToMinutes(startTime);
       const endMinutes = parseTimeToMinutes(endTime);
       const minutes = endMinutes - startMinutes;
       const topic = topicInput.value.trim();
-      const selectedMilestone = milestones.find((item) => item.id === milestoneId) || null;
+      const selectedMilestone = milestoneSelect
+        ? milestones.find((item) => item.id === milestoneId) || null
+        : null;
 
       if (!date) return;
       if (!Number.isFinite(startMinutes) || !Number.isFinite(endMinutes)) return;
       if (minutes <= 0) return;
-      if (!selectedMilestone && !topic) return;
+      if (isAdditionalBlock && !topic) return;
+      if (!isAdditionalBlock && !selectedMilestone && !topic) return;
 
       const payloadPlan = {
         date,

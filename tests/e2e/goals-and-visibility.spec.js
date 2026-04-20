@@ -30,19 +30,23 @@ test("Erledigtes Zwischenziel blendet verknüpfte Detailplanung aus", async ({ p
   await addGoal(page, { title: goalTitle, date: "2026-04-25" });
   await addMilestoneToGoal(page, { goalTitle, milestoneTitle });
 
-  await page.locator('[data-detail-plan-toggle="additional"]').click();
-  await page.locator('[data-detail-date="additional"]').fill("2026-04-16");
-  await page.locator('[data-detail-start="additional"]').fill("10:00");
-  await page.locator('[data-detail-end="additional"]').fill("11:00");
+  await addRoughPlan(page, {
+    goalTitle,
+    week: "2026-W16",
+    hours: 2,
+    note: "Verknuepfte Detailplanung",
+  });
 
-  const milestoneSelect = page.locator('[data-detail-milestone-select="additional"]');
-  const linkedMilestoneId = await milestoneSelect
-    .locator('option:not([value=""])')
+  await page
+    .locator('[data-detail-plan-toggle]:not([data-detail-plan-toggle="additional"])')
     .first()
-    .getAttribute("value");
-  await milestoneSelect.selectOption(linkedMilestoneId);
-  await page.locator('[data-detail-topic="additional"]').fill("Linked Topic");
-  await page.locator('[data-detail-block-form="additional"] button[type="submit"]').click();
+    .click();
+  await page.locator("[data-detail-date]:visible").fill("2026-04-16");
+  await page.locator("[data-detail-start]:visible").fill("10:00");
+  await page.locator("[data-detail-end]:visible").fill("11:00");
+  await page.locator("[data-detail-milestone-select]:visible").selectOption({ index: 1 });
+  await page.locator("[data-detail-topic]:visible").fill("Linked Topic");
+  await page.locator('[data-detail-block-form]:visible button[type="submit"]').click();
 
   await expect(page.locator("#detail-list")).toContainText(`60 Min für ${milestoneTitle}`);
 
@@ -104,6 +108,14 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
   await expect(page.locator("#achieved-list")).toContainText(goalTitle);
   await expect(page.locator("#achieved-list")).toContainText("Zeit geplant:");
   await expect(page.locator("#achieved-list")).toContainText("Lernzeit verwendet:");
+  await expect(page.locator("#achieved-list")).toContainText("Workload:");
+  await expect(page.locator("#achieved-list [data-achieved-workload-delta]"))
+    .toContainText("unter dem Workload");
+  const achievedPositiveRow = page.locator("#achieved-list li.lz-achieved-status-positive").first();
+  await expect(achievedPositiveRow).toBeVisible();
+  await expect(page.locator("#achieved-list [data-achieved-progress-text]"))
+    .toContainText("% der geplanten Zeit wurden gelernt");
+  await expect(page.locator("#achieved-list [data-achieved-progress-bar]")).toHaveCount(1);
   await expect(page.locator("#goal-list")).not.toContainText(goalTitle);
   await expect(page.locator("#rough-list")).not.toContainText(roughNote);
   await expect(page.locator("#detail-list")).not.toContainText(detailTopic);

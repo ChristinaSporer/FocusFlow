@@ -206,13 +206,16 @@ test("Detailplanung: Bearbeiten, Kalender-Drag&Drop, mit und ohne Hauptziel plan
   expect(statusNachDrag.draggedDate).toBe("2026-04-29");
   expect(statusNachDrag.goalTargetDate).toBe("2026-04-29");
 
-  await addAdditionalDetailPlan(page, {
-    date: "2026-04-30",
-    startTime: "12:00",
-    endTime: "13:00",
-    topic: "Zusatz mit Ziel",
-    milestoneLabel: zwischenziel,
-  });
+  await page
+    .locator('[data-detail-plan-toggle]:not([data-detail-plan-toggle="additional"])')
+    .first()
+    .click();
+  await page.locator("[data-detail-date]:visible").fill("2026-04-30");
+  await page.locator("[data-detail-start]:visible").fill("12:00");
+  await page.locator("[data-detail-end]:visible").fill("13:00");
+  await page.locator("[data-detail-topic]:visible").fill("Zusatz mit Ziel");
+  await page.locator("[data-detail-milestone-select]:visible").selectOption({ index: 1 });
+  await page.locator('[data-detail-block-form]:visible button[type="submit"]').click();
   await addAdditionalDetailPlan(page, {
     date: "2026-04-30",
     startTime: "13:00",

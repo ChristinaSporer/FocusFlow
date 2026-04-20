@@ -150,12 +150,28 @@ describe("modules/render-main-view", () => {
             title: "Goal 2",
             targetDate: "2026-03-25",
             description: "",
+            workloadHours: 1,
             completed: true,
             completedAt: "2026-03-24T09:00:00.000Z",
             milestones: [
               { id: "m2", title: "Done MS", done: true },
               { id: "m3", title: "Open MS", done: false },
             ],
+          },
+        ],
+        detailPlans: [
+          {
+            id: "d-g2",
+            goalId: "g2",
+            minutes: 60,
+            milestoneId: "m2",
+          },
+        ],
+        trackedSessions: [
+          {
+            id: "t-g2",
+            detailPlanId: "d-g2",
+            minutes: 30,
           },
         ],
       },
@@ -188,6 +204,25 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("achieved-list").textContent).toContain("Goal 2");
     expect(document.getElementById("achieved-list").textContent).toContain("Done MS (erledigt)");
     expect(document.getElementById("achieved-list").textContent).toContain("Open MS (offen)");
+    expect(document.querySelector("#achieved-list .lz-achieved-progress-wrap")).toBeTruthy();
+    expect(document.querySelector('#achieved-list [data-achieved-progress-text="true"]').textContent).toBe(
+      "50% der geplanten Zeit wurden gelernt"
+    );
+    expect(document.querySelectorAll('#achieved-list [data-achieved-progress-bar="true"]')).toHaveLength(
+      1
+    );
+    expect(document.querySelector('#achieved-list [data-achieved-workload="true"]').textContent).toBe(
+      "Workload: 1.0 h (60 Min)"
+    );
+    expect(document.querySelector('#achieved-list [data-achieved-workload-delta="true"]').textContent).toContain(
+      "unter dem Workload"
+    );
+    expect(document.querySelector('#achieved-list li.lz-achieved-status-positive')).toBeTruthy();
+    expect(
+      document
+        .querySelector('#achieved-list [data-achieved-workload-delta="true"]')
+        .classList.contains("lz-achieved-workload-positive")
+    ).toBe(true);
 
     const achievedToggle = Array.from(
       document.querySelectorAll('#achieved-list [data-goal-toggle="g2"]')
@@ -242,6 +277,50 @@ describe("modules/render-main-view", () => {
     expect(onRenderAll).toHaveBeenCalled();
     expect(confirmSpy).toHaveBeenCalledTimes(5);
     expect(document.getElementById("achieved-list").textContent).toContain("Erreicht am");
+  });
+
+  it("markiert erreichte Ziele negativ, wenn Lernzeit den Workload uebersteigt", () => {
+    renderGoals({
+      state: {
+        goals: [
+          {
+            id: "g-over",
+            title: "Goal Over",
+            targetDate: "2026-03-25",
+            workloadHours: 0.5,
+            completed: true,
+            completedAt: "2026-03-24T09:00:00.000Z",
+            milestones: [],
+          },
+        ],
+        detailPlans: [
+          {
+            id: "d-over",
+            goalId: "g-over",
+            minutes: 30,
+          },
+        ],
+        trackedSessions: [
+          {
+            id: "t-over",
+            detailPlanId: "d-over",
+            minutes: 60,
+          },
+        ],
+      },
+      dispatch: vi.fn(),
+      onActivity: vi.fn(),
+      onRenderAll: vi.fn(),
+      onEditGoal: vi.fn(),
+    });
+
+    expect(document.querySelector("#achieved-list li.lz-achieved-status-negative")).toBeTruthy();
+    expect(
+      document
+        .querySelector('#achieved-list [data-achieved-workload-delta="true"]')
+        .classList.contains("lz-achieved-workload-negative")
+    ).toBe(true);
+    expect(document.getElementById("achieved-list").textContent).toContain("uebersteigt den Workload");
   });
 
   it("rendert Grob-, Detail- und Tracking-Listen inklusive blockbasierter Detailplanung", () => {

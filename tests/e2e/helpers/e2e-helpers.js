@@ -50,12 +50,10 @@ async function seedAppState(page, partialState) {
   }, state);
 }
 
-async function addGoal(page, { title, date, description = "", workloadHours = null }) {
+async function addGoal(page, { title, date, description = "", workloadHours = 4 }) {
   await page.locator("#goal-title").fill(title);
   await page.locator("#goal-start-date").fill(date);
-  if (workloadHours !== null && workloadHours !== undefined) {
-    await page.locator("#goal-workload-hours").fill(String(workloadHours));
-  }
+  await page.locator("#goal-workload-hours").fill(String(workloadHours));
   await page.locator("#goal-description").fill(description);
   await page.locator("#goal-submit").click();
   await expect(page.locator("#goal-list")).toContainText(title);
@@ -123,15 +121,17 @@ async function addAdditionalDetailPlan(
   await page.locator('[data-detail-end="additional"]').fill(endTime);
   if (milestoneLabel) {
     const milestoneSelect = page.locator('[data-detail-milestone-select="additional"]');
-    const milestoneValue = await milestoneSelect.evaluate((select, label) => {
-      const options = Array.from(select.options || []);
-      const matched = options.find((option) =>
-        (option.textContent || "").toLowerCase().includes(String(label).toLowerCase())
-      );
-      return matched ? matched.value : null;
-    }, milestoneLabel);
-    if (milestoneValue) {
-      await milestoneSelect.selectOption(milestoneValue);
+    if ((await milestoneSelect.count()) > 0) {
+      const milestoneValue = await milestoneSelect.evaluate((select, label) => {
+        const options = Array.from(select.options || []);
+        const matched = options.find((option) =>
+          (option.textContent || "").toLowerCase().includes(String(label).toLowerCase())
+        );
+        return matched ? matched.value : null;
+      }, milestoneLabel);
+      if (milestoneValue) {
+        await milestoneSelect.selectOption(milestoneValue);
+      }
     }
   }
   await page.locator('[data-detail-topic="additional"]').fill(topic);
