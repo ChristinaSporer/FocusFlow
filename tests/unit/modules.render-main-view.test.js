@@ -321,7 +321,7 @@ describe("modules/render-main-view", () => {
         .classList.contains("lz-achieved-workload-negative")
     ).toBe(true);
     expect(document.getElementById("achieved-list").textContent).toContain(
-      "uebersteigt den Workload"
+      "übersteigt den Workload"
     );
   });
 
