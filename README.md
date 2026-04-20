@@ -91,15 +91,15 @@ Voraussetzung in GitHub:
 graph TB
     User["👤 <b>Nutzer</b>"]
     Browser["🌐 <b>Web Browser</b><br/>(HTML5 / JavaScript)"]
-    
+
     subgraph System ["📦 FocusFlow System"]
         App["FocusFlow Frontend<br/>(app.js + Module)"]
     end
-    
+
     LocalStorage["💾 <b>localStorage</b><br/>(focusflow-v1)"]
     NotificationAPI["🔔 <b>Notification API</b><br/>(Browser-Benachrichtigungen)"]
     FileAPI["📁 <b>File API</b><br/>(JSON/ICS Import-Export)"]
-    
+
     User -->|Interaktion| Browser
     Browser -->|rendert| System
     App -->|persistiert / liest| LocalStorage
@@ -107,7 +107,7 @@ graph TB
     NotificationAPI -->|zeigt an| Browser
     App -->|importiert / exportiert| FileAPI
     FileAPI -->|Download-Dialog / Dateiauswahl| Browser
-    
+
     style System fill:#4EBE9B
     style LocalStorage fill:#D6A4E0
     style NotificationAPI fill:#A6B7DE

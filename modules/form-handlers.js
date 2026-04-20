@@ -385,7 +385,9 @@ export function initFormHandlers({
     const targetDate = byId("goal-date")?.value || "";
     const startDate = byId("goal-start-date")?.value || targetDate || formatYmd(new Date());
     const workloadInput = byId("goal-workload-hours");
-    const workloadRaw = String(workloadInput?.value || "").trim().replace(",", ".");
+    const workloadRaw = String(workloadInput?.value || "")
+      .trim()
+      .replace(",", ".");
     const parsedWorkload = Number(workloadRaw || 0);
     const workloadHours = Math.max(0, Number.isFinite(parsedWorkload) ? parsedWorkload : 0);
     const description = byId("goal-description").value.trim();

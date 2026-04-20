@@ -109,12 +109,14 @@ test("Erledigtes Ziel wandert zu erreichten Zielen und kann wieder aktiviert wer
   await expect(page.locator("#achieved-list")).toContainText("Zeit geplant:");
   await expect(page.locator("#achieved-list")).toContainText("Lernzeit verwendet:");
   await expect(page.locator("#achieved-list")).toContainText("Workload:");
-  await expect(page.locator("#achieved-list [data-achieved-workload-delta]"))
-    .toContainText("unter dem Workload");
+  await expect(page.locator("#achieved-list [data-achieved-workload-delta]")).toContainText(
+    "unter dem Workload"
+  );
   const achievedPositiveRow = page.locator("#achieved-list li.lz-achieved-status-positive").first();
   await expect(achievedPositiveRow).toBeVisible();
-  await expect(page.locator("#achieved-list [data-achieved-progress-text]"))
-    .toContainText("% der geplanten Zeit wurden gelernt");
+  await expect(page.locator("#achieved-list [data-achieved-progress-text]")).toContainText(
+    "% der geplanten Zeit wurden gelernt"
+  );
   await expect(page.locator("#achieved-list [data-achieved-progress-bar]")).toHaveCount(1);
   await expect(page.locator("#goal-list")).not.toContainText(goalTitle);
   await expect(page.locator("#rough-list")).not.toContainText(roughNote);

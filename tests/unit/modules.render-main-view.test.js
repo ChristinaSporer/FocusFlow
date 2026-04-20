@@ -205,19 +205,19 @@ describe("modules/render-main-view", () => {
     expect(document.getElementById("achieved-list").textContent).toContain("Done MS (erledigt)");
     expect(document.getElementById("achieved-list").textContent).toContain("Open MS (offen)");
     expect(document.querySelector("#achieved-list .lz-achieved-progress-wrap")).toBeTruthy();
-    expect(document.querySelector('#achieved-list [data-achieved-progress-text="true"]').textContent).toBe(
-      "50% der geplanten Zeit wurden gelernt"
-    );
-    expect(document.querySelectorAll('#achieved-list [data-achieved-progress-bar="true"]')).toHaveLength(
-      1
-    );
-    expect(document.querySelector('#achieved-list [data-achieved-workload="true"]').textContent).toBe(
-      "Workload: 1.0 h (60 Min)"
-    );
-    expect(document.querySelector('#achieved-list [data-achieved-workload-delta="true"]').textContent).toContain(
-      "unter dem Workload"
-    );
-    expect(document.querySelector('#achieved-list li.lz-achieved-status-positive')).toBeTruthy();
+    expect(
+      document.querySelector('#achieved-list [data-achieved-progress-text="true"]').textContent
+    ).toBe("50% der geplanten Zeit wurden gelernt");
+    expect(
+      document.querySelectorAll('#achieved-list [data-achieved-progress-bar="true"]')
+    ).toHaveLength(1);
+    expect(
+      document.querySelector('#achieved-list [data-achieved-workload="true"]').textContent
+    ).toBe("Workload: 1.0 h (60 Min)");
+    expect(
+      document.querySelector('#achieved-list [data-achieved-workload-delta="true"]').textContent
+    ).toContain("unter dem Workload");
+    expect(document.querySelector("#achieved-list li.lz-achieved-status-positive")).toBeTruthy();
     expect(
       document
         .querySelector('#achieved-list [data-achieved-workload-delta="true"]')
@@ -320,7 +320,9 @@ describe("modules/render-main-view", () => {
         .querySelector('#achieved-list [data-achieved-workload-delta="true"]')
         .classList.contains("lz-achieved-workload-negative")
     ).toBe(true);
-    expect(document.getElementById("achieved-list").textContent).toContain("uebersteigt den Workload");
+    expect(document.getElementById("achieved-list").textContent).toContain(
+      "uebersteigt den Workload"
+    );
   });
 
   it("rendert Grob-, Detail- und Tracking-Listen inklusive blockbasierter Detailplanung", () => {
