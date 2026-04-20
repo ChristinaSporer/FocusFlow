@@ -1,7 +1,7 @@
 # Testspezifikation E2E
 
-Stand: 2026-04-15
-Umfang: Playwright-End-to-End-Tests in `tests/e2e`
+Stand: 2026-04-20
+Umfang: Playwright-End-to-End-Tests in `tests/e2e` (aktuell 26 Testfälle)
 
 ## 1. JSON Backup und Restore
 
@@ -60,7 +60,7 @@ Grobe Testschritte:
 
 1. App öffnen.
 2. Seitentitel/Headliner prüfen.
-3. Zieldaten eingeben und Ziel anlegen.
+3. Zieldaten inklusive Workload (> 0 h) eingeben und Ziel anlegen.
 4. Sichtbarkeit des neuen Ziels in der Ziel-Liste prüfen.
 
 ### TC-E2E-SMOKE-02
@@ -194,6 +194,20 @@ Grobe Testschritte:
 6. In Listenansicht wechseln und verschobenes Datum/Target-Date prüfen.
 7. Zusätzliche Details mit und ohne Zielbezug anlegen.
 8. Zielbezogenen Zusatztermin löschen und Ziel-Target-Date erneut konsistent prüfen.
+
+### TC-E2E-PLAN-03
+
+Titel: Erledigtes Ziel gibt belegten Detailplanungstag für neue Grobplanung wieder frei
+Kurzbeschreibung: Verifiziert, dass durch ein erledigtes Ziel belegte Planungsslots bei nachfolgenden Zielen wieder verfügbar sind.
+Grobe Testschritte:
+
+1. App öffnen, Monat setzen und erstes Ziel mit Workload anlegen.
+2. Standard-Lernzeit für den relevanten Wochentag setzen.
+3. Grobplanung für das erste Ziel auf einem konkreten Datum durchführen.
+4. Prüfen, dass die erzeugte Detailplanung zum ersten Ziel sichtbar ist.
+5. Erstes Ziel als erreicht markieren.
+6. Zweites Ziel anlegen und für Grobplanung auswählen.
+7. Prüfen, dass der zuvor belegte Planungstag wieder im Vorschlagsgrid verfügbar ist.
 
 ## 6. Einstellungen und Menü
 
