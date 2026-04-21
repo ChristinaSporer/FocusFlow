@@ -115,8 +115,11 @@ test("Grobplanung: Ziel mit Farbe, Slot-Auswahl, Detailerzeugung und erneute Pla
   expect(optionenNachPlan.join(" ")).toContain(zielB);
 
   const roughRow = page.locator("#rough-list li").filter({ hasText: zielA }).first();
-  await roughRow.getByRole("button", { name: "Löschen" }).click();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await roughRow.getByRole("button", { name: "Löschen" }).click();
+  });
 
+  // The option should now be available again in the dropdown after deletion
   await page.locator("#rough-goal").selectOption({ label: zielA });
   await expect(page.locator("#rough-goal")).toHaveValue(
     await page.evaluate((title) => {

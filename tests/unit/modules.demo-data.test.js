@@ -92,10 +92,10 @@ describe("modules/demo-data", () => {
 
     expect(state.goals).toHaveLength(4);
     expect(state.roughPlans).toHaveLength(3);
-    expect(state.detailPlans).toHaveLength(6);
-    expect(state.trackedSessions).toHaveLength(6);
+    expect(state.detailPlans.length).toBeGreaterThan(0);
+    expect(state.trackedSessions).toHaveLength(8);
     expect(state.importedEvents).toEqual([]);
-    expect(state.timer).toEqual({ start: null });
+    expect(state.timer).toEqual({ start: null, selectedDetailPlanId: expect.any(String) });
 
     expect(state.goals[0]).toMatchObject({
       title: "Modul Software Engineering abschließen",
@@ -123,15 +123,8 @@ describe("modules/demo-data", () => {
       expect(plan.plannedDays.length).toBeGreaterThan(0);
     });
 
-    expect(state.detailPlans).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ topic: "Anforderungsanalyse durcharbeiten" }),
-        expect.objectContaining({ topic: "User Stories und Akzeptanzkriterien" }),
-        expect.objectContaining({ topic: "Altklausur 2019 \u2013 Analysis" }),
-        expect.objectContaining({ topic: "Lineare Algebra Formeln zusammenfassen" }),
-        expect.objectContaining({ topic: "Datensatz explorieren und bereinigen" }),
-        expect.objectContaining({ topic: "Feature Engineering und Modellauswahl" }),
-      ])
+    expect(state.detailPlans.every((plan) => plan.topic.includes("(automatisch geplant)"))).toBe(
+      true
     );
 
     state.trackedSessions.forEach((session) => {
@@ -145,10 +138,20 @@ describe("modules/demo-data", () => {
       inactivityDays: 3,
       lastReminderRun: "2026-03-24T10:00:00.000Z",
       notificationEnabled: false,
+      notificationLeadMinutes: 15,
       activeView: "list",
       calendarMonth: "2026-03",
       themeMode: "dark",
       confirmDialogsEnabled: true,
+      standardLearningTimes: {
+        mon: { startTime: "08:00", endTime: "16:00" },
+        tue: { startTime: "08:00", endTime: "16:00" },
+        wed: { startTime: "08:00", endTime: "16:00" },
+        thu: { startTime: "08:00", endTime: "16:00" },
+        fri: { startTime: "08:00", endTime: "12:00" },
+        sat: { startTime: "", endTime: "" },
+        sun: { startTime: "", endTime: "" },
+      },
     });
   });
 

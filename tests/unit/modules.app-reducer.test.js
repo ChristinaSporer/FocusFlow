@@ -154,8 +154,34 @@ describe("modules/app-reducer", () => {
       type: "ROUGH_ADD",
       payload: { plan: { id: "r2", date: "2026-04-10", hours: 1 } },
     });
+    state = appReducer(state, {
+      type: "DETAIL_ADD",
+      payload: {
+        plan: {
+          id: "d-linked-r2",
+          date: "2026-04-10",
+          minutes: 25,
+          roughPlanId: "r2",
+          done: false,
+        },
+      },
+    });
+    state = appReducer(state, {
+      type: "DETAIL_ADD",
+      payload: {
+        plan: {
+          id: "d-unlinked",
+          date: "2026-04-10",
+          minutes: 15,
+          done: false,
+        },
+      },
+    });
     state = appReducer(state, { type: "ROUGH_DELETE", payload: { id: "r1" } });
     expect(state.roughPlans.map((plan) => plan.id)).toEqual(["r2"]);
+    expect(state.detailPlans.find((plan) => plan.id === "d1")).toBeUndefined();
+    expect(state.detailPlans.find((plan) => plan.id === "d-linked-r2")).toBeTruthy();
+    expect(state.detailPlans.find((plan) => plan.id === "d-unlinked")).toBeTruthy();
 
     state = appReducer(state, {
       type: "DETAIL_ADD",

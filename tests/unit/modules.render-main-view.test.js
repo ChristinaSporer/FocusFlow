@@ -378,7 +378,11 @@ describe("modules/render-main-view", () => {
     });
     expect(document.getElementById("rough-list").textContent).toContain("Workload");
 
+    const roughDeleteConfirm = vi.spyOn(globalThis, "confirm").mockReturnValueOnce(true);
     document.querySelector("#rough-list .btn-outline-danger").click();
+    expect(roughDeleteConfirm).toHaveBeenCalledWith(
+      "Sind sie sicher? Wenn sie diese Planung löschen, werden alle zugehörigen Detailplanungspunkte (automatische und manuell erzeugte) ebenfalls gelöscht!"
+    );
     expect(dispatch).toHaveBeenCalledWith(
       expect.objectContaining({
         type: "ROUGH_DELETE",
@@ -703,5 +707,32 @@ describe("modules/render-main-view", () => {
 
     const firstItem = document.querySelector("#overview-next-items .list-group-item");
     expect(firstItem?.style.borderLeft).toContain("6px solid");
+  });
+
+  it("fragt beim Löschen einer Grobplanung nach Bestätigung und bricht bei Abbruch ab", () => {
+    const dispatch = vi.fn();
+    const onRenderAll = vi.fn();
+    const confirmSpy = vi.spyOn(globalThis, "confirm").mockReturnValueOnce(false);
+
+    renderRoughPlans({
+      state: {
+        roughPlans: [{ id: "r1", date: "2026-03-16", week: "KW 12/2026", hours: 1, note: "KW 12" }],
+        goals: [],
+      },
+      dispatch,
+      onRenderAll,
+    });
+
+    document.querySelector("#rough-list .btn-outline-danger").click();
+
+    expect(confirmSpy).toHaveBeenCalledWith(
+      "Sind sie sicher? Wenn sie diese Planung löschen, werden alle zugehörigen Detailplanungspunkte (automatische und manuell erzeugte) ebenfalls gelöscht!"
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        type: "ROUGH_DELETE",
+      })
+    );
+    expect(onRenderAll).not.toHaveBeenCalled();
   });
 });

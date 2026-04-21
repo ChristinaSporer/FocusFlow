@@ -703,6 +703,11 @@ export function renderRoughPlans({ state, dispatch, onRenderAll, onEditRoughPlan
     const row = buildRow(primaryText, secondaryText, {
       actions,
       onDelete: () => {
+        const ok = askConfirmation(
+          state,
+          "Sind sie sicher? Wenn sie diese Planung löschen, werden alle zugehörigen Detailplanungspunkte (automatische und manuell erzeugte) ebenfalls gelöscht!"
+        );
+        if (!ok) return;
         dispatch({ type: "ROUGH_DELETE", payload: { id: plan.id } });
         onRenderAll();
       },
@@ -1260,7 +1265,7 @@ export function renderDetailPlans({
   additionalTitle.textContent = "Weitere Detailplanung";
   const additionalHint = document.createElement("small");
   additionalHint.className = "text-body-secondary d-block mt-1";
-  additionalHint.textContent = "Freitext oder optionales Zwischenziel - auch ohne Grobplanung";
+  additionalHint.textContent = "Geplante Lernzeiten ohne Hauptziel";
   additionalHeader.append(additionalTitle, additionalHint);
 
   const additionalToggleButton = document.createElement("button");

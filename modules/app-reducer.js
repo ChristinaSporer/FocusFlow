@@ -148,6 +148,9 @@ export function appReducer(currentState, action) {
       return {
         ...currentState,
         roughPlans: currentState.roughPlans.filter((item) => item.id !== action.payload.id),
+        detailPlans: currentState.detailPlans.filter(
+          (item) => item.roughPlanId !== action.payload.id
+        ),
       };
     case "ROUGH_UPDATE":
       return {

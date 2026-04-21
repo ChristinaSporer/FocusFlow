@@ -31,13 +31,6 @@ export function buildDemoState({ themeMode }) {
   const roughPlanTwoId = uid();
   const roughPlanThreeId = uid();
 
-  const detailOneAId = uid();
-  const detailOneBId = uid();
-  const detailTwoAId = uid();
-  const detailTwoBId = uid();
-  const detailThreeAId = uid();
-  const detailThreeBId = uid();
-
   const in5 = new Date(today);
   in5.setDate(today.getDate() + 5);
   const in10 = new Date(today);
@@ -70,7 +63,7 @@ export function buildDemoState({ themeMode }) {
 
   const distThree = distributeGoalWorkload({
     startDate: startThreeStr,
-    workloadHours: 90,
+    workloadHours: 35,
     standardLearningTimes: slt,
     detailPlans: [],
     horizonDays: 365,
@@ -97,12 +90,102 @@ export function buildDemoState({ themeMode }) {
     ? distFour.days[distFour.days.length - 1].date
     : startFourStr;
 
-  const d1a = distOne.days[0] || { date: startOneStr, startTime: "08:00", minutes: 120 };
-  const d1b = distOne.days[1] || { date: startOneStr, startTime: "08:00", minutes: 90 };
-  const d2a = distTwo.days[0] || { date: startTwoStr, startTime: "08:00", minutes: 180 };
-  const d2b = distTwo.days[1] || { date: startTwoStr, startTime: "08:00", minutes: 120 };
-  const d3a = distThree.days[0] || { date: startThreeStr, startTime: "08:00", minutes: 240 };
-  const d3b = distThree.days[1] || { date: startThreeStr, startTime: "08:00", minutes: 180 };
+  const makeAutoDetails = ({
+    days,
+    goalTitle,
+    goalId,
+    roughPlanId,
+    milestonePairs = [],
+    assignMilestones = true,
+  }) =>
+    days.map((day, index) => {
+      const milestone =
+        assignMilestones && milestonePairs.length
+          ? milestonePairs[index % milestonePairs.length]
+          : null;
+      return {
+        id: uid(),
+        date: day.date,
+        minutes: day.minutes,
+        startTime: day.startTime,
+        endTime: day.endTime || addMinutesToTime(day.startTime, day.minutes),
+        topic: `${goalTitle} (automatisch geplant)`,
+        milestone: milestone?.title || "",
+        milestoneId: milestone?.id || null,
+        goalId,
+        roughPlanId,
+        done: false,
+      };
+    });
+
+  const seDetails = makeAutoDetails({
+    days: distOne.days,
+    goalTitle: "Modul Software Engineering abschlie\u00dfen",
+    goalId: goalOneId,
+    roughPlanId: roughPlanOneId,
+    milestonePairs: [
+      { id: milestoneOneId, title: "Kapitel 6 wiederholen" },
+      { id: milestoneTwoId, title: "Pr\u00e4sentation fertigstellen" },
+    ],
+  });
+
+  const mathDetails = makeAutoDetails({
+    days: distTwo.days,
+    goalTitle: "Klausurvorbereitung Mathematik",
+    goalId: goalTwoId,
+    roughPlanId: roughPlanTwoId,
+    milestonePairs: [
+      { id: milestoneThreeId, title: "Altklausur 1 rechnen" },
+      { id: milestoneFourId, title: "Formelblatt zusammenfassen" },
+    ],
+  });
+
+  const dataScienceDetails = makeAutoDetails({
+    days: distThree.days,
+    goalTitle: "Projektarbeit Data Science",
+    goalId: goalThreeId,
+    roughPlanId: roughPlanThreeId,
+    assignMilestones: false,
+  });
+
+  const detailPlans = [...mathDetails, ...seDetails, ...dataScienceDetails];
+
+  function toUtcDate(daysOffset, hour, minute = 0) {
+    return new Date(
+      Date.UTC(
+        today.getUTCFullYear(),
+        today.getUTCMonth(),
+        today.getUTCDate() + daysOffset,
+        hour,
+        minute,
+        0,
+        0
+      )
+    );
+  }
+
+  function buildTrackedSession({
+    daysOffset,
+    hour,
+    minute = 0,
+    durationMinutes,
+    note,
+    detailPlanId,
+  }) {
+    const startDate = toUtcDate(daysOffset, hour, minute);
+    const endDate = new Date(startDate.getTime() + durationMinutes * 60000);
+    return {
+      id: uid(),
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      minutes: durationMinutes,
+      note,
+      detailPlanId,
+    };
+  }
+
+  const mathDetailIds = mathDetails.map((item) => item.id);
+  const firstSeDetailId = seDetails[0]?.id || null;
 
   return {
     goals: [
@@ -115,7 +198,7 @@ export function buildDemoState({ themeMode }) {
         colorKey: "dark-blue",
         description: "Abgabe, Abschlusspr\u00e4sentation und Nachbereitung erledigen.",
         milestones: [
-          { id: milestoneOneId, title: "Kapitel 6 wiederholen", done: true },
+          { id: milestoneOneId, title: "Kapitel 6 wiederholen", done: false },
           { id: milestoneTwoId, title: "Pr\u00e4sentation fertigstellen", done: false },
         ],
         completed: false,
@@ -141,7 +224,7 @@ export function buildDemoState({ themeMode }) {
         title: "Projektarbeit Data Science",
         startDate: startThreeStr,
         targetDate: targetDateThree,
-        workloadHours: 90,
+        workloadHours: 35,
         colorKey: "turquoise",
         description: "Daten aufbereiten, Modell trainieren, Bericht schreiben.",
         milestones: [
@@ -182,185 +265,86 @@ export function buildDemoState({ themeMode }) {
       {
         id: roughPlanThreeId,
         startDate: startThreeStr,
-        totalWorkloadHours: 90,
+        totalWorkloadHours: 35,
         plannedDays: distThree.days,
         goalId: goalThreeId,
       },
-      /*      {
-        id: roughPlanFourId,
-        startDate: startFourStr,
-        totalWorkloadHours: 60,
-        plannedDays: distFour.days,
-        goalId: goalFourId,
-      },*/
     ],
-    detailPlans: [
-      {
-        id: detailOneAId,
-        date: d1a.date,
-        minutes: 120,
-        startTime: d1a.startTime,
-        endTime: addMinutesToTime(d1a.startTime, 120),
-        topic: "Anforderungsanalyse durcharbeiten",
-        milestone: "Pr\u00e4sentation fertigstellen",
-        milestoneId: milestoneTwoId,
-        goalId: goalOneId,
-        roughPlanId: roughPlanOneId,
-        done: false,
-      },
-      {
-        id: detailOneBId,
-        date: d1b.date,
-        minutes: 90,
-        startTime: d1b.startTime,
-        endTime: addMinutesToTime(d1b.startTime, 90),
-        topic: "User Stories und Akzeptanzkriterien",
-        milestone: "Pr\u00e4sentation fertigstellen",
-        milestoneId: milestoneTwoId,
-        goalId: goalOneId,
-        roughPlanId: roughPlanOneId,
-        done: false,
-      },
-      {
-        id: detailTwoAId,
-        date: d2a.date,
-        minutes: 180,
-        startTime: d2a.startTime,
-        endTime: addMinutesToTime(d2a.startTime, 180),
-        topic: "Altklausur 2019 \u2013 Analysis",
-        milestone: "Altklausur 1 rechnen",
-        milestoneId: milestoneThreeId,
-        goalId: goalTwoId,
-        roughPlanId: roughPlanTwoId,
-        done: true,
-      },
-      {
-        id: detailTwoBId,
-        date: d2b.date,
-        minutes: 120,
-        startTime: d2b.startTime,
-        endTime: addMinutesToTime(d2b.startTime, 120),
-        topic: "Lineare Algebra Formeln zusammenfassen",
-        milestone: "Formelblatt zusammenfassen",
-        milestoneId: milestoneFourId,
-        goalId: goalTwoId,
-        roughPlanId: roughPlanTwoId,
-        done: true,
-      },
-      {
-        id: detailThreeAId,
-        date: d3a.date,
-        minutes: 240,
-        startTime: d3a.startTime,
-        endTime: addMinutesToTime(d3a.startTime, 240),
-        topic: "Datensatz explorieren und bereinigen",
-        milestone: "Datensatz bereinigen",
-        milestoneId: milestoneFiveId,
-        goalId: goalThreeId,
-        roughPlanId: roughPlanThreeId,
-        done: false,
-      },
-      {
-        id: detailThreeBId,
-        date: d3b.date,
-        minutes: 180,
-        startTime: d3b.startTime,
-        endTime: addMinutesToTime(d3b.startTime, 180),
-        topic: "Feature Engineering und Modellauswahl",
-        milestone: "Modell validieren",
-        milestoneId: milestoneSixId,
-        goalId: goalThreeId,
-        roughPlanId: roughPlanThreeId,
-        done: false,
-      },
-      /*    {
-        id: detailFourAId,
-        date: d4a.date,
-        minutes: 90,
-        startTime: d4a.startTime,
-        endTime: addMinutesToTime(d4a.startTime, 90),
-        topic: "Listening Comprehension \u00dcbungen",
-        milestone: "",
-        milestoneId: null,
-        goalId: goalFourId,
-        roughPlanId: roughPlanFourId,
-        done: false,
-      },
-      {
-        id: detailFourBId,
-        date: d4b.date,
-        minutes: 120,
-        startTime: d4b.startTime,
-        endTime: addMinutesToTime(d4b.startTime, 120),
-        topic: "Vokabeltraining B2-Wortschatz",
-        milestone: "",
-        milestoneId: null,
-        goalId: goalFourId,
-        roughPlanId: roughPlanFourId,
-        done: false,
-      },*/
-    ],
+    detailPlans,
     trackedSessions: [
       {
         id: uid(),
-        start: new Date(today.getTime() - 2 * 24 * 60 * 60000).toISOString(),
-        end: new Date(today.getTime() - 2 * 24 * 60 * 60000 + 120 * 60000).toISOString(),
-        minutes: 120,
-        note: "Anforderungsanalyse \u2013 Block 1",
-        detailPlanId: detailOneAId,
-      },
-      {
-        id: uid(),
-        start: new Date(today.getTime() - 24 * 60 * 60000).toISOString(),
-        end: new Date(today.getTime() - 24 * 60 * 60000 + 180 * 60000).toISOString(),
-        minutes: 180,
-        note: "Altklausur Analysis \u2013 vollst\u00e4ndig",
-        detailPlanId: detailTwoAId,
-      },
-      {
-        id: uid(),
-        start: new Date(today.getTime() - 24 * 60 * 60000 + 4 * 60 * 60000).toISOString(),
-        end: new Date(
-          today.getTime() - 24 * 60 * 60000 + 4 * 60 * 60000 + 100 * 60000
-        ).toISOString(),
-        minutes: 100,
-        note: "Lineare Algebra \u2013 Formelblatt",
-        detailPlanId: detailTwoBId,
-      },
-      {
-        id: uid(),
-        start: new Date().toISOString(),
+        start: nowIso(),
         end: new Date(Date.now() + 45 * 60000).toISOString(),
         minutes: 45,
-        note: "Fokusblock am Morgen",
+        note: "Webinar KI-Nutzung angesehen",
+        detailPlanId: null,
       },
-      {
-        id: uid(),
-        start: new Date(today.getTime() - 3 * 24 * 60 * 60000).toISOString(),
-        end: new Date(today.getTime() - 3 * 24 * 60 * 60000 + 60 * 60000).toISOString(),
-        minutes: 60,
-        note: "Abend-Review Mathematik",
-      },
-      {
-        id: uid(),
-        start: new Date(today.getTime() - 4 * 24 * 60 * 60000).toISOString(),
-        end: new Date(today.getTime() - 4 * 24 * 60 * 60000 + 90 * 60000).toISOString(),
-        minutes: 90,
+      buildTrackedSession({
+        daysOffset: -4,
+        hour: 7,
+        minute: 44,
+        durationMinutes: 90,
         note: "Projektarbeit Data Science \u2013 Recherche",
-      },
+      }),
+      buildTrackedSession({
+        daysOffset: -8,
+        hour: 10,
+        durationMinutes: 480,
+        note: "",
+        detailPlanId: mathDetailIds[0] || null,
+      }),
+      buildTrackedSession({
+        daysOffset: -7,
+        hour: 10,
+        durationMinutes: 480,
+        note: "",
+        detailPlanId: mathDetailIds[1] || null,
+      }),
+      buildTrackedSession({
+        daysOffset: -6,
+        hour: 10,
+        durationMinutes: 480,
+        note: "",
+        detailPlanId: mathDetailIds[2] || null,
+      }),
+      buildTrackedSession({
+        daysOffset: -5,
+        hour: 10,
+        durationMinutes: 480,
+        note: "",
+        detailPlanId: mathDetailIds[3] || null,
+      }),
+      buildTrackedSession({
+        daysOffset: -4,
+        hour: 10,
+        durationMinutes: 60,
+        note: "",
+        detailPlanId: mathDetailIds[4] || null,
+      }),
+      buildTrackedSession({
+        daysOffset: 6,
+        hour: 10,
+        durationMinutes: 480,
+        note: "",
+        detailPlanId: firstSeDetailId,
+      }),
     ],
     settings: {
       inactivityDays: 3,
       lastReminderRun: nowIso(),
       notificationEnabled: false,
       confirmDialogsEnabled: true,
+      notificationLeadMinutes: 15,
       activeView: "list",
       calendarMonth: month,
       themeMode,
+      standardLearningTimes: slt,
     },
     importedEvents: [],
     timer: {
       start: null,
+      selectedDetailPlanId: firstSeDetailId,
     },
   };
 }
