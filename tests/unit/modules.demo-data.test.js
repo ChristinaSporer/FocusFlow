@@ -138,6 +138,8 @@ describe("modules/demo-data", () => {
       inactivityDays: 3,
       lastReminderRun: "2026-03-24T10:00:00.000Z",
       notificationEnabled: false,
+      inactivityNotificationEnabled: false,
+      lastInactivityNotificationAt: null,
       notificationLeadMinutes: 15,
       activeView: "list",
       calendarMonth: "2026-03",

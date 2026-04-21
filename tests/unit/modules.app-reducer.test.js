@@ -248,6 +248,14 @@ describe("modules/app-reducer", () => {
     state = appReducer(state, { type: "SET_ACTIVE_VIEW", payload: { view: "calendar" } });
     state = appReducer(state, { type: "SET_INACTIVITY_DAYS", payload: { days: 7 } });
     state = appReducer(state, { type: "SET_NOTIFICATION_ENABLED", payload: { enabled: true } });
+    state = appReducer(state, {
+      type: "SET_INACTIVITY_NOTIFICATION_ENABLED",
+      payload: { enabled: true },
+    });
+    state = appReducer(state, {
+      type: "SET_LAST_INACTIVITY_NOTIFICATION_AT",
+      payload: { timestamp: "2026-03-24T10:00:00.000Z" },
+    });
     state = appReducer(state, { type: "SET_THEME_MODE", payload: { themeMode: "dark" } });
 
     expect(state.settings).toMatchObject({
@@ -255,6 +263,8 @@ describe("modules/app-reducer", () => {
       activeView: "calendar",
       inactivityDays: 7,
       notificationEnabled: true,
+      inactivityNotificationEnabled: true,
+      lastInactivityNotificationAt: "2026-03-24T10:00:00.000Z",
       themeMode: "dark",
     });
 

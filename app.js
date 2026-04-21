@@ -294,6 +294,7 @@ const jsonManager = createJsonManager({
 
 const notificationManager = createNotificationManager({
   getState,
+  dispatch,
 });
 
 export function bootstrap() {

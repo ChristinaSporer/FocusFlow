@@ -334,6 +334,8 @@ export function buildDemoState({ themeMode }) {
       inactivityDays: 3,
       lastReminderRun: nowIso(),
       notificationEnabled: false,
+      inactivityNotificationEnabled: false,
+      lastInactivityNotificationAt: null,
       confirmDialogsEnabled: true,
       notificationLeadMinutes: 15,
       activeView: "list",

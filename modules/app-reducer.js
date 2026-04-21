@@ -272,12 +272,28 @@ export function appReducer(currentState, action) {
           notificationEnabled: action.payload.enabled,
         },
       };
+    case "SET_INACTIVITY_NOTIFICATION_ENABLED":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          inactivityNotificationEnabled: action.payload.enabled,
+        },
+      };
     case "SET_NOTIFICATION_LEAD_MINUTES":
       return {
         ...currentState,
         settings: {
           ...currentState.settings,
           notificationLeadMinutes: action.payload.minutes,
+        },
+      };
+    case "SET_LAST_INACTIVITY_NOTIFICATION_AT":
+      return {
+        ...currentState,
+        settings: {
+          ...currentState.settings,
+          lastInactivityNotificationAt: action.payload.timestamp,
         },
       };
     case "SET_CONFIRM_DIALOGS_ENABLED":

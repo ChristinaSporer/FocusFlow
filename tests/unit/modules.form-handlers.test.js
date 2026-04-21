@@ -125,8 +125,13 @@ describe("modules/form-handlers", () => {
       '<input id="menu-json-file" type="file">',
       '<button id="menu-json-export" type="button"></button>',
       '<input id="menu-notification-enabled" type="checkbox">',
+      '<input id="menu-confirm-dialogs-enabled" type="checkbox">',
       '<input id="menu-notification-lead" value="15">',
+      '<input id="menu-inactivity-notification-enabled" type="checkbox">',
+      '<input id="menu-inactivity-notification-days-range" type="range" value="3">',
+      '<input id="menu-inactivity-notification-days" value="3">',
       '<p id="menu-notification-status"></p>',
+      '<p id="menu-confirm-dialogs-hint" class="d-none"></p>',
       '<button id="menu-save-learning-times" type="button"></button>',
       '<input id="slt-mon-start" value="08:00"><input id="slt-mon-end" value="10:00">',
       '<input id="slt-tue-start" value="08:00"><input id="slt-tue-end" value="10:00">',
@@ -166,7 +171,10 @@ describe("modules/form-handlers", () => {
             sun: { startTime: "", endTime: "" },
           },
           notificationEnabled: false,
+          confirmDialogsEnabled: true,
+          inactivityNotificationEnabled: false,
           notificationLeadMinutes: 15,
+          inactivityDays: 3,
         },
       })),
       touchActivity: vi.fn(),
@@ -678,6 +686,54 @@ describe("modules/form-handlers", () => {
     expect(alertSpy).not.toHaveBeenCalled();
   });
 
+  it("zeigt den Hinweis zu Popup-Bestaetigungen nur bei deaktivierten Bestaetigungen", () => {
+    const settings = {
+      standardLearningTimes: {
+        mon: { startTime: "08:00", endTime: "16:00" },
+        tue: { startTime: "08:00", endTime: "16:00" },
+        wed: { startTime: "08:00", endTime: "16:00" },
+        thu: { startTime: "08:00", endTime: "16:00" },
+        fri: { startTime: "08:00", endTime: "12:00" },
+        sat: { startTime: "", endTime: "" },
+        sun: { startTime: "", endTime: "" },
+      },
+      notificationEnabled: false,
+      confirmDialogsEnabled: false,
+      inactivityNotificationEnabled: false,
+      notificationLeadMinutes: 15,
+      inactivityDays: 3,
+    };
+
+    const getState = vi.fn(() => ({
+      goals: [],
+      roughPlans: [],
+      detailPlans: [],
+      settings,
+    }));
+
+    const dispatch = vi.fn((action) => {
+      if (action?.type === "SET_CONFIRM_DIALOGS_ENABLED") {
+        settings.confirmDialogsEnabled = action.payload.enabled;
+      }
+    });
+
+    const { deps } = setupHandlers({ getState, dispatch });
+    const hint = document.getElementById("menu-confirm-dialogs-hint");
+    const toggle = document.getElementById("menu-confirm-dialogs-enabled");
+
+    expect(toggle.checked).toBe(false);
+    expect(hint.classList.contains("d-none")).toBe(false);
+
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_CONFIRM_DIALOGS_ENABLED",
+      payload: { enabled: true },
+    });
+    expect(hint.classList.contains("d-none")).toBe(true);
+  });
+
   it("meldet fehlende Importdateien ueber die Standardtexte", async () => {
     const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
     const { deps } = setupHandlers({
@@ -850,7 +906,9 @@ describe("modules/form-handlers", () => {
             sun: { startTime: "", endTime: "" },
           },
           notificationEnabled: false,
+          inactivityNotificationEnabled: false,
           notificationLeadMinutes: undefined,
+          inactivityDays: undefined,
         },
       })),
       getNotificationPermission: vi.fn(() => "denied"),
@@ -876,6 +934,85 @@ describe("modules/form-handlers", () => {
       type: "SET_NOTIFICATION_LEAD_MINUTES",
       payload: { minutes: 0 },
     });
+  });
+
+  it("verarbeitet Inaktivitaets-Benachrichtigung mit Toggle, Slider und Eingabefeld", async () => {
+    const { deps } = setupHandlers({
+      getState: vi.fn(() => ({
+        goals: [],
+        roughPlans: [],
+        detailPlans: [],
+        settings: {
+          standardLearningTimes: {
+            mon: { startTime: "08:00", endTime: "10:00" },
+            tue: { startTime: "08:00", endTime: "10:00" },
+            wed: { startTime: "08:00", endTime: "10:00" },
+            thu: { startTime: "08:00", endTime: "10:00" },
+            fri: { startTime: "08:00", endTime: "10:00" },
+            sat: { startTime: "", endTime: "" },
+            sun: { startTime: "", endTime: "" },
+          },
+          notificationEnabled: false,
+          inactivityNotificationEnabled: true,
+          notificationLeadMinutes: 15,
+          inactivityDays: 9,
+        },
+      })),
+    });
+
+    expect(document.getElementById("menu-inactivity-notification-enabled").checked).toBe(true);
+    expect(document.getElementById("menu-inactivity-notification-days-range").value).toBe("9");
+    expect(document.getElementById("menu-inactivity-notification-days").value).toBe("9");
+
+    document.getElementById("menu-inactivity-notification-days-range").value = "12";
+    document
+      .getElementById("menu-inactivity-notification-days-range")
+      .dispatchEvent(new Event("input", { bubbles: true }));
+
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_INACTIVITY_DAYS",
+      payload: { days: 12 },
+    });
+
+    document.getElementById("menu-inactivity-notification-days").value = "80";
+    document
+      .getElementById("menu-inactivity-notification-days")
+      .dispatchEvent(new Event("change", { bubbles: true }));
+
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_INACTIVITY_DAYS",
+      payload: { days: 60 },
+    });
+
+    const toggle = document.getElementById("menu-inactivity-notification-enabled");
+    toggle.checked = false;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    await Promise.resolve();
+
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_INACTIVITY_NOTIFICATION_ENABLED",
+      payload: { enabled: false },
+    });
+    expect(deps.syncNotifications).toHaveBeenCalled();
+  });
+
+  it("deaktiviert Inaktivitaets-Benachrichtigungen wenn Berechtigung verweigert wird", async () => {
+    const alertSpy = vi.spyOn(globalThis, "alert").mockImplementation(() => {});
+    const { deps } = setupHandlers({
+      notificationPermission: vi.fn(async () => "denied"),
+    });
+
+    const toggle = document.getElementById("menu-inactivity-notification-enabled");
+    toggle.checked = true;
+    toggle.dispatchEvent(new Event("change", { bubbles: true }));
+    await Promise.resolve();
+
+    expect(deps.dispatch).toHaveBeenCalledWith({
+      type: "SET_INACTIVITY_NOTIFICATION_ENABLED",
+      payload: { enabled: false },
+    });
+    expect(toggle.checked).toBe(false);
+    expect(alertSpy).toHaveBeenCalledTimes(1);
   });
 
   it("meldet erfolgreiche Importe ohne Zusatzdaten mit den Fallback-Texten", async () => {

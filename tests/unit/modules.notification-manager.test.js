@@ -299,4 +299,84 @@ describe("modules/notification-manager", () => {
 
     expect(clearIntervalSpy).toHaveBeenCalledTimes(1);
   });
+
+  it("sendet eine Inaktivitaets-Benachrichtigung auf Basis der letzten getrackten Session", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-21T10:00:00.000Z"));
+
+    const notificationCtor = vi.fn();
+    notificationCtor.permission = "granted";
+    vi.stubGlobal("Notification", notificationCtor);
+    const dispatch = vi.fn();
+
+    const manager = createNotificationManager({
+      dispatch,
+      getState: () => ({
+        settings: {
+          inactivityNotificationEnabled: true,
+          inactivityDays: 7,
+          lastInactivityNotificationAt: null,
+        },
+        trackedSessions: [
+          {
+            id: "t1",
+            start: "2026-04-11T08:00:00.000Z",
+            end: "2026-04-11T09:00:00.000Z",
+            minutes: 60,
+          },
+        ],
+        detailPlans: [],
+      }),
+    });
+
+    manager.sync();
+
+    expect(notificationCtor).toHaveBeenCalledTimes(1);
+    expect(notificationCtor).toHaveBeenCalledWith(
+      "FocusFlow: Seit 10 Tagen keine Lernzeit erfasst",
+      {
+        body: "Du hast seit 10 Tagen keine Lernzeit getrackt. Zeit für den nächsten Fokusblock?",
+      }
+    );
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "SET_LAST_INACTIVITY_NOTIFICATION_AT",
+      payload: { timestamp: "2026-04-21T10:00:00.000Z" },
+    });
+
+    manager.dispose();
+  });
+
+  it("sendet die Inaktivitaets-Benachrichtigung nicht doppelt ohne neue Session", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-21T10:00:00.000Z"));
+
+    const notificationCtor = vi.fn();
+    notificationCtor.permission = "granted";
+    vi.stubGlobal("Notification", notificationCtor);
+
+    const manager = createNotificationManager({
+      dispatch: vi.fn(),
+      getState: () => ({
+        settings: {
+          inactivityNotificationEnabled: true,
+          inactivityDays: 7,
+          lastInactivityNotificationAt: "2026-04-21T10:00:00.000Z",
+        },
+        trackedSessions: [
+          {
+            id: "t1",
+            start: "2026-04-11T08:00:00.000Z",
+            end: "2026-04-11T09:00:00.000Z",
+            minutes: 60,
+          },
+        ],
+        detailPlans: [],
+      }),
+    });
+
+    manager.sync();
+    expect(notificationCtor).not.toHaveBeenCalled();
+
+    manager.dispose();
+  });
 });

@@ -166,7 +166,13 @@ describe("modules/json-manager", () => {
             },
             { id: "g2", title: "Neu" },
           ],
-          settings: { activeView: "calendar", inactivityDays: 5, themeMode: "dark" },
+          settings: {
+            activeView: "calendar",
+            inactivityDays: 5,
+            inactivityNotificationEnabled: true,
+            lastInactivityNotificationAt: "2026-03-24T08:00:00.000Z",
+            themeMode: "dark",
+          },
         })
       ),
     };
@@ -187,6 +193,8 @@ describe("modules/json-manager", () => {
     });
     expect(result.state.settings.activeView).toBe("calendar");
     expect(result.state.settings.inactivityDays).toBe(5);
+    expect(result.state.settings.inactivityNotificationEnabled).toBe(true);
+    expect(result.state.settings.lastInactivityNotificationAt).toBe("2026-03-24T08:00:00.000Z");
     expect(result.state.settings.themeMode).toBe("dark");
   });
 
@@ -247,6 +255,23 @@ describe("modules/json-manager", () => {
     const result = await manager.importFromFile(file);
     expect(result.ok).toBe(true);
     expect(result.state.settings.notificationLeadMinutes).toBe(90);
+  });
+
+  it("klemmt inactivityDays auf 60 wenn der Wert groesser ist", async () => {
+    const { manager } = createManager();
+
+    const file = {
+      name: "settings.json",
+      text: vi.fn(async () =>
+        JSON.stringify({
+          settings: { inactivityDays: 200 },
+        })
+      ),
+    };
+
+    const result = await manager.importFromFile(file);
+    expect(result.ok).toBe(true);
+    expect(result.state.settings.inactivityDays).toBe(60);
   });
 
   it("gibt ok:false zurueck wenn importiertes JSON ein Array statt Objekt ist", async () => {

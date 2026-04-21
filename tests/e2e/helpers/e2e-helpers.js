@@ -10,6 +10,8 @@ const DEFAULT_STATE = {
     inactivityDays: 3,
     lastReminderRun: null,
     notificationEnabled: false,
+    inactivityNotificationEnabled: false,
+    lastInactivityNotificationAt: null,
     activeView: "list",
     calendarMonth: null,
     themeMode: "auto",

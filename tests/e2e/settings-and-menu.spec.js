@@ -4,6 +4,7 @@ const {
   addAdditionalDetailPlan,
   installNotificationMock,
   getNotificationCalls,
+  seedAppState,
   openMenu,
   openMenuSection,
   clickAndAcceptDialogIfPresent,
@@ -62,6 +63,7 @@ test("Erinnerung kann ein- und ausgeschaltet werden; ausgeschaltet kommt keine B
   await page.goto("/");
 
   await openMenu(page);
+  await openMenuSection(page, "Benachrichtigungen");
   await page.locator("#menu-notification-lead").fill("0");
   await page.locator("#menu-notification-lead").dispatchEvent("change");
 
@@ -79,6 +81,33 @@ test("Erinnerung kann ein- und ausgeschaltet werden; ausgeschaltet kommt keine B
 
   const calls = await getNotificationCalls(page);
   expect(calls.length).toBe(0);
+});
+
+test("Inaktivitaets-Benachrichtigung wird beim Oeffnen der App nachgeholt", async ({ page }) => {
+  await installNotificationMock(page, { permission: "granted" });
+  await seedAppState(page, {
+    trackedSessions: [
+      {
+        id: "t1",
+        start: "2026-04-10T08:00:00.000Z",
+        end: "2026-04-10T09:00:00.000Z",
+        minutes: 60,
+        note: "Alt",
+        detailPlanId: null,
+      },
+    ],
+    settings: {
+      inactivityDays: 7,
+      inactivityNotificationEnabled: true,
+      lastInactivityNotificationAt: null,
+    },
+  });
+
+  await page.goto("/");
+
+  const calls = await getNotificationCalls(page);
+  expect(calls).toHaveLength(1);
+  expect(calls[0].title).toContain("keine Lernzeit erfasst");
 });
 
 test("Standard-Lernzeiten beeinflussen die Vorschläge in der Grobplanung", async ({ page }) => {

@@ -17,7 +17,26 @@ function parsePlanStart(plan) {
   return Number.isNaN(value.getTime()) ? null : value;
 }
 
-export function createNotificationManager({ getState }) {
+function parseTrackedTimestamp(session) {
+  const value = session?.end || session?.start || null;
+  if (!value) return null;
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getLatestTrackedAt(trackedSessions) {
+  let latest = null;
+  (trackedSessions || []).forEach((session) => {
+    const candidate = parseTrackedTimestamp(session);
+    if (!candidate) return;
+    if (!latest || candidate.getTime() > latest.getTime()) {
+      latest = candidate;
+    }
+  });
+  return latest;
+}
+
+export function createNotificationManager({ getState, dispatch }) {
   let intervalId = null;
   const sentNotificationKeys = new Set();
 
@@ -41,8 +60,7 @@ export function createNotificationManager({ getState }) {
     return Notification.permission;
   }
 
-  function sync() {
-    const state = getState();
+  function syncUpcomingPlanNotifications(state) {
     const enabled = Boolean(state.settings?.notificationEnabled);
     const leadMinutes = Math.min(
       90,
@@ -52,7 +70,7 @@ export function createNotificationManager({ getState }) {
 
     cleanupSentKeys(detailPlans, leadMinutes);
 
-    if (!enabled || getNotificationPermission() !== "granted") return;
+    if (!enabled) return;
 
     const now = Date.now();
     detailPlans.forEach((plan) => {
@@ -80,6 +98,48 @@ export function createNotificationManager({ getState }) {
       new Notification(title, { body });
       sentNotificationKeys.add(key);
     });
+  }
+
+  function syncInactivityNotification(state) {
+    const settings = state.settings || {};
+    if (!settings.inactivityNotificationEnabled) return;
+
+    const latestTrackedAt = getLatestTrackedAt(state.trackedSessions || []);
+    if (!latestTrackedAt) return;
+
+    const inactivityDays = Math.min(
+      60,
+      Math.max(1, Math.round(Number(settings.inactivityDays ?? 3)))
+    );
+    const thresholdMs = inactivityDays * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const latestTrackedAtMs = latestTrackedAt.getTime();
+
+    if (now - latestTrackedAtMs < thresholdMs) return;
+
+    const lastNotificationAt = settings.lastInactivityNotificationAt
+      ? new Date(settings.lastInactivityNotificationAt)
+      : null;
+    if (lastNotificationAt && !Number.isNaN(lastNotificationAt.getTime())) {
+      if (lastNotificationAt.getTime() >= latestTrackedAtMs) return;
+    }
+
+    const inactiveForDays = Math.floor((now - latestTrackedAtMs) / (24 * 60 * 60 * 1000));
+    new Notification(`FocusFlow: Seit ${inactiveForDays} Tagen keine Lernzeit erfasst`, {
+      body: `Du hast seit ${inactiveForDays} Tagen keine Lernzeit getrackt. Zeit für den nächsten Fokusblock?`,
+    });
+
+    dispatch?.({
+      type: "SET_LAST_INACTIVITY_NOTIFICATION_AT",
+      payload: { timestamp: new Date(now).toISOString() },
+    });
+  }
+
+  function sync() {
+    const state = getState();
+    if (getNotificationPermission() !== "granted") return;
+    syncUpcomingPlanNotifications(state);
+    syncInactivityNotification(state);
   }
 
   function ensurePolling() {

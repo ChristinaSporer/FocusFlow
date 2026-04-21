@@ -762,18 +762,45 @@ export function initFormHandlers({
   });
 
   const notificationToggle = byId("menu-notification-enabled");
+  const inactivityNotificationToggle = byId("menu-inactivity-notification-enabled");
   const confirmDialogsToggle = byId("menu-confirm-dialogs-enabled");
+  const notificationLeadRange = byId("menu-notification-lead-range");
   const notificationLeadInput = byId("menu-notification-lead");
+  const inactivityNotificationDaysRange = byId("menu-inactivity-notification-days-range");
+  const inactivityNotificationDaysInput = byId("menu-inactivity-notification-days");
   const notificationStatus = byId("menu-notification-status");
+  const confirmDialogsHint = byId("menu-confirm-dialogs-hint");
+
+  function clampInactivityDays(value) {
+    return Math.min(60, Math.max(1, Math.round(Number(value || 3))));
+  }
 
   function syncNotificationInputs() {
     const settings = getState().settings || {};
     if (notificationToggle) notificationToggle.checked = Boolean(settings.notificationEnabled);
+    if (inactivityNotificationToggle) {
+      inactivityNotificationToggle.checked = Boolean(settings.inactivityNotificationEnabled);
+    }
     if (confirmDialogsToggle) {
       confirmDialogsToggle.checked = settings.confirmDialogsEnabled !== false;
     }
+    if (confirmDialogsHint) {
+      const confirmationsEnabled = settings.confirmDialogsEnabled !== false;
+      confirmDialogsHint.classList.toggle("d-none", confirmationsEnabled);
+    }
+    const leadMinutes = Math.min(90, Math.max(0, Number(settings.notificationLeadMinutes ?? 15)));
+    if (notificationLeadRange) {
+      notificationLeadRange.value = String(leadMinutes);
+    }
     if (notificationLeadInput) {
-      notificationLeadInput.value = String(settings.notificationLeadMinutes ?? 15);
+      notificationLeadInput.value = String(leadMinutes);
+    }
+    const inactivityDays = clampInactivityDays(settings.inactivityDays ?? 3);
+    if (inactivityNotificationDaysRange) {
+      inactivityNotificationDaysRange.value = String(inactivityDays);
+    }
+    if (inactivityNotificationDaysInput) {
+      inactivityNotificationDaysInput.value = String(inactivityDays);
     }
     if (notificationStatus) {
       const permission = getNotificationPermission?.() || "default";
@@ -806,14 +833,57 @@ export function initFormHandlers({
     syncNotifications?.();
   });
 
-  notificationLeadInput?.addEventListener("change", () => {
-    const minutes = Math.min(90, Math.max(0, Number(notificationLeadInput.value || 0)));
+  function updateLeadMinutes(value) {
+    const minutes = Math.min(90, Math.max(0, Math.round(Number(value || 0) / 5) * 5));
     dispatch({ type: "SET_NOTIFICATION_LEAD_MINUTES", payload: { minutes } });
+    syncNotificationInputs();
     syncNotifications?.();
+  }
+
+  notificationLeadRange?.addEventListener("input", () => {
+    updateLeadMinutes(notificationLeadRange.value);
+  });
+
+  notificationLeadInput?.addEventListener("change", () => {
+    updateLeadMinutes(notificationLeadInput.value);
+  });
+
+  inactivityNotificationToggle?.addEventListener("change", async (event) => {
+    const enabled = event.target.checked;
+    if (enabled) {
+      const permission = await notificationPermission?.();
+      if (permission !== "granted") {
+        dispatch({ type: "SET_INACTIVITY_NOTIFICATION_ENABLED", payload: { enabled: false } });
+        event.target.checked = false;
+        syncNotificationInputs();
+        alert("Benachrichtigungen konnten nicht aktiviert werden.");
+        return;
+      }
+    }
+
+    dispatch({ type: "SET_INACTIVITY_NOTIFICATION_ENABLED", payload: { enabled } });
+    syncNotificationInputs();
+    syncNotifications?.();
+  });
+
+  function updateInactivityDays(value) {
+    const days = clampInactivityDays(value);
+    dispatch({ type: "SET_INACTIVITY_DAYS", payload: { days } });
+    syncNotificationInputs();
+    syncNotifications?.();
+  }
+
+  inactivityNotificationDaysRange?.addEventListener("input", () => {
+    updateInactivityDays(inactivityNotificationDaysRange.value);
+  });
+
+  inactivityNotificationDaysInput?.addEventListener("change", () => {
+    updateInactivityDays(inactivityNotificationDaysInput.value);
   });
 
   confirmDialogsToggle?.addEventListener("change", (event) => {
     dispatch({ type: "SET_CONFIRM_DIALOGS_ENABLED", payload: { enabled: event.target.checked } });
+    syncNotificationInputs();
   });
 
   byId("menu-ics-import")?.addEventListener("click", async () => {

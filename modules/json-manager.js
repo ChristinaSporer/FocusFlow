@@ -63,7 +63,10 @@ function normalizeSettings(importedSettings, fallbackSettings, warnings) {
   }
 
   if (typeof importedSettings.inactivityDays === "number" && importedSettings.inactivityDays > 0) {
-    nextSettings.inactivityDays = importedSettings.inactivityDays;
+    nextSettings.inactivityDays = Math.min(
+      60,
+      Math.max(1, Math.round(Number(importedSettings.inactivityDays)))
+    );
   }
 
   if (
@@ -77,11 +80,22 @@ function normalizeSettings(importedSettings, fallbackSettings, warnings) {
     nextSettings.notificationEnabled = importedSettings.notificationEnabled;
   }
 
+  if (typeof importedSettings.inactivityNotificationEnabled === "boolean") {
+    nextSettings.inactivityNotificationEnabled = importedSettings.inactivityNotificationEnabled;
+  }
+
   if (Number.isFinite(Number(importedSettings.notificationLeadMinutes))) {
     nextSettings.notificationLeadMinutes = Math.min(
       90,
       Math.max(0, Math.round(Number(importedSettings.notificationLeadMinutes)))
     );
+  }
+
+  if (
+    typeof importedSettings.lastInactivityNotificationAt === "string" ||
+    importedSettings.lastInactivityNotificationAt === null
+  ) {
+    nextSettings.lastInactivityNotificationAt = importedSettings.lastInactivityNotificationAt;
   }
 
   if (typeof importedSettings.activeView === "string") {
