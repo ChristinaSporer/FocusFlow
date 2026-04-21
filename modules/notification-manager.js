@@ -2,6 +2,8 @@ function canUseNotifications() {
   return typeof Notification !== "undefined";
 }
 
+const NOTIFICATION_POLL_INTERVAL_MS = 30000;
+
 function getNotificationPermission() {
   if (!canUseNotifications()) return "unsupported";
   return Notification.permission;
@@ -34,6 +36,24 @@ function getLatestTrackedAt(trackedSessions) {
     }
   });
   return latest;
+}
+
+function isTrackingActive(state) {
+  return Boolean(state?.timer?.start) || Boolean(state?.pomodoro?.active);
+}
+
+function isPlanWithinReminderWindow(plan, now, leadMinutes) {
+  if (plan?.done) return false;
+  const startDate = parsePlanStart(plan);
+  if (!startDate) return false;
+
+  const startTime = startDate.getTime();
+  if (leadMinutes === 0) {
+    return now >= startTime && now < startTime + NOTIFICATION_POLL_INTERVAL_MS;
+  }
+
+  const triggerAt = startTime - leadMinutes * 60 * 1000;
+  return now >= triggerAt && now < startTime;
 }
 
 export function createNotificationManager({ getState, dispatch }) {
@@ -74,15 +94,9 @@ export function createNotificationManager({ getState, dispatch }) {
 
     const now = Date.now();
     detailPlans.forEach((plan) => {
-      if (plan?.done) return;
-      const startDate = parsePlanStart(plan);
-      if (!startDate) return;
-
-      const startTime = startDate.getTime();
-      const triggerAt = startTime - leadMinutes * 60 * 1000;
       const key = buildNotificationKey(plan, leadMinutes);
 
-      if (now < triggerAt || now >= startTime) return;
+      if (!isPlanWithinReminderWindow(plan, now, leadMinutes)) return;
       if (sentNotificationKeys.has(key)) return;
 
       const sessionTitle = plan.topic || plan.milestone || "Geplante Lernzeit";
@@ -97,6 +111,25 @@ export function createNotificationManager({ getState, dispatch }) {
 
       new Notification(title, { body });
       sentNotificationKeys.add(key);
+    });
+  }
+
+  function consumeSuppressedUpcomingPlanNotifications(state) {
+    const enabled = Boolean(state.settings?.notificationEnabled);
+    if (!enabled) return;
+
+    const leadMinutes = Math.min(
+      90,
+      Math.max(0, Math.round(Number(state.settings?.notificationLeadMinutes ?? 15)))
+    );
+    const detailPlans = state.detailPlans || [];
+
+    cleanupSentKeys(detailPlans, leadMinutes);
+
+    const now = Date.now();
+    detailPlans.forEach((plan) => {
+      if (!isPlanWithinReminderWindow(plan, now, leadMinutes)) return;
+      sentNotificationKeys.add(buildNotificationKey(plan, leadMinutes));
     });
   }
 
@@ -135,16 +168,51 @@ export function createNotificationManager({ getState, dispatch }) {
     });
   }
 
+  function consumeSuppressedInactivityNotification(state) {
+    const settings = state.settings || {};
+    if (!settings.inactivityNotificationEnabled) return;
+
+    const latestTrackedAt = getLatestTrackedAt(state.trackedSessions || []);
+    if (!latestTrackedAt) return;
+
+    const inactivityDays = Math.min(
+      60,
+      Math.max(1, Math.round(Number(settings.inactivityDays ?? 3)))
+    );
+    const thresholdMs = inactivityDays * 24 * 60 * 60 * 1000;
+    const now = Date.now();
+    const latestTrackedAtMs = latestTrackedAt.getTime();
+
+    if (now - latestTrackedAtMs < thresholdMs) return;
+
+    const lastNotificationAt = settings.lastInactivityNotificationAt
+      ? new Date(settings.lastInactivityNotificationAt)
+      : null;
+    if (lastNotificationAt && !Number.isNaN(lastNotificationAt.getTime())) {
+      if (lastNotificationAt.getTime() >= latestTrackedAtMs) return;
+    }
+
+    dispatch?.({
+      type: "SET_LAST_INACTIVITY_NOTIFICATION_AT",
+      payload: { timestamp: new Date(now).toISOString() },
+    });
+  }
+
   function sync() {
     const state = getState();
     if (getNotificationPermission() !== "granted") return;
+    if (isTrackingActive(state)) {
+      consumeSuppressedUpcomingPlanNotifications(state);
+      consumeSuppressedInactivityNotification(state);
+      return;
+    }
     syncUpcomingPlanNotifications(state);
     syncInactivityNotification(state);
   }
 
   function ensurePolling() {
     if (intervalId !== null) return;
-    intervalId = window.setInterval(sync, 30000);
+    intervalId = window.setInterval(sync, NOTIFICATION_POLL_INTERVAL_MS);
   }
 
   function dispose() {

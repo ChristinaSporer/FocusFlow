@@ -83,6 +83,57 @@ test("Erinnerung kann ein- und ausgeschaltet werden; ausgeschaltet kommt keine B
   expect(calls.length).toBe(0);
 });
 
+test("0-Minuten-Erinnerung wird direkt zum Startzeitpunkt gesendet", async ({ page }) => {
+  await page.addInitScript(() => {
+    const fixedNow = new Date("2026-04-20T09:00:05").getTime();
+    const RealDate = Date;
+
+    class MockDate extends RealDate {
+      constructor(...args) {
+        if (args.length === 0) {
+          super(fixedNow);
+          return;
+        }
+        super(...args);
+      }
+
+      static now() {
+        return fixedNow;
+      }
+    }
+
+    Object.setPrototypeOf(MockDate, RealDate);
+    window.Date = MockDate;
+  });
+
+  await installNotificationMock(page, { permission: "granted" });
+  await seedAppState(page, {
+    detailPlans: [
+      {
+        id: "d-start-now",
+        date: "2026-04-20",
+        startTime: "09:00",
+        endTime: "10:00",
+        topic: "Direktstart",
+        done: false,
+      },
+    ],
+    settings: {
+      notificationEnabled: true,
+      notificationLeadMinutes: 0,
+    },
+  });
+
+  await page.goto("/");
+
+  const calls = await getNotificationCalls(page);
+  expect(calls).toHaveLength(1);
+  expect(calls[0]).toEqual({
+    title: "FocusFlow: Zeit zu lernen",
+    options: { body: "Direktstart · 09:00-10:00" },
+  });
+});
+
 test("Inaktivitaets-Benachrichtigung wird beim Oeffnen der App nachgeholt", async ({ page }) => {
   await installNotificationMock(page, { permission: "granted" });
   await seedAppState(page, {

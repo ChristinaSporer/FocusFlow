@@ -105,6 +105,76 @@ describe("modules/notification-manager", () => {
     manager.dispose();
   });
 
+  it("unterdrueckt die Lernzeit-Erinnerung waehrend aktiver Stoppuhr", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-06T08:50:00"));
+
+    const notificationCtor = vi.fn();
+    notificationCtor.permission = "granted";
+    vi.stubGlobal("Notification", notificationCtor);
+
+    const manager = createNotificationManager({
+      getState: () => ({
+        settings: { notificationEnabled: true, notificationLeadMinutes: 15 },
+        timer: { start: "2026-04-06T08:45:00.000Z" },
+        pomodoro: { active: false },
+        detailPlans: [
+          {
+            id: "d1",
+            date: "2026-04-06",
+            startTime: "09:00",
+            endTime: "10:00",
+            topic: "Test",
+            done: false,
+          },
+        ],
+      }),
+    });
+
+    manager.sync();
+    expect(notificationCtor).not.toHaveBeenCalled();
+    manager.dispose();
+  });
+
+  it("holt Lernzeit-Erinnerung nach aktiver Stoppuhr nicht nach", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-06T08:50:00"));
+
+    const notificationCtor = vi.fn();
+    notificationCtor.permission = "granted";
+    vi.stubGlobal("Notification", notificationCtor);
+
+    const state = {
+      settings: { notificationEnabled: true, notificationLeadMinutes: 15 },
+      timer: { start: "2026-04-06T08:45:00.000Z" },
+      pomodoro: { active: false },
+      detailPlans: [
+        {
+          id: "d1",
+          date: "2026-04-06",
+          startTime: "09:00",
+          endTime: "10:00",
+          topic: "Test",
+          done: false,
+        },
+      ],
+    };
+
+    const manager = createNotificationManager({
+      getState: () => state,
+    });
+
+    manager.sync();
+    expect(notificationCtor).not.toHaveBeenCalled();
+
+    state.timer.start = null;
+    vi.setSystemTime(new Date("2026-04-06T08:52:00"));
+    manager.sync();
+
+    expect(notificationCtor).not.toHaveBeenCalled();
+    manager.dispose();
+  });
+
   it("ueberspringt Plaene ohne startTime", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-06T08:50:00"));
@@ -127,16 +197,14 @@ describe("modules/notification-manager", () => {
     manager.dispose();
   });
 
-  it("sendet keine Benachrichtigung wenn leadMinutes=0 (Zeitfenster ist leer)", () => {
+  it("sendet bei leadMinutes=0 eine Benachrichtigung direkt zum Startzeitpunkt", () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2026-04-06T08:59:59"));
+    vi.setSystemTime(new Date("2026-04-06T09:00:00"));
 
     const notificationCtor = vi.fn();
     notificationCtor.permission = "granted";
     vi.stubGlobal("Notification", notificationCtor);
 
-    // Mit leadMinutes=0 ist triggerAt === startTime, die Bedingung
-    // (now < triggerAt || now >= startTime) ist immer wahr → nie eine Benachrichtigung
     const manager = createNotificationManager({
       getState: () => ({
         settings: { notificationEnabled: true, notificationLeadMinutes: 0 },
@@ -154,7 +222,10 @@ describe("modules/notification-manager", () => {
     });
 
     manager.sync();
-    expect(notificationCtor).not.toHaveBeenCalled();
+    expect(notificationCtor).toHaveBeenCalledTimes(1);
+    expect(notificationCtor).toHaveBeenCalledWith("FocusFlow: Zeit zu lernen", {
+      body: "Direkt jetzt · 09:00-10:00",
+    });
     manager.dispose();
   });
 
@@ -202,7 +273,7 @@ describe("modules/notification-manager", () => {
     manager.dispose();
   });
 
-  it("ueberspringt Benachrichtigung wenn Startzeit bereits vergangen ist", () => {
+  it("ueberspringt 0-Minuten-Benachrichtigung wenn Startzeitfenster bereits vorbei ist", () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-06T09:05:00"));
 
@@ -377,6 +448,99 @@ describe("modules/notification-manager", () => {
     manager.sync();
     expect(notificationCtor).not.toHaveBeenCalled();
 
+    manager.dispose();
+  });
+
+  it("unterdrueckt Inaktivitaets-Benachrichtigung waehrend aktivem Pomodoro", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-21T10:00:00.000Z"));
+
+    const notificationCtor = vi.fn();
+    notificationCtor.permission = "granted";
+    vi.stubGlobal("Notification", notificationCtor);
+    const dispatch = vi.fn();
+
+    const manager = createNotificationManager({
+      dispatch,
+      getState: () => ({
+        settings: {
+          inactivityNotificationEnabled: true,
+          inactivityDays: 7,
+          lastInactivityNotificationAt: null,
+        },
+        timer: { start: null },
+        pomodoro: { active: true },
+        trackedSessions: [
+          {
+            id: "t1",
+            start: "2026-04-11T08:00:00.000Z",
+            end: "2026-04-11T09:00:00.000Z",
+            minutes: 60,
+          },
+        ],
+        detailPlans: [],
+      }),
+    });
+
+    manager.sync();
+    expect(notificationCtor).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "SET_LAST_INACTIVITY_NOTIFICATION_AT",
+      payload: { timestamp: "2026-04-21T10:00:00.000Z" },
+    });
+    manager.dispose();
+  });
+
+  it("holt Inaktivitaets-Benachrichtigung nach aktivem Tracking nicht nach", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-21T10:00:00.000Z"));
+
+    const notificationCtor = vi.fn();
+    notificationCtor.permission = "granted";
+    vi.stubGlobal("Notification", notificationCtor);
+
+    const state = {
+      settings: {
+        inactivityNotificationEnabled: true,
+        inactivityDays: 7,
+        lastInactivityNotificationAt: null,
+      },
+      timer: { start: "2026-04-21T09:50:00.000Z" },
+      pomodoro: { active: false },
+      trackedSessions: [
+        {
+          id: "t1",
+          start: "2026-04-11T08:00:00.000Z",
+          end: "2026-04-11T09:00:00.000Z",
+          minutes: 60,
+        },
+      ],
+      detailPlans: [],
+    };
+
+    const dispatch = vi.fn((action) => {
+      if (action?.type === "SET_LAST_INACTIVITY_NOTIFICATION_AT") {
+        state.settings.lastInactivityNotificationAt = action.payload.timestamp;
+      }
+    });
+
+    const manager = createNotificationManager({
+      dispatch,
+      getState: () => state,
+    });
+
+    manager.sync();
+    expect(notificationCtor).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith({
+      type: "SET_LAST_INACTIVITY_NOTIFICATION_AT",
+      payload: { timestamp: "2026-04-21T10:00:00.000Z" },
+    });
+
+    state.timer.start = null;
+    vi.setSystemTime(new Date("2026-04-21T10:01:00.000Z"));
+    manager.sync();
+
+    expect(notificationCtor).not.toHaveBeenCalled();
     manager.dispose();
   });
 });

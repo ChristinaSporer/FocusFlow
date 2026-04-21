@@ -1,7 +1,7 @@
 # Testspezifikation E2E
 
-Stand: 2026-04-20
-Umfang: Playwright-End-to-End-Tests in `tests/e2e` (aktuell 26 Testfälle)
+Stand: 2026-04-21
+Umfang: Playwright-End-to-End-Tests in `tests/e2e` (aktuell 28 Testfälle)
 
 ## 1. JSON Backup und Restore
 
@@ -242,11 +242,35 @@ Kurzbeschreibung: Prüft Notification-Schalter gegen Mock-Notification-API.
 Grobe Testschritte:
 
 1. Notification-Mock installieren, App öffnen, Menü öffnen.
-2. Erinnerung konfigurieren, einschalten und wieder ausschalten.
-3. Ziel und Detailtermin anlegen.
-4. Prüfen, dass keine Notification ausgelöst wurde.
+2. Menübereich „Benachrichtigungen“ öffnen.
+3. Erinnerung konfigurieren, einschalten und wieder ausschalten.
+4. Ziel und Detailtermin anlegen.
+5. Prüfen, dass keine Notification ausgelöst wurde.
 
 ### TC-E2E-SET-04
+
+Titel: 0-Minuten-Erinnerung wird direkt zum Startzeitpunkt gesendet
+Kurzbeschreibung: Verifiziert, dass eine geplante Lernzeit auch bei `0` Minuten Vorlauf direkt zum Terminstart eine Browser-Benachrichtigung auslöst.
+Grobe Testschritte:
+
+1. Browserzeit auf einen festen Zeitpunkt kurz nach Session-Beginn mocken.
+2. Notification-Mock installieren und App-State mit aktivierter Erinnerung und `notificationLeadMinutes = 0` vorinitialisieren.
+3. Detailplanung mit Startzeit exakt zum gemockten Zeitpunkt anlegen.
+4. App öffnen.
+5. Prüfen, dass genau eine Notification mit Titel und Inhalt der Start-Erinnerung ausgelöst wurde.
+
+### TC-E2E-SET-05
+
+Titel: Inaktivitaets-Benachrichtigung wird beim Oeffnen der App nachgeholt
+Kurzbeschreibung: Prüft die Catch-up-Logik für Inaktivitäts-Benachrichtigungen bei bereits überschrittener Schwelle.
+Grobe Testschritte:
+
+1. Notification-Mock installieren.
+2. App-State mit alter getrackter Session und aktivierter Inaktivitäts-Benachrichtigung vorinitialisieren.
+3. App öffnen.
+4. Prüfen, dass genau eine Inaktivitäts-Notification ausgelöst wird.
+
+### TC-E2E-SET-06
 
 Titel: Standard-Lernzeiten beeinflussen die Vorschläge in der Grobplanung
 Kurzbeschreibung: Verifiziert, dass gespeicherte Standard-Lernzeiten in die Slot-Vorschläge einfließen.
