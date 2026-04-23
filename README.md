@@ -57,7 +57,7 @@ Statusbericht zur Vorbereitung und technischen Initialisierung (Sprint 0)
 Sprint1_Statusblatt.docx
 Statusbericht zur Umsetzung der Kernfunktionen und Dokumentation (Sprint 1)
 
-Zusätzlich liegt eine Sprint‑Planung zur Koordination der Testphase sowie ein Trello‑Board 
+Zusätzlich liegt eine Sprint‑Planung zur Koordination der Testphase sowie ein Trello‑Board
 zur operativen Aufgaben‑ und Fortschrittsverfolgung vor.
 
 ## GitHub
@@ -143,10 +143,12 @@ Frontend-only-Architektur<br>
 Es existiert keine serverseitige Persistenz oder Synchronisation.
 
 ### Datensicherung
+
 Alle Daten werden lokal gespeichert.<br>
 Für die Sicherung stehen JSON- und ICS-Exporte zur Verfügung.
 
 ## Architektur
+
 <details>
 <summary>Übersicht und Diagramme zur Architektur des Systems</summary>
 
@@ -341,4 +343,5 @@ classDiagram
   AppState --> TimerState
   AppState --> PomodoroState
 ```
+
 </details>
