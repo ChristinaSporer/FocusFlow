@@ -1,7 +1,13 @@
-# FocusFlow
+# Projekt: Lernzeit-Manager (FocusFlow)
 
-Frontend-Prototyp fuer Lernzeitplanung und Lernzeit-Tracking ohne Backend.
-Alle Daten werden lokal im Browser in `localStorage` gespeichert (`focusflow-v1`).
+Dieses Projekt entstand im Modul „Projekt Software Engineering (ISEF01)“ an der
+IU Internationale Hochschule.
+
+Der Lernzeit-Manager ist eine browserbasierte Webanwendung zur Planung, Organisation
+und Nachverfolgung von Lernzeiten. Ziel ist es, Lernziele strukturiert zu planen,
+Lernzeiten zu verteilen und den tatsächlichen Lernaufwand zu erfassen.<br>
+Die Anwendung ist als Frontend-only-Prototyp umgesetzt und verzichtet bewusst auf
+ein Backend oder eine Benutzerverwaltung.
 
 ## Features
 
@@ -13,6 +19,62 @@ Alle Daten werden lokal im Browser in `localStorage` gespeichert (`focusflow-v1`
 - JSON- und ICS-Import/Export ueber das Menue
 - Browser-Benachrichtigungen fuer geplante Lernzeiten
 - Demo-Daten und Reset fuer schnelle Tests
+
+## Systemüberblick
+
+Anwendungstyp: Browserbasierte Web-App (Frontend-only)<br>
+Persistenz: localStorage im Browser<br>
+Deployment: GitHub Pages<br>
+Zugriff: Direkt über Browser, keine Installation erforderlich<br>
+Login: Nicht vorhanden
+
+Die Anwendung wurde bis zur Abgabe iterativ weiterentwickelt und um
+UI-/UX-Verbesserungen sowie zusätzliche Komfortfunktionen ergänzt,
+ohne die fachlichen Zielsetzungen oder die Systemarchitektur zu verändern.
+
+## Dokumentationen
+
+MS4_Benutzerhandbuch_v1.0.pdf<br>
+Beschreibung der Bedienung, Navigation und Kernfunktionen
+
+MS4_Fachliche_Dokumentation_v1.0.pdf<br>
+Funktionale Anforderungen, Use Cases, fachliche Regeln und Prozesse
+
+MS4_TechnischeDokumentation_v1.0.pdf<br>
+Architektur, Module, Datenhaltung, Berechnungslogik, Import/Export, CI/CD
+
+MS4_Betriebsdokumentation_v1.0.pdf<br>
+Systemzugriff, lokaler Start, Deployment, Betrieb, Konfiguration
+
+MS4_Testabschlussbericht_v1.0.pdf<br>
+Struktur, Teststrategie und Übersicht geplanter Tests (noch einzupflegen)
+
+## Prozess- und Statusdokumente
+
+Sprint0_Statusblatt.docx
+Statusbericht zur Vorbereitung und technischen Initialisierung (Sprint 0)
+
+Sprint1_Statusblatt.docx
+Statusbericht zur Umsetzung der Kernfunktionen und Dokumentation (Sprint 1)
+
+Zusätzlich liegt eine Sprint‑Planung zur Koordination der Testphase sowie ein Trello‑Board 
+zur operativen Aufgaben‑ und Fortschrittsverfolgung vor.
+
+## GitHub
+
+Repository-Link: `https://github.com/ChristinaSporer/FocusFlow`<br>
+GitHub-Repository mit vollständiger Versionshistorie
+
+## GitHub Pages
+
+Bei erfolgreichem Default-Branch-Push werden App und Coverage bereitgestellt:
+
+- App: `https://christinasporer.github.io/FocusFlow/`
+- Coverage: `https://christinasporer.github.io/FocusFlow/coverage/`
+
+Voraussetzung in GitHub:
+
+- `Settings -> Pages -> Source: GitHub Actions`
 
 ## Lokaler Start
 
@@ -72,18 +134,21 @@ Enthaelt folgende Jobs:
 5. `coverage-pages`
    - Deploy von App + Coverage auf GitHub Pages (nur Push auf Default-Branch)
 
-## GitHub Pages
+## BESONDERE HINWEISE
 
-Bei erfolgreichem Default-Branch-Push werden App und Coverage bereitgestellt:
+Keine Test-Accounts erforderlich<br>
+Die Anwendung besitzt keinen Login und keine Benutzerverwaltung.
 
-- App: `https://<username>.github.io/FocusFlow/`
-- Coverage: `https://<username>.github.io/FocusFlow/coverage/index.html`
+Frontend-only-Architektur<br>
+Es existiert keine serverseitige Persistenz oder Synchronisation.
 
-Voraussetzung in GitHub:
-
-- `Settings -> Pages -> Source: GitHub Actions`
+### Datensicherung
+Alle Daten werden lokal gespeichert.<br>
+Für die Sicherung stehen JSON- und ICS-Exporte zur Verfügung.
 
 ## Architektur
+<details>
+<summary>Übersicht und Diagramme zur Architektur des Systems</summary>
 
 ### Kontextdiagramm (Systemgrenze und externe Schnittstellen)
 
@@ -114,7 +179,7 @@ graph TB
     style FileAPI fill:#F8D096
 ```
 
-### Kurzueberblick (ohne Diagramme)
+### Kurzueberblick
 
 - `app.js` initialisiert die Anwendung und orchestriert Rendering, Handler und Manager.
 - Zustandsaenderungen laufen zentral ueber `form-handlers.js` -> `app-reducer.js` -> `state-store.js`.
@@ -276,42 +341,4 @@ classDiagram
   AppState --> TimerState
   AppState --> PomodoroState
 ```
-
-### Sequenz: Detailplanung erstellen und Tracking starten
-
-```mermaid
-sequenceDiagram
-  actor Nutzer
-  participant UI as Formular/Buttons
-  participant FH as form-handlers.js
-  participant RED as app-reducer.js
-  participant STORE as state-store.js
-  participant RENDER as render-main-view.js
-  participant TIM as timer-manager.js
-
-  Nutzer->>UI: Detailplanung erfassen
-  UI->>FH: Submit Event
-  FH->>RED: DETAIL_ADD
-  RED->>STORE: neuer State
-  STORE->>STORE: persistState(localStorage)
-  FH->>RENDER: renderAll()
-
-  Nutzer->>UI: Tracking starten
-  UI->>TIM: startTimerForDetailPlan()
-  TIM->>RED: TIMER_START
-  RED->>STORE: State Update
-  STORE->>STORE: persistState(localStorage)
-  TIM->>RENDER: renderAll()
-
-  Nutzer->>UI: Tracking stoppen
-  UI->>TIM: stopTimer()
-  TIM->>RED: TIMER_STOP_AND_STORE_SESSION
-  RED->>STORE: Session gespeichert
-  STORE->>STORE: persistState(localStorage)
-  TIM->>RENDER: renderAll()
-```
-
-## Hinweise
-
-- Browser-Benachrichtigungen erfordern Berechtigung im Browser.
-- Fuer produktiven Einsatz fehlen u. a. Authentifizierung, Mehrbenutzerfaehigkeit und serverseitige Persistenz.
+</details>
