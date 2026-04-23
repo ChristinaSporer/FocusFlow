@@ -1,6 +1,10 @@
 const { test, expect } = require("@playwright/test");
 const fs = require("fs/promises");
-const { addGoal, openMenuSection } = require("./helpers/e2e-helpers");
+const {
+  addGoal,
+  openMenuSection,
+  clickAndAcceptDialogIfPresent,
+} = require("./helpers/e2e-helpers");
 
 test("JSON-Import lädt einen gültigen App-Stand", async ({ page }) => {
   await page.goto("/");
@@ -35,9 +39,9 @@ test("JSON-Import lädt einen gültigen App-Stand", async ({ page }) => {
     mimeType: "application/json",
     buffer: Buffer.from(JSON.stringify(exportedPayload)),
   });
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.locator("#menu-json-import").click();
-  await (await dialogPromise).accept();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await page.locator("#menu-json-import").click();
+  });
 
   await expect(page.locator("#json-status")).toContainText("Import erfolgreich");
 
@@ -75,10 +79,9 @@ test("JSON-Import zeigt Fehler bei ungültigem JSON", async ({ page }) => {
     mimeType: "application/json",
     buffer: Buffer.from('{"goals": [}', "utf-8"),
   });
-
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.locator("#menu-json-import").click();
-  await (await dialogPromise).accept();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await page.locator("#menu-json-import").click();
+  });
 
   await expect(page.locator("#json-status")).toContainText("Import fehlgeschlagen");
 });
@@ -92,10 +95,9 @@ test("JSON-Import zeigt Fehler bei falschem Dateiformat", async ({ page }) => {
     mimeType: "text/plain",
     buffer: Buffer.from("kein gueltiges json", "utf-8"),
   });
-
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.locator("#menu-json-import").click();
-  await (await dialogPromise).accept();
+  await clickAndAcceptDialogIfPresent(page, async () => {
+    await page.locator("#menu-json-import").click();
+  });
 
   await expect(page.locator("#json-status")).toContainText("Import fehlgeschlagen");
 });

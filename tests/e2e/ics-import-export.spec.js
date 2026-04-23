@@ -82,9 +82,10 @@ test("ICS-Import zeigt Fehler bei kaputter ICS-Datei", async ({ page }) => {
     buffer: Buffer.from("BEGIN:VCALENDAR\nBEGIN:VEVENT\nSUMMARY:Kaputt\nEND:VCALENDAR", "utf-8"),
   });
 
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.locator("#menu-ics-import").click();
-  const dialog = await dialogPromise;
+  const [dialog] = await Promise.all([
+    page.waitForEvent("dialog"),
+    page.locator("#menu-ics-import").click(),
+  ]);
   expect(dialog.message()).toMatch(/Import fehlgeschlagen|Keine importierbaren Termine/);
   await dialog.accept();
 });
@@ -99,9 +100,10 @@ test("ICS-Import zeigt Fehler bei falschem Dateiformat", async ({ page }) => {
     buffer: Buffer.from("kein kalenderinhalt", "utf-8"),
   });
 
-  const dialogPromise = page.waitForEvent("dialog");
-  await page.locator("#menu-ics-import").click();
-  const dialog = await dialogPromise;
+  const [dialog] = await Promise.all([
+    page.waitForEvent("dialog"),
+    page.locator("#menu-ics-import").click(),
+  ]);
   expect(dialog.message()).toMatch(/Import fehlgeschlagen|Keine importierbaren Termine/);
   await dialog.accept();
 });
